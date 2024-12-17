@@ -1,0 +1,18 @@
+Package: bowen.biodiversity.webapp
+Title: Bowen Biodiversity Web App
+Version: 0.0.0.9000
+Authors@R: 
+    person(given = "Jay",
+           family = "Matsushiba",
+           role = c("aut", "cre"),
+           email = "hello@jmatsushiba.com")
+Description: This pacakge is for a web application being built for the Bowen
+Island Community Plan process, in order to incorporate biodiversity information.
+License: What license is it under?
+Imports: 
+    config,
+    golem,
+    shiny
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
