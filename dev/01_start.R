@@ -20,15 +20,16 @@
 ##
 golem::fill_desc(
   pkg_name = "bowen.biodiversity.webapp", # The name of the golem package containing the app (typically lowercase, no underscore or periods)
-  pkg_title = "PKG_TITLE", # What the Package Does (One Line, Title Case, No Period)
-  pkg_description = "PKG_DESC.", # What the package does (one paragraph).
+  pkg_title = "Bowen Biodiversity Web App", # What the Package Does (One Line, Title Case, No Period)
+  pkg_description = "This pacakge is for a web application being built for the Bowen
+  Island Community Plan process, in order to incorporate biodiversity information.", # What the package does (one paragraph).
   authors = person(
-    given = "AUTHOR_FIRST", # Your First Name
-    family = "AUTHOR_LAST", # Your Last Name
-    email = "AUTHOR@MAIL.COM", # Your email
+    given = "Jay", # Your First Name
+    family = "Matsushiba", # Your Last Name
+    email = "hello@jmatsushiba.com", # Your email
     role = c("aut", "cre") # Your role (here author/creator)
   ),
-  repo_url = NULL, # The URL of the GitHub repo (optional),
+  repo_url = "https://github.com/Palen-Lab/bowen.biodiversity.webapp.git", # The URL of the GitHub repo (optional),
   pkg_version = "0.0.0.9000", # The version of the package containing the app
   set_options = TRUE # Set the global golem options
 )

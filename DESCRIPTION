@@ -2,13 +2,10 @@ Package: bowen.biodiversity.webapp
 Title: Bowen Biodiversity Web App
 Version: 0.0.0.9000
 Authors@R: 
-    person(given = "Jay",
-           family = "Matsushiba",
-           role = c("aut", "cre"),
-           email = "hello@jmatsushiba.com")
+    person("Jay", "Matsushiba", , "hello@jmatsushiba.com", role = c("aut", "cre"))
 Description: This pacakge is for a web application being built for the Bowen
-    Island Community Plan process, in order to incorporate biodiversity information.
-License: What license is it under?
+  Island Community Plan process, in order to incorporate biodiversity information.
+License: MIT + file LICENSE
 Imports: 
     config,
     golem,
@@ -16,3 +13,10 @@ Imports:
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.1.1
+URL: https://github.com/Palen-Lab/bowen.biodiversity.webapp.git
+BugReports: https://github.com/Palen-Lab/bowen.biodiversity.webapp.git/issues
+Suggests: 
+    spelling,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Language: en-US
