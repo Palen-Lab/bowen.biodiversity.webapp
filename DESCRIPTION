@@ -7,7 +7,7 @@ Authors@R:
            role = c("aut", "cre"),
            email = "hello@jmatsushiba.com")
 Description: This pacakge is for a web application being built for the Bowen
-Island Community Plan process, in order to incorporate biodiversity information.
+    Island Community Plan process, in order to incorporate biodiversity information.
 License: What license is it under?
 Imports: 
     config,
