@@ -22,5 +22,16 @@ library(bowen.biodiversity.webapp)
 
 ```{r}
 
+
+# Create features table from files available in data
+features <- list.files(here::here("inst", "app", "rasters"),
+                       recursive = T,
+                       full.names = T)
+layers_df <- data.frame(full_path = features)
+layers_df$filename <- basename(layers_df$full_path)
+layers_df$weights <- 1.0
+
+zonation5(layers_df)
+
 ```
 

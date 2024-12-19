@@ -10,16 +10,26 @@
 mod_zonation_param_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    button(ns("btn"))
+    DT::DTOutput(ns("lyrs")),
+    actionButton(ns("btn"), "Zonation"),
+    DT::DTOutput(ns("selected"))
   )
 }
 
 #' zonation_param Server Functions
 #'
 #' @noRd
-mod_zonation_param_server <- function(id){
+mod_zonation_param_server <- function(id, data){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+
+    output$lyrs <- DT::renderDT({
+      data
+    })
+    reactive({
+      message("Selected layers updated")
+      data.frame(data[input$lyrs_rows_selected,])
+    })
 
   })
 }
