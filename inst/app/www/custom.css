@@ -22,3 +22,7 @@ body {
 .metric_card_fullscreen_description {
   padding: 20px;
 }
+
+#website_logo {
+  height: 40px;
+}

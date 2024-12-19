@@ -20,10 +20,11 @@ app_ui <- function(request) {
         h1("Test")
       }),
       title = div(
-        # img(
-        #   src = "oceanos_logo.svg"
-        # ),
-        "Bowen Island Biodiversity Data Atlas"
+        img(
+          src = "www/bowenisland_brandmark.png",
+          id = "website_logo"
+        ),
+        "Biodiversity Data Atlas"
       ),
     )
   )

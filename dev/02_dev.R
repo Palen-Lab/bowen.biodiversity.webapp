@@ -49,7 +49,7 @@ usethis::use_test("app")
 # Documentation
 
 ## Vignette ----
-usethis::use_vignette("bowen.biodiversity.webapp")
+usethis::use_vignette("bowen_biodiversity_webapp.Rmd")
 devtools::build_vignettes()
 
 ## Code Coverage----

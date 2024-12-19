@@ -1,0 +1,26 @@
+---
+title: "bowen_biodiversity_webapp"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{bowen_biodiversity_webapp}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+```
+
+# Running Zonation from R
+
+```{r}
+
+```
+
