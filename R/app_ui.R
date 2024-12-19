@@ -17,7 +17,10 @@ app_ui <- function(request) {
       ),
       fillable = c("Map"),
       sidebar = bslib::sidebar({
-        h1("Test")
+        tagList(
+          h1("Test"),
+          actionButton(label = "Test","test_button")
+        )
       }),
       title = div(
         img(

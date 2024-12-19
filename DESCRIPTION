@@ -15,7 +15,8 @@ Imports:
     config,
     golem,
     leaflet,
-    shiny
+    shiny,
+    stringr
 Suggests: 
     knitr,
     rmarkdown,

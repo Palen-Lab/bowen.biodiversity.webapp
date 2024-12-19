@@ -19,6 +19,7 @@
 attachment::att_amend_desc()
 usethis::use_package("leaflet")
 usethis::use_package("bslib")
+usethis::use_package("stringr")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
