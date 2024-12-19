@@ -1,0 +1,24 @@
+.sidebar .card.bslib-value-box,
+.sidebar .card-body,
+.sidebar .card {
+  overflow: visible;
+  position: relative;
+}
+
+.selectize-dropdown {
+  z-index: 10000;
+}
+
+.modal {z-index: 1150;}
+
+.navbar-brand {
+  margin-right: 0px;
+}
+
+body {
+  background-color: #F5F5F5;
+}
+
+.metric_card_fullscreen_description {
+  padding: 20px;
+}

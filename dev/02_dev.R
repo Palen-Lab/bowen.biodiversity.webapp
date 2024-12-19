@@ -17,11 +17,13 @@
 ## Amend DESCRIPTION with dependencies read from package code parsing
 ## install.packages('attachment') # if needed.
 attachment::att_amend_desc()
+usethis::use_package("leaflet")
+usethis::use_package("bslib")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
-golem::add_module(name = "name_of_module1", with_test = TRUE) # Name of the module
-golem::add_module(name = "name_of_module2", with_test = TRUE) # Name of the module
+golem::add_module(name = "main_map", with_test = TRUE) # Name of the module
+golem::add_module(name = "zonation_param", with_test = TRUE) # Name of the module
 
 ## Add helper functions ----
 ## Creates fct_* and utils_*
@@ -34,7 +36,7 @@ golem::add_js_file("script")
 golem::add_js_handler("handlers")
 golem::add_css_file("custom")
 golem::add_sass_file("custom")
-golem::add_any_file("file.json")
+# golem::add_any_file("file.json")
 
 ## Add internal datasets ----
 ## If you have data in your package

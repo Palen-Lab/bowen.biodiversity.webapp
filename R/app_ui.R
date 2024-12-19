@@ -9,8 +9,22 @@ app_ui <- function(request) {
     # Leave this function for adding external resources
     golem_add_external_resources(),
     # Your application UI logic
-    fluidPage(
-      golem::golem_welcome_page() # Remove this line to start building your UI
+    bslib::page_navbar(
+      bslib::nav_spacer(),
+      bslib::nav_panel(
+        "Map",
+        mod_main_map_ui("main_map")
+      ),
+      fillable = c("Map"),
+      sidebar = bslib::sidebar({
+        h1("Test")
+      }),
+      title = div(
+        # img(
+        #   src = "oceanos_logo.svg"
+        # ),
+        "Bowen Island Biodiversity Data Atlas"
+      ),
     )
   )
 }
