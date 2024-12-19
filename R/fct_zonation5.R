@@ -10,6 +10,8 @@ zonation5 <- function() {
   features <- list.files("inst/app/rasters",
                          recursive = T,
                          full.names = T)
+  # Need to get full path, not relative path within relative working directory
+  features <- paste0(getwd(), "/", features)
 
   weights <- lapply(features, function(x) {"1.0"})
 
