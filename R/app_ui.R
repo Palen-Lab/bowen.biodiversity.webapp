@@ -17,7 +17,10 @@ app_ui <- function(request) {
       ),
       bslib::nav_panel(
         "Zonation",
+        h2("Available Layers"),
         mod_zonation_param_ui("zonation_param"),
+        hr(),
+        h2("Selected Layers"),
         DT::DTOutput("test_table")
       ),
       fillable = c("Map"),
