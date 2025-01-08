@@ -1,0 +1,50 @@
+---
+title: "species_table"
+date: "January 8 2025"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{species_table}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(here)
+library(stringr)
+library(dplyr)
+library(googlesheets4)
+```
+
+```{r}
+# select only SDMs
+features <- list.files(here::here("inst", "app", "rasters", "2024_12_12_Environment_100m_Bowen_Island"),
+                       recursive = T)
+layers_df <- data.frame(full_path = paste("inst", "app", "rasters", "2024_12_12_Environment_100m_Bowen_Island", features, sep = "/"))
+
+layers_df$filename <- basename(layers_df$full_path)
+layers_df$weights <- 1.0
+layers_df$layer_name <- ""
+
+# This sheet was uploaded to Google Sheets
+# WARNING: DO NOT RUN OR WILL OVERWRITE MANUAL INPUT TO GOOGLE SHEETS
+# write_sheet(layers_df,
+#             "https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0",
+#             "environmental")
+# write.csv(layers_df, "environmental_df.csv")
+```
+
+# Read in from Google Sheets 
+```{r}
+layers_googlesheet <- read_sheet("https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0",
+                                 "environmental")
+```
+
+

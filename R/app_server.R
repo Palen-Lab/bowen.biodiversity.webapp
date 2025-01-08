@@ -8,7 +8,11 @@ app_server <- function(input, output, session) {
   # Your application server logic
 
   # Zonation5 input layers logic ----
-  layers_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing")
+  species_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing") %>%
+    dplyr::rename(layer_name = sci_name)
+  environmental_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0")
+  # Combine Species and Environmental df for now
+  layers_df <- bind_rows(species_df, environmental_df)
 
   # Zonation5 layer selection module ----
   zonation5_input_df <- mod_zonation_param_server("zonation_param", layers_df)
