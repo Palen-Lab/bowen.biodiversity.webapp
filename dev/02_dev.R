@@ -54,6 +54,8 @@ usethis::use_test("app")
 
 ## Vignette ----
 usethis::use_vignette("bowen_biodiversity_webapp.Rmd")
+usethis::use_vignette("species_table.Rmd")
+usethis::use_vignette("environmental_table.Rmd")
 devtools::build_vignettes()
 
 ## Code Coverage----
