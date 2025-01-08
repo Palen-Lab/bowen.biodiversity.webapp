@@ -23,8 +23,8 @@ app_ui <- function(request) {
       fillable = c("Map"),
       sidebar = bslib::sidebar({
         tagList(
-          h1("Test"),
-          actionButton(label = "Test","test_button")
+          h1("Zonation5 Tool"),
+          actionButton(label = "Zonation","zonation_button")
         )
       }),
       title = div(

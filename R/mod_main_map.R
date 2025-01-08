@@ -21,6 +21,8 @@ mod_main_map_server <- function(id, main_raster){
   stopifnot(is.reactive(main_raster))
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    # TODO: add legend
+    # TODO: add interactive legend, to reveal top % of zonation output
     output$map <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron,

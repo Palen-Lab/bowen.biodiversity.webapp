@@ -15,6 +15,7 @@ Imports:
     config,
     DT,
     golem,
+    googlesheets4,
     here,
     leaflet,
     shiny,

@@ -10,9 +10,7 @@
 mod_zonation_param_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    DT::DTOutput(ns("lyrs")),
-    actionButton(ns("btn"), "Zonation"),
-    DT::DTOutput(ns("selected"))
+    DT::DTOutput(ns("lyrs"))
   )
 }
 
@@ -22,6 +20,9 @@ mod_zonation_param_ui <- function(id) {
 mod_zonation_param_server <- function(id, data){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+
+    # TODO: set weights for selected layers
+    # TODO: zonation settings
 
     output$lyrs <- DT::renderDT({
       data

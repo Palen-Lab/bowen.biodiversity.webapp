@@ -1,0 +1,64 @@
+---
+title: "species_table"
+date: "January 8 2025"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{species_table}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(here)
+library(stringr)
+library(dplyr)
+library(googlesheets4)
+```
+
+```{r}
+# select only SDMs
+features <- list.files(here::here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island"),
+                       recursive = T,
+                       full.names = T)
+layers_df <- data.frame(full_path = features)
+
+layers_df$filename <- basename(layers_df$full_path)
+layers_df$weights <- 1.0
+layers_df$sci_name <- layers_df$filename %>%
+  gsub("_BowenIsland_100m.tif", "", .) %>%
+  gsub("\\.", " ", .)
+
+layers_df$taxon_group <- case_when(
+    str_detect(layers_df$full_path, "Fish") ~ "Fish",
+    str_detect(layers_df$full_path, "MammalSmall") ~ "MammalSmall",
+    str_detect(layers_df$full_path, "Bird") ~ "Bird",
+    str_detect(layers_df$full_path, "Amphibian") ~ "Amphibian",
+    str_detect(layers_df$full_path, "Reptile") ~ "Reptile"
+  )
+
+layers_df$prov_status <- ""
+layers_df$fed_status <- ""
+layers_df$IUCN_status <- ""
+
+# This sheet was uploaded to Google Sheets
+# WARNING: DO NOT RUN OR WILL OVERWRITE MANUAL INPUT TO GOOGLE SHEETS
+# write_sheet(layers_df, 
+#             "https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing",
+#             "species")
+# write.csv(layers_df, "layers_df.csv")
+```
+
+# Read in from Google Sheets as updated by Michael Tylo (Jan 8 2025)
+```{r}
+layers_googlesheet <- read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing")
+```
+
+

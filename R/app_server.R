@@ -8,12 +8,7 @@ app_server <- function(input, output, session) {
   # Your application server logic
 
   # Zonation5 input layers logic ----
-  features <- list.files(here::here("inst", "app", "rasters"),
-                         recursive = T,
-                         full.names = T)
-  layers_df <- data.frame(full_path = features)
-  layers_df$filename <- basename(layers_df$full_path)
-  layers_df$weights <- 1.0
+  layers_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing")
 
   # Zonation5 layer selection module ----
   zonation5_input_df <- mod_zonation_param_server("zonation_param", layers_df)
@@ -23,7 +18,7 @@ app_server <- function(input, output, session) {
 
   # Trigger Zonation5 run ----
   main_raster <- reactiveVal(terra::rast("inst/app/zonation/zonation_output/rankmap.tif"))
-  observeEvent(input$test_button, {
+  observeEvent(input$zonation_button, {
     zonation5(zonation5_input_df())
     main_raster(terra::rast("inst/app/zonation/zonation_output/rankmap.tif"))
   })
