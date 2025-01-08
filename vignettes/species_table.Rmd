@@ -26,9 +26,8 @@ library(googlesheets4)
 ```{r}
 # select only SDMs
 features <- list.files(here::here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island"),
-                       recursive = T,
-                       full.names = T)
-layers_df <- data.frame(full_path = features)
+                       recursive = T)
+layers_df <- data.frame(full_path = paste("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island", features, sep = "/"))
 
 layers_df$filename <- basename(layers_df$full_path)
 layers_df$weights <- 1.0
@@ -50,7 +49,7 @@ layers_df$IUCN_status <- ""
 
 # This sheet was uploaded to Google Sheets
 # WARNING: DO NOT RUN OR WILL OVERWRITE MANUAL INPUT TO GOOGLE SHEETS
-# write_sheet(layers_df, 
+# write_sheet(layers_df,
 #             "https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing",
 #             "species")
 # write.csv(layers_df, "layers_df.csv")
