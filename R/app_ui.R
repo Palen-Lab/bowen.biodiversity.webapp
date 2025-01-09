@@ -17,6 +17,7 @@ app_ui <- function(request) {
       ),
       bslib::nav_panel(
         "Zonation",
+        # TODO: move everything in this nav_panel() to mod_zonation_param_ui
         h2("Available Layers"),
         mod_zonation_param_ui("zonation_param"),
         hr(),

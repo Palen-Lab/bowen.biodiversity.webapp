@@ -16,6 +16,7 @@ app_server <- function(input, output, session) {
 
   # Zonation5 layer selection module ----
   zonation5_input_df <- mod_zonation_param_server("zonation_param", layers_df)
+  # TODO: move output$test_table to mod_zonation_param_server
   output$test_table <- DT::renderDT(
     zonation5_input_df()
   )
