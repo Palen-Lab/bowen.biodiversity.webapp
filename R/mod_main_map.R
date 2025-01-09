@@ -24,18 +24,11 @@ mod_main_map_server <- function(id, main_raster){
     # TODO: add legend
     # TODO: add interactive legend, to reveal top % of zonation output
     output$map <- leaflet::renderLeaflet({
-      # browser()
       leaflet::leaflet() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron,
                                   options = leaflet::providerTileOptions(noWrap = TRUE)
         ) %>%
-        leaflet::addRasterImage(x = main_raster(),
-                                colors = "Spectral") %>%
-        leaflet::addLegend(values = terra::values(main_raster()),
-                           pal = leaflet::colorNumeric(palette = "Spectral",
-                                                       domain = terra::values(main_raster())
-                                                       )
-                           )
+        leaflet::addRasterImage(x = main_raster())
     })
   })
 }
