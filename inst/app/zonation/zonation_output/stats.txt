@@ -1,3 +1,0 @@
-Arguments given: --mode=CAZ2 /home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/app/zonation/zonation_input/settings.z5 /home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/app/zonation/zonation_output
-Settings filename: /home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/app/zonation/zonation_input/settings.z5
-Feature list filename: /home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/app/zonation/zonation_input/features.txt
