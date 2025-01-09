@@ -10,7 +10,11 @@
 mod_zonation_param_ui <- function(id) {
   ns <- NS(id)
   tagList(
-    DT::DTOutput(ns("lyrs"))
+    h2("Available Layers"),
+    DT::DTOutput(ns("lyrs")),
+    hr(),
+    h2("Selected Layers"),
+    DT::DTOutput(ns("select_lyrs"))
   )
 }
 
@@ -27,11 +31,17 @@ mod_zonation_param_server <- function(id, data){
     output$lyrs <- DT::renderDT({
       data
     })
-    reactive({
+
+    output$select_lyrs <- DT::renderDT({
+      select_df()
+    })
+
+    select_df <- reactive({
       message("Selected layers updated")
       data.frame(data[input$lyrs_rows_selected,])
     })
 
+    return(select_df)
   })
 }
 

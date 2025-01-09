@@ -13,7 +13,7 @@ zonation5 <- function(layers_df) {
       sep = "\n")
 
   for(i in 1:nrow(layers_df)) {
-    full_system_path <- paste(here(), layers_df[i, "full_path"], sep = "/")
+    full_system_path <- paste(here::here(), layers_df[i, "full_path"], sep = "/")
     next_row <- paste0(layers_df[i, "weights"], " ", full_system_path)
     cat(next_row,
         file = features_txt_path,

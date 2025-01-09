@@ -12,14 +12,10 @@ app_server <- function(input, output, session) {
     dplyr::rename(layer_name = sci_name)
   environmental_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0")
   # Combine Species and Environmental df for now
-  layers_df <- bind_rows(species_df, environmental_df)
+  layers_df <- dplyr::bind_rows(species_df, environmental_df)
 
   # Zonation5 layer selection module ----
   zonation5_input_df <- mod_zonation_param_server("zonation_param", layers_df)
-  # TODO: move output$test_table to mod_zonation_param_server
-  output$test_table <- DT::renderDT(
-    zonation5_input_df()
-  )
 
   # Trigger Zonation5 run ----
   main_raster <- reactiveVal(terra::rast("inst/app/zonation/zonation_output/rankmap.tif"))
