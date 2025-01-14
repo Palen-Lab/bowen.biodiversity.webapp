@@ -22,6 +22,7 @@ usethis::use_package("bslib")
 usethis::use_package("stringr")
 usethis::use_package("DT")
 usethis::use_package("here")
+usethis::use_package("dplyr")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
@@ -53,9 +54,9 @@ usethis::use_test("app")
 # Documentation
 
 ## Vignette ----
-usethis::use_vignette("bowen_biodiversity_webapp.Rmd")
 usethis::use_vignette("species_table.Rmd")
 usethis::use_vignette("environmental_table.Rmd")
+usethis::use_vignette("overlap_maps.Rmd")
 devtools::build_vignettes()
 
 ## Code Coverage----

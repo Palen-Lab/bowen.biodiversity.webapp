@@ -13,11 +13,14 @@ BugReports:
 Imports: 
     bslib,
     config,
+    dplyr,
     DT,
     golem,
     googlesheets4,
     here,
     leaflet,
+    magrittr,
+    pkgload,
     shiny,
     stringr
 Suggests: 
