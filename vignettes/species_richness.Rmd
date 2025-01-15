@@ -106,7 +106,7 @@ herptiles_richness_0.7_plot <- bowen_map(raster_layer = herptiles_richness_0.7,
                       legend_label = "Richness")
 ggplot2::ggsave(
   here("vignettes", "figures", paste0(Sys.Date(), "_herptiles_richness_0.7.png")),
-  birds_richness_0.7_plot,
+  herptiles_richness_0.7_plot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
@@ -181,7 +181,7 @@ herptiles_richness_0.5_plot <- bowen_map(raster_layer = herptiles_richness_0.5,
                       legend_label = "Richness")
 ggplot2::ggsave(
   here("vignettes", "figures", paste0(Sys.Date(), "_herptiles_richness_0.5.png")),
-  birds_richness_0.5_plot,
+  herptiles_richness_0.5_plot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
