@@ -7,6 +7,8 @@
 #' @param legend_label Text, legend label
 #'
 #' @returns ggplot
+#'
+#' @import ggplot2
 #' @export
 #'
 bowen_map <- function(raster_layer,
@@ -19,7 +21,7 @@ bowen_map <- function(raster_layer,
   bowen_shoreline <- here::here("data-raw/shoreline_dem_smoothed2/shoreline_dem_smoothed2.shp") %>% sf::st_read()
 
   # basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
-  basemap_for_plot <- basemap_terra(ext = raster_layer,
+  basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer,
                       map_service = "maptiler",
                       map_type = "backdrop",
                       map_token = "baL4WLstSFqSHP2fnYrE")
@@ -29,7 +31,7 @@ bowen_map <- function(raster_layer,
     ggplot2::theme_bw() +
     # tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
     tidyterra::geom_spatraster(data = raster_layer) +
-    geom_sf(data = bowen_shoreline, fill = NA) +
+    ggplot2::geom_sf(data = bowen_shoreline, fill = NA) +
     ggplot2::scale_fill_continuous(
       na.value = NA,
       type = "viridis",

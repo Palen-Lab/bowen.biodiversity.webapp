@@ -1,0 +1,97 @@
+---
+title: "individual_sdm"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{individual_sdm}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(here)
+library(terra)
+library(magrittr)
+library(ggtext)
+```
+
+```{r}
+sdm_plot <- function(sdm,
+                     sci_name,
+                     common_name) {
+  title <- common_name
+  subtitle <- paste0("Probability of occurrence of ", common_name, " (*", sci_name, "*)")
+  
+  sdm_plot <- bowen_map(raster_layer = sdm,
+                        title = title,
+                        subtitle = subtitle,
+                        caption = "2025 Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)",
+                        legend_label = "Probability of Occurrence")
+  
+  ggplot2::ggsave(
+    paste0("figures/", Sys.Date(), "_", gsub(" ", "_", sci_name), "_plot.png"),
+    sdm_plot,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+}
+
+
+
+# Pileated Woodpecker 
+# Dryocopus pileatus
+Dryocopus_pileatus_sdm <- here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island", "Bird_mask", "Dryocopus.pileatus_BowenIsland_100m.tif") %>%
+  rast()
+
+sdm_plot(Dryocopus_pileatus_sdm, 
+         "Dryocopus pileatus",
+         "Pileated Woodpecker")
+
+# Varied Thrush
+# Ixoreus naevius
+Ixoreus_naevius_sdm <- here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island", "Bird_mask", "Ixoreus.naevius_BowenIsland_100m.tif") %>%
+  rast()
+
+sdm_plot(Ixoreus_naevius_sdm,
+         "Ixoreus naevius",
+         "Varied Thrush")
+
+# Douglas Squirrel
+# Tamiasciurus douglasii
+# We don't actually have this SDM in general 
+# Tamiasciurus_douglasii_sdm <- here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island", "MammalSmall_mask", "") %>%
+
+# River Otter
+# Lontra canadensis
+# Don't have this either
+
+# Northern flying squirrel
+# Glaucomys sabrinus
+Glaucomys_sabrinus_sdm <- here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island", "MammalSmall_mask", "Glaucomys.sabrinus_BowenIsland_100m.tif") %>%
+  rast()
+sdm_plot(Glaucomys_sabrinus_sdm,
+         "Glaucomys sabrinus",
+         "Northern Flying Squirrel")
+
+# Red Legged Frog
+# Rana aurora 
+Rana_aurora_sdm <- here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island", "Amphibian_mask", "Rana.aurora_BowenIsland_100m.tif") %>%
+  rast()
+sdm_plot(Rana_aurora_sdm,
+         "Rana aurora",
+         "Red-Legged Frog")
+
+# Western Red Backed Salamander
+# Plethodon vehiculum 
+# Plethodon_vehiculum_sdm <- here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island", "Amphibian_mask", "") %>%
+# Don't have this either
+
+```
+

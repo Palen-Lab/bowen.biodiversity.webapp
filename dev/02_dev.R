@@ -57,6 +57,8 @@ usethis::use_test("app")
 usethis::use_vignette("species_table.Rmd")
 usethis::use_vignette("environmental_table.Rmd")
 usethis::use_vignette("overlap_maps.Rmd")
+usethis::use_vignette("individual_sdm.Rmd")
+usethis::use_vignette("species_richness.Rmd")
 devtools::build_vignettes()
 
 ## Code Coverage----

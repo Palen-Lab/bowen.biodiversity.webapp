@@ -2,8 +2,11 @@
 
 export("%>%")
 export(bowen_map)
+export(raster_prep_bowen)
 export(run_app)
+export(sdm_to_species_richness)
 export(zonation5)
+import(ggplot2)
 import(shiny)
 importFrom(golem,activate_js)
 importFrom(golem,add_resource_path)
