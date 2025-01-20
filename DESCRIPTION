@@ -11,16 +11,20 @@ URL: https://github.com/Palen-Lab/bowen.biodiversity.webapp.git
 BugReports: 
     https://github.com/Palen-Lab/bowen.biodiversity.webapp.git/issues
 Imports: 
+    basemaps,
     bslib,
     config,
     dplyr,
     DT,
+    ggplot2,
+    ggtext,
     golem,
     googlesheets4,
     here,
     leaflet,
     magrittr,
     pkgload,
+    sf,
     shiny,
     stringr
 Suggests: 

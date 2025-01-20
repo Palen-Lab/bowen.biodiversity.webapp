@@ -23,6 +23,10 @@ usethis::use_package("stringr")
 usethis::use_package("DT")
 usethis::use_package("here")
 usethis::use_package("dplyr")
+usethis::use_package("sf")
+usethis::use_package("ggtext")
+usethis::use_package("ggplot2")
+usethis::use_package("basemaps")
 
 ## Add modules ----
 ## Create a module infrastructure in R/

@@ -15,15 +15,15 @@
 
 ## Run checks ----
 ## Check the package before sending to prod
-devtools::check()
-rhub::check_for_cran()
+devtools::check(vignettes = FALSE)
+# rhub::check_for_cran()
 
 # Deploy
 
 ## Local, CRAN or Package Manager ----
 ## This will build a tar.gz that can be installed locally,
 ## sent to CRAN, or to a package manager
-devtools::build()
+devtools::build(vignettes = FALSE)
 
 ## Docker ----
 ## If you want to deploy via a generic Dockerfile
@@ -40,7 +40,7 @@ golem::add_shinyserver_file()
 ## Deploy to Posit Connect or ShinyApps.io ----
 
 ## Add/update manifest file (optional; for Git backed deployment on Posit )
-rsconnect::writeManifest()
+# rsconnect::writeManifest()
 
 ## In command line.
 rsconnect::deployApp(
