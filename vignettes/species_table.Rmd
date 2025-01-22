@@ -60,4 +60,30 @@ layers_df$IUCN_status <- ""
 layers_googlesheet <- read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing")
 ```
 
+# Create plots for each individual species in PNG for review
+```{r}
+for(n in 1:nrow(layers_df)) {
+  full_path <- layers_df[[n, "full_path"]]
+  taxon_group <- layers_df[[n, "taxon_group"]]
+  sci_name <- layers_df[[n, "sci_name"]]
+
+  layer <- here::here(full_path) %>%
+    terra::rast()
+
+  output_map <- bowen_map(raster_layer = layer,
+                          title = sci_name,
+                          subtitle = paste0("Species of ", taxon_group, ". Species Distribution Model."),
+                          legend_label = "Probability",
+                          caption = "Created by Jay Matsushiba (jmatsush@sfu.ca) for Palen Lab. January 21 2025.")
+  
+  ggplot2::ggsave(
+    paste0("figures/individual_species_maps/", taxon_group, "/", sci_name, ".png"),
+    output_map,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+}
+
+```
+
 
