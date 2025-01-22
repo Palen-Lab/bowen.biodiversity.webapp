@@ -15,14 +15,17 @@ app_server <- function(input, output, session) {
   layers_df <- dplyr::bind_rows(species_df, environmental_df)
 
   # Zonation5 layer selection module ----
-  zonation5_input_df <- mod_zonation_param_server("zonation_param", layers_df)
+  # zonation5_input_df <- mod_zonation_param_server("zonation_param", layers_df)
+  #
+  # # Trigger Zonation5 run ----
+  # main_raster <- reactiveVal(terra::rast("inst/app/zonation/zonation_output/rankmap.tif"))
+  # observeEvent(input$zonation_button, {
+  #   zonation5(zonation5_input_df())
+  #   main_raster(terra::rast("inst/app/zonation/zonation_output/rankmap.tif"))
+  # })
 
-  # Trigger Zonation5 run ----
-  main_raster <- reactiveVal(terra::rast("inst/app/zonation/zonation_output/rankmap.tif"))
-  observeEvent(input$zonation_button, {
-    zonation5(zonation5_input_df())
-    main_raster(terra::rast("inst/app/zonation/zonation_output/rankmap.tif"))
-  })
+  # TODO: change main_raster to select from list of existing zonation outputs, previously run
+  # TODO: host main_raster options on the Google Drive, access with googlesheets4
 
   # Main map module ----
   mod_main_map_server("main_map", main_raster)

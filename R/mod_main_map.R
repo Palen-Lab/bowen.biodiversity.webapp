@@ -17,8 +17,9 @@ mod_main_map_ui <- function(id) {
 #' main_map Server Functions
 #'
 #' @noRd
-mod_main_map_server <- function(id, main_raster){
+mod_main_map_server <- function(id, main_raster, zonation_val){
   stopifnot(is.reactive(main_raster))
+  stopifnot(zonational_val <= 1 & zonation_val >= 0)
   moduleServer(id, function(input, output, session){
     ns <- session$ns
     # TODO: add interactive legend, to reveal top % of zonation output
