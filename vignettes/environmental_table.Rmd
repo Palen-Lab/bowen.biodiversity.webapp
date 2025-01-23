@@ -21,10 +21,151 @@ library(here)
 library(stringr)
 library(dplyr)
 library(googlesheets4)
+library(googledrive)
+library(foreach)
+library(sf)
 ```
 
+# Environmental Vector Spatial Data Layers 
+Run this RMarkdown script to download environmental spatial data layers to correct location within repository. Files are stored on Google Drive. 
+
+```{r download}
+# Download data to location available to Shiny application. 
+download_data_path <- here::here("inst", "app", "data")
+
+#### Islands Trust Spatial Data Layers ####
+# https://islandstrust.bc.ca/mapping-resources/mapping/bowen/ 
+
+# Cadastral (Property) Shapefile from Islands Trust
+bowen_island_properties_zipfile_path <- here::here(download_data_path, "bowen_island_properties.zip")
+bowen_island_properties_extracted_path <- here::here(download_data_path, "bowen_island_properties")
+googledrive::drive_download(file = "https://drive.google.com/file/d/16ys45qQdcnyJb1hUoG7Mi7cxUgTctZDI/view?usp=drive_link",
+                            path = bowen_island_properties_zipfile_path,
+                            overwrite = T)
+unzip(zipfile = bowen_island_properties_zipfile_path,
+      exdir = bowen_island_properties_extracted_path)
+file.remove(bowen_island_properties_zipfile_path)
+
+# Protected Areas Shapefile from Islands Trust
+bowen_island_protectedareas_zipfile_path <- here::here(download_data_path, "bowen_island_protectedareas.zip")
+bowen_island_protectedareas_extracted_path <- here::here(download_data_path, "bowen_island_protectedareas")
+googledrive::drive_download(file = "https://drive.google.com/file/d/1DXpqHi7RdfM3hImS3qTzzWH1dwj-dmu8/view?usp=drive_link",
+                            path = bowen_island_protectedareas_zipfile_path,
+                            overwrite = T)
+unzip(zipfile = bowen_island_protectedareas_zipfile_path,
+      exdir = bowen_island_protectedareas_extracted_path)
+file.remove(bowen_island_protectedareas_zipfile_path)
+
+# Zoning Shapefile from Islands Trust
+bowen_island_zoning_zipfile_path <- here::here(download_data_path, "bowen_island_zoning.zip")
+bowen_island_zoning_extracted_path <- here::here(download_data_path, "bowen_island_zoning")
+googledrive::drive_download(file = "https://drive.google.com/file/d/1RFqBN38KRZ_VEA3733JYWSa_aF_P-YBh/view?usp=drive_link",
+                            path = bowen_island_zoning_zipfile_path,
+                            overwrite = T)
+unzip(zipfile = bowen_island_zoning_zipfile_path,
+      exdir = bowen_island_zoning_extracted_path)
+file.remove(bowen_island_zoning_zipfile_path)
+
+#### Bowen Island Spatial Data Layers from John Dowler ####
+bowen_island_covenants_path <- here::here(download_data_path, "bowen_island_covenants.gpkg")
+googledrive::drive_download(file = "https://drive.google.com/file/d/1VY9DG0uosIWDnHviGwb0t_FvLIEkqfO7/view?usp=drive_link",
+                            path = bowen_island_covenants_path,
+                            overwrite = T)
+
+#### Metro Vancouver Sensitive Ecosystems Inventory ####
+# https://arcg.is/TnfXL 
+mvsei_path <- here::here(download_data_path, "bowen_island_mvsei.gpkg")
+bowen_island_sei_path <- here::here("inst", "app", "data", "bowen_island_sei.gpkg")
+googledrive::drive_download(file = "https://drive.google.com/file/d/1lmH7UA0kBBBwnfaJDd9uIuVK0Aolwt_c/view?usp=drive_link",
+                            path = mvsei_path,
+                            overwrite = T)
+mvsei <- sf::st_read(mvsei_path)
+bowen_island_boundary <- sf::st_read(here::here("data-raw", "bowen_boundary")) %>%
+  sf::st_transform(st_crs(mvsei))
+bowen_island_sei <- sf::st_intersection(mvsei, bowen_island_boundary)
+st_write(bowen_island_sei, bowen_island_sei_path)
+file.remove(mvsei_path)
+```
+
+# Load layers that have been downloaded
 ```{r}
-# select only SDMs
+#### Load layers with terra
+# bowen_island_properties <- terra::vect(bowen_island_properties_extracted_path)
+# bowen_island_protectedareas <- terra::vect(bowen_island_protectedareas_extracted_path)
+# bowen_island_zoning <- terra::vect(bowen_island_zoning_extracted_path)
+# bowen_island_covnenants <- terra::vect(bowen_island_covenants_path)
+# bowen_island_mvsei <- terra::vect(bowen_island_mvsei_path)
+
+#### Load layers with sf
+bowen_island_properties <- sf::st_read(bowen_island_properties_extracted_path)
+bowen_island_protectedareas <- sf::st_read(bowen_island_protectedareas_extracted_path)
+bowen_island_zoning <- sf::st_read(bowen_island_zoning_extracted_path)
+bowen_island_covenants <- sf::st_read(bowen_island_covenants_path)
+bowen_island_sei <- sf::st_read(bowen_island_sei_path)
+```
+
+
+# Extract ecosystem types from MV SEI and turn into new raster layers
+```{r}
+#### Translate MV SEI ecosystem class codes to description using values from data docs ####
+mv_sei_SECl_codes <- data.frame(
+  code = unique(bowen_island_mvsei$SECl_1)
+)
+mv_sei_SECl_codes$description <- c(
+  "Young Forest (small)",
+  "Riparian",
+  "Lost - Young Forest (small)",
+  "Mature Forest",
+  "Young Forest",
+  "Lost - Riparian",
+  "Lost - Mature Forest",
+  "Lost - Young Forest",
+  "Lost - Old Field",
+  "Lost - Wetland",
+  "Freshwater",
+  "Old Field",
+  "Wetland",
+  "Estuarine",
+  "Intertidal",
+  "Old Forest",
+  "Herbaceous",
+  "Woodland",
+  "Sparsely Vegetated",
+  "Lost - Herbaceous",
+  "Non SE or ME",
+  "Lost - Estuarine",
+  "Alpine",
+  "Lost - Freshwater",
+  "Lost - Old Forest",
+  "Lost - Woodland",
+  "Lost - Intertidal",
+  "Lost - Sparsely Vegetated"
+)
+
+#### Decide which MV SEI classes to turn into habitat rasters to include into Zonation run ####
+include_classes <- c(
+  "Mature Forest",
+  "Old Forest",
+  "Woodland",
+  "Riparian",
+  "Wetland",
+  "Freshwater",
+  "Estuarine",
+  "Intertidal"
+)
+
+foreach(class = include_classes) %do% {
+  SECl <- mv_sei_SECl_codes[mv_sei_SECl_codes$description == class, "code"]
+  
+  
+}
+
+
+```
+
+
+```{r table}
+# select only rasters
 features <- list.files(here::here("inst", "app", "rasters", "2024_12_12_Environment_100m_Bowen_Island"),
                        recursive = T)
 layers_df <- data.frame(full_path = paste("inst", "app", "rasters", "2024_12_12_Environment_100m_Bowen_Island", features, sep = "/"))
