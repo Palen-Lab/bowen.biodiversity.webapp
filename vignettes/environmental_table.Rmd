@@ -39,114 +39,123 @@ download_data_path <- here::here("inst", "app", "data")
 # Cadastral (Property) Shapefile from Islands Trust
 bowen_island_properties_zipfile_path <- here::here(download_data_path, "bowen_island_properties.zip")
 bowen_island_properties_extracted_path <- here::here(download_data_path, "bowen_island_properties")
-googledrive::drive_download(file = "https://drive.google.com/file/d/16ys45qQdcnyJb1hUoG7Mi7cxUgTctZDI/view?usp=drive_link",
-                            path = bowen_island_properties_zipfile_path,
-                            overwrite = T)
-unzip(zipfile = bowen_island_properties_zipfile_path,
-      exdir = bowen_island_properties_extracted_path)
-file.remove(bowen_island_properties_zipfile_path)
+if(!dir.exists(bowen_island_properties_extracted_path)) {
+  googledrive::drive_download(file = "https://drive.google.com/file/d/16ys45qQdcnyJb1hUoG7Mi7cxUgTctZDI/view?usp=drive_link",
+                              path = bowen_island_properties_zipfile_path,
+                              overwrite = T)
+  unzip(zipfile = bowen_island_properties_zipfile_path,
+        exdir = bowen_island_properties_extracted_path)
+  file.remove(bowen_island_properties_zipfile_path)
+}
 
 # Protected Areas Shapefile from Islands Trust
 bowen_island_protectedareas_zipfile_path <- here::here(download_data_path, "bowen_island_protectedareas.zip")
 bowen_island_protectedareas_extracted_path <- here::here(download_data_path, "bowen_island_protectedareas")
-googledrive::drive_download(file = "https://drive.google.com/file/d/1DXpqHi7RdfM3hImS3qTzzWH1dwj-dmu8/view?usp=drive_link",
-                            path = bowen_island_protectedareas_zipfile_path,
-                            overwrite = T)
-unzip(zipfile = bowen_island_protectedareas_zipfile_path,
-      exdir = bowen_island_protectedareas_extracted_path)
-file.remove(bowen_island_protectedareas_zipfile_path)
+if(!dir.exists(bowen_island_protectedareas_extracted_path)) {
+  googledrive::drive_download(file = "https://drive.google.com/file/d/1DXpqHi7RdfM3hImS3qTzzWH1dwj-dmu8/view?usp=drive_link",
+                              path = bowen_island_protectedareas_zipfile_path,
+                              overwrite = T)
+  unzip(zipfile = bowen_island_protectedareas_zipfile_path,
+        exdir = bowen_island_protectedareas_extracted_path)
+  file.remove(bowen_island_protectedareas_zipfile_path)
+}
 
 # Zoning Shapefile from Islands Trust
 bowen_island_zoning_zipfile_path <- here::here(download_data_path, "bowen_island_zoning.zip")
 bowen_island_zoning_extracted_path <- here::here(download_data_path, "bowen_island_zoning")
-googledrive::drive_download(file = "https://drive.google.com/file/d/1RFqBN38KRZ_VEA3733JYWSa_aF_P-YBh/view?usp=drive_link",
-                            path = bowen_island_zoning_zipfile_path,
-                            overwrite = T)
-unzip(zipfile = bowen_island_zoning_zipfile_path,
-      exdir = bowen_island_zoning_extracted_path)
-file.remove(bowen_island_zoning_zipfile_path)
-
+if(!dir.exists(bowen_island_zoning_extracted_path)) {
+  googledrive::drive_download(file = "https://drive.google.com/file/d/1RFqBN38KRZ_VEA3733JYWSa_aF_P-YBh/view?usp=drive_link",
+                              path = bowen_island_zoning_zipfile_path,
+                              overwrite = T)
+  unzip(zipfile = bowen_island_zoning_zipfile_path,
+        exdir = bowen_island_zoning_extracted_path)
+  file.remove(bowen_island_zoning_zipfile_path)
+}
 #### Bowen Island Spatial Data Layers from John Dowler ####
 bowen_island_covenants_path <- here::here(download_data_path, "bowen_island_covenants.gpkg")
-googledrive::drive_download(file = "https://drive.google.com/file/d/1VY9DG0uosIWDnHviGwb0t_FvLIEkqfO7/view?usp=drive_link",
-                            path = bowen_island_covenants_path,
-                            overwrite = T)
-
+if(!file.exists(bowen_island_covenants_path)) {
+  googledrive::drive_download(file = "https://drive.google.com/file/d/1VY9DG0uosIWDnHviGwb0t_FvLIEkqfO7/view?usp=drive_link",
+                              path = bowen_island_covenants_path,
+                              overwrite = T)
+}
 #### Metro Vancouver Sensitive Ecosystems Inventory ####
 # https://arcg.is/TnfXL 
 mvsei_path <- here::here(download_data_path, "bowen_island_mvsei.gpkg")
 bowen_island_sei_path <- here::here("inst", "app", "data", "bowen_island_sei.gpkg")
-googledrive::drive_download(file = "https://drive.google.com/file/d/1lmH7UA0kBBBwnfaJDd9uIuVK0Aolwt_c/view?usp=drive_link",
-                            path = mvsei_path,
-                            overwrite = T)
-mvsei <- sf::st_read(mvsei_path)
-bowen_island_boundary <- sf::st_read(here::here("data-raw", "bowen_boundary")) %>%
-  sf::st_transform(st_crs(mvsei))
-bowen_island_sei <- sf::st_intersection(mvsei, bowen_island_boundary)
-st_write(bowen_island_sei, bowen_island_sei_path)
-file.remove(mvsei_path)
-
-#### Translate MV SEI ecosystem class codes to description using values from data docs ####
-mvsei_SECl_codes <- data.frame(
-  code = unique(mvsei$SECl_1)
-)
-mvsei_SECl_codes$description <- c(
-  "Young Forest (small)",
-  "Riparian",
-  "Lost - Young Forest (small)",
-  "Mature Forest",
-  "Young Forest",
-  "Lost - Riparian",
-  "Lost - Mature Forest",
-  "Lost - Young Forest",
-  "Lost - Old Field",
-  "Lost - Wetland",
-  "Freshwater",
-  "Old Field",
-  "Wetland",
-  "Estuarine",
-  "Intertidal",
-  "Old Forest",
-  "Herbaceous",
-  "Woodland",
-  "Sparsely Vegetated",
-  "Lost - Herbaceous",
-  "Non SE or ME",
-  "Lost - Estuarine",
-  "Alpine",
-  "Lost - Freshwater",
-  "Lost - Old Forest",
-  "Lost - Woodland",
-  "Lost - Intertidal",
-  "Lost - Sparsely Vegetated"
-)
-write.csv(mvsei_SECl_codes, 
-          here::here(download_data_path, 
-                     "mvsei_SECl_codes.csv"), 
-          row.names = F)
+if(!file.exists(bowen_island_sei_path)) {
+  googledrive::drive_download(file = "https://drive.google.com/file/d/1lmH7UA0kBBBwnfaJDd9uIuVK0Aolwt_c/view?usp=drive_link",
+                              path = mvsei_path,
+                              overwrite = T)
+  mvsei <- sf::st_read(mvsei_path)
+  bowen_island_boundary <- sf::st_read(here::here("data-raw", "bowen_boundary")) %>%
+    sf::st_transform(st_crs(mvsei))
+  bowen_island_sei <- sf::st_intersection(mvsei, bowen_island_boundary)
+  st_write(bowen_island_sei, bowen_island_sei_path)
+  file.remove(mvsei_path)
+  
+  #### Translate MV SEI ecosystem class codes to description using values from data docs ####
+  mvsei_SECl_codes <- data.frame(
+    code = unique(mvsei$SECl_1)
+  )
+  mvsei_SECl_codes$description <- c(
+    "Young Forest (small)",
+    "Riparian",
+    "Lost - Young Forest (small)",
+    "Mature Forest",
+    "Young Forest",
+    "Lost - Riparian",
+    "Lost - Mature Forest",
+    "Lost - Young Forest",
+    "Lost - Old Field",
+    "Lost - Wetland",
+    "Freshwater",
+    "Old Field",
+    "Wetland",
+    "Estuarine",
+    "Intertidal",
+    "Old Forest",
+    "Herbaceous",
+    "Woodland",
+    "Sparsely Vegetated",
+    "Lost - Herbaceous",
+    "Non SE or ME",
+    "Lost - Estuarine",
+    "Alpine",
+    "Lost - Freshwater",
+    "Lost - Old Forest",
+    "Lost - Woodland",
+    "Lost - Intertidal",
+    "Lost - Sparsely Vegetated"
+  )
+  write.csv(mvsei_SECl_codes, 
+            here::here(download_data_path, 
+                       "mvsei_SECl_codes.csv"), 
+            row.names = F)
+}
 
 #### Existing Disturbance ####
 # TODO: replace with Google Drive Download
 disturbed_download_path <- "/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/human_footprint_30m_v2.tif"
 bc_disturbed_path <- here::here(download_data_path, "bc_human_footprint_30m.tif")
 bowen_island_undisturbed_path <- here::here(download_data_path, "bowen_island_env_rasters", "bowen_island_normal_inverse_human_footprint.tif")
-file.copy(disturbed_download_path, bc_disturbed_path)
-# Load raster
-disturbed <- terra::rast(bc_disturbed_path)
-# Resample raster to one of SDMs clipped to Bowen Island
-ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
-disturbed_resamp <- terra::resample(disturbed, ex_sdm)
-# Normalize from 0 to 1
-disturbed_normal <- disturbed_resamp %>% normalize()
-# Invert so that high values are low disturbance and vice versa
-undisturbed <- disturbed_normal %>% invert()
-# Write Bowen Island inverse and normalized human footprint raster
-terra::writeRaster(undisturbed, 
-                   bowen_island_undisturbed_path, 
-                   overwrite=TRUE)
-# Clean up enormous human footprint file
-file.remove(bc_disturbed_path)
-
+if(!file.exists(bowen_island_undisturbed_path)) {
+  file.copy(disturbed_download_path, bc_disturbed_path)
+  # Load raster
+  disturbed <- terra::rast(bc_disturbed_path)
+  # Resample raster to one of SDMs clipped to Bowen Island
+  ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+  disturbed_resamp <- terra::resample(disturbed, ex_sdm)
+  # Normalize from 0 to 1
+  disturbed_normal <- disturbed_resamp %>% normalize()
+  # Invert so that high values are low disturbance and vice versa
+  undisturbed <- disturbed_normal %>% invert()
+  # Write Bowen Island inverse and normalized human footprint raster
+  terra::writeRaster(undisturbed, 
+                     bowen_island_undisturbed_path, 
+                     overwrite=TRUE)
+  # Clean up enormous human footprint file
+  file.remove(bc_disturbed_path)
+}
 ```
 
 # Load layers that have been downloaded
@@ -203,6 +212,9 @@ ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Isl
 
 #### OGMA (Old Growth Management Areas) ####
 # TODO: add to bowen_island_env_rasters
+# Extract from protectedareas
+
+
 ogma_path <- "/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BCGW_7113060B_1734046393868_8492/RMP_OGMA_LEGAL_CURRENT_SVW.gpkg"
 ogma <- terra::vect(ogma_path)
 ogma_rast <- terra::rasterize(ogma,
