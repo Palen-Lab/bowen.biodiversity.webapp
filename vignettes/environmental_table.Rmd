@@ -26,7 +26,7 @@ library(foreach)
 library(sf)
 ```
 
-# Environmental Vector Spatial Data Layers 
+# Environmental Spatial Data Layers 
 Run this RMarkdown script to download environmental spatial data layers to correct location within repository. Files are stored on Google Drive. 
 
 ```{r download}
@@ -85,33 +85,12 @@ bowen_island_boundary <- sf::st_read(here::here("data-raw", "bowen_boundary")) %
 bowen_island_sei <- sf::st_intersection(mvsei, bowen_island_boundary)
 st_write(bowen_island_sei, bowen_island_sei_path)
 file.remove(mvsei_path)
-```
 
-# Load layers that have been downloaded
-```{r}
-#### Load layers with terra
-# bowen_island_properties <- terra::vect(bowen_island_properties_extracted_path)
-# bowen_island_protectedareas <- terra::vect(bowen_island_protectedareas_extracted_path)
-# bowen_island_zoning <- terra::vect(bowen_island_zoning_extracted_path)
-# bowen_island_covnenants <- terra::vect(bowen_island_covenants_path)
-# bowen_island_mvsei <- terra::vect(bowen_island_mvsei_path)
-
-#### Load layers with sf
-bowen_island_properties <- sf::st_read(bowen_island_properties_extracted_path)
-bowen_island_protectedareas <- sf::st_read(bowen_island_protectedareas_extracted_path)
-bowen_island_zoning <- sf::st_read(bowen_island_zoning_extracted_path)
-bowen_island_covenants <- sf::st_read(bowen_island_covenants_path)
-bowen_island_sei <- sf::st_read(bowen_island_sei_path)
-```
-
-
-# Extract ecosystem types from MV SEI and turn into new raster layers
-```{r}
 #### Translate MV SEI ecosystem class codes to description using values from data docs ####
-mv_sei_SECl_codes <- data.frame(
-  code = unique(bowen_island_mvsei$SECl_1)
+mvsei_SECl_codes <- data.frame(
+  code = unique(mvsei$SECl_1)
 )
-mv_sei_SECl_codes$description <- c(
+mvsei_SECl_codes$description <- c(
   "Young Forest (small)",
   "Riparian",
   "Lost - Young Forest (small)",
@@ -141,6 +120,56 @@ mv_sei_SECl_codes$description <- c(
   "Lost - Intertidal",
   "Lost - Sparsely Vegetated"
 )
+write.csv(mvsei_SECl_codes, 
+          here::here(download_data_path, 
+                     "mvsei_SECl_codes.csv"), 
+          row.names = F)
+
+#### Existing Disturbance ####
+# TODO: replace with Google Drive Download
+disturbed_download_path <- "/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/human_footprint_30m_v2.tif"
+bc_disturbed_path <- here::here(download_data_path, "bc_human_footprint_30m.tif")
+bowen_island_undisturbed_path <- here::here(download_data_path, "bowen_island_env_rasters", "bowen_island_normal_inverse_human_footprint.tif")
+file.copy(disturbed_download_path, bc_disturbed_path)
+# Load raster
+disturbed <- terra::rast(bc_disturbed_path)
+# Resample raster to one of SDMs clipped to Bowen Island
+ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+disturbed_resamp <- terra::resample(disturbed, ex_sdm)
+# Normalize from 0 to 1
+disturbed_normal <- disturbed_resamp %>% normalize()
+# Invert so that high values are low disturbance and vice versa
+undisturbed <- disturbed_normal %>% invert()
+# Write Bowen Island inverse and normalized human footprint raster
+terra::writeRaster(undisturbed, 
+                   bowen_island_undisturbed_path, 
+                   overwrite=TRUE)
+# Clean up enormous human footprint file
+file.remove(bc_disturbed_path)
+
+```
+
+# Load layers that have been downloaded
+```{r}
+#### Load layers with terra
+# bowen_island_properties <- terra::vect(bowen_island_properties_extracted_path)
+# bowen_island_protectedareas <- terra::vect(bowen_island_protectedareas_extracted_path)
+# bowen_island_zoning <- terra::vect(bowen_island_zoning_extracted_path)
+# bowen_island_covnenants <- terra::vect(bowen_island_covenants_path)
+# bowen_island_mvsei <- terra::vect(bowen_island_mvsei_path)
+
+#### Load layers with sf
+bowen_island_properties <- sf::st_read(bowen_island_properties_extracted_path)
+bowen_island_protectedareas <- sf::st_read(bowen_island_protectedareas_extracted_path)
+bowen_island_zoning <- sf::st_read(bowen_island_zoning_extracted_path)
+bowen_island_covenants <- sf::st_read(bowen_island_covenants_path)
+bowen_island_sei <- sf::st_read(bowen_island_sei_path)
+```
+
+
+# Extract ecosystem types from MV SEI and turn into new raster layers
+```{r}
+mvsei_SECl_codes <- read.csv(here::here("inst", "app", "data", "mvsei_SECl_codes.csv"))
 
 #### Decide which MV SEI classes to turn into habitat rasters to include into Zonation run ####
 include_classes <- c(
@@ -155,13 +184,33 @@ include_classes <- c(
 )
 
 foreach(class = include_classes) %do% {
-  SECl <- mv_sei_SECl_codes[mv_sei_SECl_codes$description == class, "code"]
-  
-  
+  # Select SEI by class code 
+  SECl <- mvsei_SECl_codes[mvsei_SECl_codes$description == class, "code"]
+  select_sei <- bowen_island_sei[bowen_island_sei$SECl_1 == SECl,]
+  # Turn selected SEI into raster
+  sei_rast <- bowen_sf_to_rast(select_sei)
+  # Save raster for Zonation runs later
+  rast_path <- here::here("inst", "app", "data", "bowen_island_env_rasters", paste0(class, "_raster.tiff"))
+  terra::writeRaster(sei_rast,
+                     filename = rast_path,
+                     overwrite = T)
 }
+```
 
+# Other environmental layers / features
+```{r}
+ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+
+#### OGMA (Old Growth Management Areas) ####
+# TODO: add to bowen_island_env_rasters
+ogma_path <- "/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BCGW_7113060B_1734046393868_8492/RMP_OGMA_LEGAL_CURRENT_SVW.gpkg"
+ogma <- terra::vect(ogma_path)
+ogma_rast <- terra::rasterize(ogma,
+                              ex_sdm) 
+writeRaster(ogma_rast, "ProcessedData/2024_12_12_Environment_100m_Bowen_Island/2024_12_12_OGMA.tif", overwrite = T)
 
 ```
+
 
 
 ```{r table}

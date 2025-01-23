@@ -29,7 +29,7 @@ bowen_map <- function(raster_layer,
 
   output_plot <- ggplot2::ggplot() +
     ggplot2::theme_bw() +
-    # tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
+    tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
     tidyterra::geom_spatraster(data = raster_layer) +
     ggplot2::geom_sf(data = bowen_shoreline, fill = NA) +
     ggplot2::scale_fill_continuous(
@@ -51,10 +51,6 @@ bowen_map <- function(raster_layer,
     ggplot2::geom_sf(data = bowen_roads,
                      aes(color = "Roads")
     ) +
-    # ggplot2::geom_sf(data = ebird_obs_pts,
-    #                  size = 0.5,
-    #                  aes(color = "eBird Observations")
-    # ) +
     scale_color_manual(
       values = c("#5c5c5c", "darkgrey", "lightgrey"),
       guide = ggplot2::guide_legend(title = NULL,

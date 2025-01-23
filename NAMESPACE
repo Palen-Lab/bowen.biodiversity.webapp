@@ -2,6 +2,7 @@
 
 export("%>%")
 export(bowen_map)
+export(bowen_sf_to_rast)
 export(raster_prep_bowen)
 export(run_app)
 export(sdm_to_species_richness)
