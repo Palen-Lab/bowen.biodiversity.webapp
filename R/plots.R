@@ -67,7 +67,7 @@ bowen_map <- function(raster_layer,
       caption = caption
     ) +
     ggplot2::theme(
-      plot.title = ggplot2::element_text(
+      plot.title = ggtext::element_textbox_simple(
         size = 25,
         margin = ggplot2::margin(0, 0, 10, 0)
       ),

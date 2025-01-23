@@ -22,6 +22,7 @@ library(here)
 library(tidyterra)
 library(ggplot2)
 library(basemaps)
+library(dplyr)
 ```
 
 ```{r}
@@ -32,6 +33,89 @@ environmental_df <- googlesheets4::read_sheet("https://docs.google.com/spreadshe
 # Combine Species and Environmental df for now
 layers_df <- dplyr::bind_rows(species_df, environmental_df)
 ```
+
+# Map Zonation run all environmental and species layers weighted equally (weight of 1.0)
+```{r}
+# Run Zonation5
+zonation5(layers_df)
+# Load output from Zonation
+zonation_input_path <- here("inst", "app", "zonation", "zonation_input")
+zonation_output_path <- here("inst", "app", "zonation", "zonation_output")
+zonation_rast <- terra::rast(here::here(zonation_output_path, "rankmap.tif"))
+# Plot
+bowen_plot <- bowen_map(raster_layer = zonation_rast,
+                        title = "Equal Weighted Prioritization of All Environmental and Species Layers",
+                        subtitle = "Zonation5 Prioritization Algorithm of Locations on Bowen Island.",
+                        caption = paste0("Map created on ", Sys.time(), " by Jay Matsushiba (jmatsush@sfu.ca) in the Palen Lab."),
+                        legend_label = "Priority")
+# Save plot
+output_path <- here::here("vignettes/figures/equal_weight_zonation")
+dir.create(output_path)
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_equal_weight_zonation.png"),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+# Save rankmap.tif, settings.z5, features.txt
+file.copy(here::here(zonation_output_path, "rankmap.tif"), 
+          here::here(output_path, "rankmap.tif"),
+          overwrite = T)
+file.copy(here::here(zonation_input_path, "settings.z5"), 
+          here::here(output_path, "settings.z5"),
+          overwrite = T)
+file.copy(here::here(zonation_input_path, "features.txt"), 
+          here::here(output_path, "features.txt"),
+          overwrite = T)
+```
+
+
+# Map Zonation where environmental layers weighed 50% and species layers weighed 50%
+```{r}
+n_env_layers <- layers_df %>%
+  filter(is.na(taxon_group)) %>%
+  nrow()
+n_spec_layers <- layers_df %>%
+  filter(!is.na(taxon_group)) %>%
+  nrow()
+split_layers_df <- layers_df %>%
+  mutate(
+    weights = case_when(
+      is.na(taxon_group) ~ 1/n_env_layers,
+      !is.na(taxon_group) ~ 1/n_spec_layers
+    )
+  )
+# Run Zonation5
+zonation5(split_layers_df)
+# Load output from Zonation
+zonation_input_path <- here("inst", "app", "zonation", "zonation_input")
+zonation_output_path <- here("inst", "app", "zonation", "zonation_output")
+zonation_rast <- terra::rast(here::here(zonation_output_path, "rankmap.tif"))
+# Plot
+bowen_plot <- bowen_map(raster_layer = zonation_rast,
+                        title = "Split Weighted Prioritization of All Environmental and Species Layers",
+                        subtitle = "Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers combined weighted 50%, with species layers combined weighted 50%",
+                        caption = paste0("Map created on ", Sys.time(), " by Jay Matsushiba (jmatsush@sfu.ca) in the Palen Lab."),
+                        legend_label = "Priority")
+# Save plot
+output_path <- here::here("vignettes/figures/split_weight_zonation")
+dir.create(output_path)
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_split_weight_zonation.png"),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+# Save rankmap.tif, settings.z5, features.txt
+file.copy(here::here(zonation_output_path, "rankmap.tif"), 
+          here::here(output_path, "rankmap.tif"))
+file.copy(here::here(zonation_input_path, "settings.z5"), 
+          here::here(output_path, "settings.z5"))
+file.copy(here::here(zonation_input_path, "features.txt"), 
+          here::here(output_path, "features.txt"))
+```
+
+
 
 # Creating Raster Layers for Overlap Maps
 

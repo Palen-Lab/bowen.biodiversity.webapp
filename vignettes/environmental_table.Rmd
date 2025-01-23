@@ -228,24 +228,24 @@ if(!file.exists(bowen_island_ogma_path)) {
 }
 ```
 
-
-
+# Create environmental layers table
 ```{r table}
-# select only rasters
-features <- list.files(here::here("inst", "app", "rasters", "2024_12_12_Environment_100m_Bowen_Island"),
-                       recursive = T)
-layers_df <- data.frame(full_path = paste("inst", "app", "rasters", "2024_12_12_Environment_100m_Bowen_Island", features, sep = "/"))
-
-layers_df$filename <- basename(layers_df$full_path)
-layers_df$weights <- 1.0
-layers_df$layer_name <- ""
+# select only environmental rasters
+bowen_island_env_rasters_dir <- "inst/app/data/bowen_island_env_rasters"
+# relative paths within project
+rasters_paths <- list.files(here::here(bowen_island_env_rasters_dir),
+                            recursive = T)
+layers_df <- data.frame(full_path = paste(bowen_island_env_rasters_dir, rasters_paths, sep = "/"),
+                        filename = rasters_paths,
+                        weights = 1.0,
+                        layer_name = "")
 
 # This sheet was uploaded to Google Sheets
 # WARNING: DO NOT RUN OR WILL OVERWRITE MANUAL INPUT TO GOOGLE SHEETS
 # write_sheet(layers_df,
 #             "https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0",
 #             "environmental")
-# write.csv(layers_df, "environmental_df.csv")
+# write.csv(layers_df, here::here("inst/app/data/bowen_island_env_rasters.csv"))
 ```
 
 # Read in from Google Sheets 
