@@ -200,9 +200,11 @@ foreach(class = include_classes) %do% {
   sei_rast <- bowen_sf_to_rast(select_sei)
   # Save raster for Zonation runs later
   rast_path <- here::here("inst", "app", "data", "bowen_island_env_rasters", paste0(class, "_raster.tiff"))
-  terra::writeRaster(sei_rast,
+  if(!file.exists(rast_path)) {
+      terra::writeRaster(sei_rast,
                      filename = rast_path,
                      overwrite = T)
+  }
 }
 ```
 
@@ -210,17 +212,20 @@ foreach(class = include_classes) %do% {
 ```{r}
 ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
 
+bowen_island_ogma_path <- here::here(download_data_path, "bowen_island_env_rasters", "bowen_island_ogma.tif")
 #### OGMA (Old Growth Management Areas) ####
-# TODO: add to bowen_island_env_rasters
 # Extract from protectedareas
-
-
-ogma_path <- "/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BCGW_7113060B_1734046393868_8492/RMP_OGMA_LEGAL_CURRENT_SVW.gpkg"
-ogma <- terra::vect(ogma_path)
-ogma_rast <- terra::rasterize(ogma,
-                              ex_sdm) 
-writeRaster(ogma_rast, "ProcessedData/2024_12_12_Environment_100m_Bowen_Island/2024_12_12_OGMA.tif", overwrite = T)
-
+if(!file.exists(bowen_island_ogma_path)) {
+  bowen_island_ogma <- bowen_island_protectedareas %>%
+    filter(NAME == "Old Growth Management Area") %>%
+    terra::vect() %>%
+    terra::project(ex_sdm)
+  bowen_island_ogma_rast <- terra::rasterize(bowen_island_ogma,
+                                             ex_sdm) 
+  terra::writeRaster(bowen_island_ogma_rast, 
+                     bowen_island_ogma_path, 
+                     overwrite=T)
+}
 ```
 
 
