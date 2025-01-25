@@ -97,6 +97,8 @@ bowen_map <- function(raster_layer,
         fill = c("grey40", "white"),
         line_col = "grey20"
       )
-    )
+    ) +
+    ggnewscale::new_scale_fill() +
+    ggnewscale::new_scale_colour()
 
 }

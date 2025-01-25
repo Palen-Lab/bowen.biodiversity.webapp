@@ -117,12 +117,11 @@ file.copy(here::here(zonation_input_path, "features.txt"),
 
 
 
-# Creating Raster Layers for Overlap Maps
-
+# Equal Weight Zonation Overlap with Human Footprint Map
 ```{r}
-zonation5(layers_df)
-filepath <- here("inst", "app", "zonation", "zonation_output", "rankmap.tif")
+filepath <- here::here("vignettes/figures/equal_weight_zonation/rankmap.tif")
 zonation_rast <- terra::rast(filepath)
+dir.create(here::here("vignettes/figures/human_footprint"))
 
 top_20_value <- zonation_rast %>%
   values() %>%
@@ -135,17 +134,15 @@ m <- matrix(c(
 zonation_rast_0.2 <- zonation_rast %>%
   classify(m) 
 
-human_footprint_filepath <- environmental_df[environmental_df$layer_name == "Human Footprint", "full_path"] %>% unlist()
+human_footprint_filepath <- here::here("inst/app/data/bowen_island_env_rasters/bowen_island_normal_inverse_human_footprint.tif")
 human_footprint <- terra::rast(here(human_footprint_filepath)) %>%
   terra::project(zonation_rast_0.2) 
 # Reverse so that high value (closer to 1) of human footprint means higher disturbance
 human_footprint <- (1 - human_footprint)
 
 human_footprint_zonation_0.2 <- zonation_rast_0.2 * human_footprint
-```
 
-# Plotting Human Footprint
-```{r}
+# 
 human_footprint_plot <- bowen_map(human_footprint_zonation_0.2,
                                     title = "Biodiversity Hotspots and Human Footprint",
                                     subtitle = "Top 20% of biodiversity locations on Bowen Island, with scale corresponding to relative human disturbance. Higher values, towards 1.0, indicate higher levels of disturbance from human activity. Lower values, towards 0.0, show lower levels of disturbance.",
@@ -153,11 +150,61 @@ human_footprint_plot <- bowen_map(human_footprint_zonation_0.2,
                                     legend_label = "Human Disturbance")
 
 ggplot2::ggsave(
-  paste0("figures/", Sys.Date(), "_human_footprint_plot.png"),
+  paste0("figures/human_footprint/", Sys.Date(), "_human_footprint_plot.png"),
   human_footprint_plot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
+```
+
+# Equal Weight Zonation Overlap with Protected Areas (including covenants)
+```{r}
+zonation_path <- here::here("vignettes/figures/equal_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(zonation_path)
+output_path <- here::here("vignettes/figures/protected_areas_overlap")
+dir.create(output_path)
+
+protected_areas <- sf::st_read(here::here("inst/app/data/bowen_island_protectedareas")) %>%
+  sf::st_make_valid()
+covenants <- sf::st_read(here::here("inst/app/data/bowen_island_covenants.gpkg"))  %>%
+  sf::st_make_valid()
+
+all_protected_areas <- sf::st_union(protected_areas, covenants)
+
+protected_areas_colour <- "green"
+covenants_colour <- "red"
+
+zonation_plot <- bowen_map(zonation_rast,
+                                    title = "Biodiversity Hotspots and Protected Areas",
+                                    subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas, including covenants, are visualized as an overlay on top of the priotization map.",
+                                    caption = "Jay Matsushiba January 23 2025",
+                                    legend_label = "Priority") +
+  geom_sf(data = protected_areas, 
+          aes(fill = protected_areas_colour, 
+              color = protected_areas_colour), 
+          alpha = 0.3,
+          linewidth = 1) +
+  geom_sf(data = covenants, 
+          aes(fill = covenants_colour, 
+              colour = covenants_colour), 
+          alpha = 0.3,
+          linewidth = 1) +
+  scale_fill_identity(name = "",
+                      breaks = c(protected_areas_colour, covenants_colour),
+                      labels = c("Protected Areas", "Covenants"),
+                      guide = "legend") +
+  scale_colour_identity(name = "",
+                        breaks = c(protected_areas_colour, covenants_colour),
+                        labels = c("Protected Areas", "Covenants"),
+                        guide = "legend")
+
+ggplot2::ggsave(
+  paste0("figures/protected_areas_overlap/", Sys.Date(), "_protected_areas_overlap.png"),
+  zonation_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+
 ```
 
 # Private Land / Municipal / Crown 
