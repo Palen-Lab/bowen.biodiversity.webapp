@@ -171,8 +171,8 @@ covenants <- sf::st_read(here::here("inst/app/data/bowen_island_covenants.gpkg")
 
 all_protected_areas <- sf::st_union(protected_areas, covenants)
 
-protected_areas_colour <- "green"
-covenants_colour <- "red"
+protected_areas_colour <- "#EE964B"
+covenants_colour <- "#AD3800"
 
 zonation_plot <- bowen_map(zonation_rast,
                                     title = "Biodiversity Hotspots and Protected Areas",
@@ -182,12 +182,12 @@ zonation_plot <- bowen_map(zonation_rast,
   geom_sf(data = protected_areas, 
           aes(fill = protected_areas_colour, 
               color = protected_areas_colour), 
-          alpha = 0.3,
+          alpha = 0.2,
           linewidth = 1) +
   geom_sf(data = covenants, 
           aes(fill = covenants_colour, 
               colour = covenants_colour), 
-          alpha = 0.3,
+          alpha = 0.2,
           linewidth = 1) +
   scale_fill_identity(name = "",
                       breaks = c(protected_areas_colour, covenants_colour),
@@ -209,19 +209,8 @@ ggplot2::ggsave(
 
 # Private Land / Municipal / Crown 
 ```{r}
-crown <- st_read("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BOWEN GIS LAYERS BY JOHN /Crown-Land-JD.gpkg")
-# this layer has a bunch of other stuff outside of crown land, such as parks / protections
+private_land <- sf::st_read(here::here("inst/app/data/bowen_island_properties"))
 ```
-
-
-# Existing Protections
-Includes covenants layer
-```{r}
-covenants <- st_read("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BOWEN GIS LAYERS BY JOHN /BI-Covenant-Catalogue-Layer 1.3.2.gpkg")
-alr <- st_read("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BOWEN GIS LAYERS BY JOHN /Bowen-ALR-Lands-JD.gpkg")
-ogma <- st_read("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BOWEN GIS LAYERS BY JOHN /Bowen-OGMAs-JD.gpkg")
-```
-
 
 # Wetlands / Freshwater Lakes 
 ```{r}

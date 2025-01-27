@@ -31,10 +31,13 @@ bowen_map <- function(raster_layer,
     ggplot2::theme_bw() +
     tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
     tidyterra::geom_spatraster(data = raster_layer) +
-    ggplot2::geom_sf(data = bowen_shoreline, fill = NA) +
-    ggplot2::scale_fill_continuous(
+    ggplot2::geom_sf(data = bowen_shoreline,
+                     fill = NA,
+                     colour = "#444544",
+                     linewidth = 1) +
+    colorspace::scale_fill_continuous_sequential(
       na.value = NA,
-      type = "viridis",
+      palette = "ag_GrnYl",
       # limits = c(0,1),
       # breaks = c(0, 0.5, 1),
       guide = ggplot2::guide_colourbar(nbin = 100,
@@ -45,12 +48,14 @@ bowen_map <- function(raster_layer,
       ),
       name = legend_label
     ) +
-    ggplot2::geom_sf(data = bowen_trails,
-                     aes(color = "Trails")
-    ) +
-    ggplot2::geom_sf(data = bowen_roads,
-                     aes(color = "Roads")
-    ) +
+    # ggplot2::geom_sf(data = bowen_trails,
+    #                  linewidth = 0.2,
+    #                  aes(color = "Trails")
+    # ) +
+    # ggplot2::geom_sf(data = bowen_roads,
+    #                  linewidth = 0.2,
+    #                  aes(color = "Roads")
+    # ) +
     scale_color_manual(
       values = c("#5c5c5c", "darkgrey", "lightgrey"),
       guide = ggplot2::guide_legend(title = NULL,
