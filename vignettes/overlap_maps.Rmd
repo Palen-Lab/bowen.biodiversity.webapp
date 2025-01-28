@@ -142,12 +142,28 @@ human_footprint <- (1 - human_footprint)
 
 human_footprint_zonation_0.2 <- zonation_rast_0.2 * human_footprint
 
-# 
+# Create Plot
+bowen_trails <- here::here("data-raw/Trails/Trails.shp") %>% sf::st_read()
+trails_colour <- "brown"
+bowen_roads <- here::here("data-raw/Roads/Bowen_Road_Inventory.shp") %>% sf::st_read()
+roads_colour <- "darkgrey"
 human_footprint_plot <- bowen_map(human_footprint_zonation_0.2,
                                     title = "Biodiversity Hotspots and Human Footprint",
                                     subtitle = "Top 20% of biodiversity locations on Bowen Island, with scale corresponding to relative human disturbance. Higher values, towards 1.0, indicate higher levels of disturbance from human activity. Lower values, towards 0.0, show lower levels of disturbance.",
-                                    caption = "Jay Matsushiba January 13 2025",
-                                    legend_label = "Human Disturbance")
+                                    caption = "Jay Matsushiba January 27 2025",
+                                    legend_label = "Human Disturbance") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
 
 ggplot2::ggsave(
   paste0("figures/human_footprint/", Sys.Date(), "_human_footprint_plot.png"),
@@ -177,7 +193,7 @@ covenants_colour <- "#AD3800"
 zonation_plot <- bowen_map(zonation_rast,
                                     title = "Biodiversity Hotspots and Protected Areas",
                                     subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas, including covenants, are visualized as an overlay on top of the priotization map.",
-                                    caption = "Jay Matsushiba January 23 2025",
+                                    caption = "Jay Matsushiba January 27 2025",
                                     legend_label = "Priority") +
   geom_sf(data = protected_areas, 
           aes(fill = protected_areas_colour, 
@@ -209,7 +225,40 @@ ggplot2::ggsave(
 
 # Private Land / Municipal / Crown 
 ```{r}
+zonation_path <- here::here("vignettes/figures/equal_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(zonation_path)
+output_path <- here::here("vignettes/figures/private_land")
+dir.create(output_path)
+
 private_land <- sf::st_read(here::here("inst/app/data/bowen_island_properties"))
+
+private_land_colour <- "#EE964B"
+
+zonation_plot <- bowen_map(zonation_rast,
+                                    title = "Biodiversity Hotspots and Protected Areas",
+                                    subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Private lands are shown overlaid ontop of the priority gradient.",
+                                    caption = "Jay Matsushiba January 27 2025",
+                                    legend_label = "Priority") +
+  geom_sf(data = private_land, 
+          aes(fill = private_land_colour, 
+              color = private_land_colour), 
+          alpha = 0.3,
+          linewidth = 0.2) +
+  scale_fill_identity(name = "",
+                      breaks = c(private_land_colour),
+                      labels = c("Private Lands"),
+                      guide = "legend") +
+  scale_colour_identity(name = "",
+                        breaks = c(private_land_colour),
+                        labels = c("Private Lands"),
+                        guide = "legend")
+
+ggplot2::ggsave(
+  paste0("figures/private_land/", Sys.Date(), "_private_land_overlap.png"),
+  zonation_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
 ```
 
 # Wetlands / Freshwater Lakes 
@@ -217,3 +266,4 @@ private_land <- sf::st_read(here::here("inst/app/data/bowen_island_properties"))
 
 ```
 
+# Threat Category Zonation Runs
