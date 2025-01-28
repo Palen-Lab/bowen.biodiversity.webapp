@@ -27,6 +27,7 @@ usethis::use_package("sf")
 usethis::use_package("ggtext")
 usethis::use_package("ggplot2")
 usethis::use_package("basemaps")
+usethis::use_package("colorspace")
 
 ## Add modules ----
 ## Create a module infrastructure in R/
