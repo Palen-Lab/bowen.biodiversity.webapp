@@ -26,7 +26,7 @@ library(foreach)
 library(sf)
 ```
 
-# Environmental Spatial Data Layers 
+# Environmental Spatial Data Layers - Download and Load into R 
 Run this RMarkdown script to download environmental spatial data layers to correct location within repository. Files are stored on Google Drive. 
 
 ```{r download}
@@ -156,10 +156,8 @@ if(!file.exists(bowen_island_undisturbed_path)) {
   # Clean up enormous human footprint file
   file.remove(bc_disturbed_path)
 }
-```
 
-# Load layers that have been downloaded
-```{r}
+# Load layers that have been downloaded #
 #### Load layers with terra
 # bowen_island_properties <- terra::vect(bowen_island_properties_extracted_path)
 # bowen_island_protectedareas <- terra::vect(bowen_island_protectedareas_extracted_path)
@@ -174,35 +172,14 @@ bowen_island_zoning <- sf::st_read(bowen_island_zoning_extracted_path)
 bowen_island_covenants <- sf::st_read(bowen_island_covenants_path)
 bowen_island_sei <- sf::st_read(bowen_island_sei_path)
 ```
-
-
-# Extract ecosystem types from MV SEI and turn into new raster layers
+# MV SEI Cl and subcl codes
 ```{r}
 mvsei_SECl_codes <- read.csv(here::here("inst", "app", "data", "mvsei_SECl_codes.csv"))
-
-#### Decide which MV SEI classes to turn into habitat rasters to include into Zonation run ####
-# include_classes <- c(
-#   "Mature Forest",
-#   "Old Forest",
-#   "Woodland",
-#   "Riparian",
-#   "Wetland",
-#   "Freshwater",
-#   "Estuarine",
-#   "Intertidal",
-#   "Herbaceous"
-# )
-
-
-# Create a list of sf objects, each one to become a layer
-# Select SEI by SECl and SEsubcl 
-
 # SEI Cl and subcl categories 
 SE_cat <- bowen_island_sei[,c("SECl_1", "SEsubcl_1")] %>%
   st_drop_geometry() %>% 
   unique()
 rownames(SE_cat) <- paste0(SE_cat$SECl_1, "_", SE_cat$SEsubcl_1)
-
 # SEsubcl descriptions
 bsei_SEsubcl_codes <- SE_cat$SEsubcl_1 %>% 
   unique() %>%
@@ -228,7 +205,61 @@ bsei_SEsubcl_codes$description <- c(
  "bog: acidic, nutrient-poor wetlands that characteristically support peat-mosses and ericaceous shrubs such as Labrador tea and bog-rosemary. Being generally isolated from mineral rich groundwater or surface water, their primary source of water and nutrients is from rainfall.",
  "Non SE, ME or YS ecosystem type."
 )
+write.csv(bsei_SEsubcl_codes, 
+          here::here(download_data_path, "bowen_island_sei_subcl_codes.csv"))
+```
 
+
+# Extract ecosystem types from MV SEI and turn into new raster layers
+
+# Water
+```{r}
+# Create directory to save water rasters 
+directory <- here::here(download_data_path, "bowen_island_env_rasters/sei_water")
+if(!dir.exists(directory)) {
+  dir.create(directory)
+}
+
+sei_raster_by_class <- function(SECl, SEsubcl, output_path) {
+  selected_sei <- bowen_island_sei %>%
+    filter(SECl_1 == SECl | SECl_2 == SECl) %>%
+    filter(SEsubcl_1 == SEsubcl | SEsubcl_2 == SEsubcl)
+  raster_sei <- bowen_sf_to_rast(selected_sei)
+  output_filename <- paste0(SECl, "_", SEsubcl, ".tif")
+  writeRaster(raster_sei,
+              paste0(output_path, "/", output_filename),
+              overwrite=T
+  )
+}
+
+# RI ff (riparian fringe)
+sei_raster_by_class(SECl = "RI", SEsubcl = "ff", output_path = directory)
+# RI gu (riparian gully)
+sei_raster_by_class(SECl = "RI", SEsubcl = "gu", output_path = directory)
+# WN sw (wetland shallow water)
+sei_raster_by_class(SECl = "WN", SEsubcl = "sw", output_path = directory)
+# FW la (freshwater lake)
+sei_raster_by_class(SECl = "FW", SEsubcl = "la", output_path = directory)
+# FW pd (freshwater pond)
+sei_raster_by_class(SECl = "FW", SEsubcl = "pd", output_path = directory)
+# WN bo fn sp (wetland bog/fen/swamp)
+WN_bo_fn_sp <- bowen_island_sei %>%
+  filter(SECl_1 == "WN" | SECl_2 == "WN") %>%
+  filter(SEsubcl_1 == "bo" | SEsubcl_2 == "bo" |
+           SEsubcl_1 == "fn" | SEsubcl_2 == "fn" |
+           SEsubcl_1 == "sp" | SEsubcl_2 == "sp" 
+           )
+raster_WN_bo_fn_sp <- bowen_sf_to_rast(WN_bo_fn_sp)
+output_filename <- "WN_bo_fn_sp.tif"
+writeRaster(raster_WN_bo_fn_sp,
+            paste0(output_path, "/", output_filename),
+            overwrite=T
+)
+
+```
+
+
+```{r}
 layers_to_rast <- foreach(i = 1:nrow(SE_cat),
                           .final = function(i) {
                             setNames(i, rownames(SE_cat))
@@ -239,7 +270,7 @@ layers_to_rast <- foreach(i = 1:nrow(SE_cat),
   select_sei <- bowen_island_sei %>%
     filter(SECl_1 == SECl) %>%
     filter(SEsubcl_1 == SEsubcl)
-}
+                          }
 
 # Raster generation code
 foreach(layer_name = names(layers_to_rast)) %do% {
