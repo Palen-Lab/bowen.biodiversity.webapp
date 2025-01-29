@@ -365,6 +365,37 @@ if(!file.exists(bowen_island_ogma_path)) {
 }
 ```
 
+# Human Disturbance
+```{r}
+ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+
+disturbed_path <- "/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/human_footprint_30m_v2.tif"
+disturbed <- terra::rast(disturbed_path)
+disturbed_resamp <- terra::resample(disturbed, ex_sdm)
+
+# https://www.facetsjournal.com/doi/10.1139/facets-2021-0063#sec-2 
+# Intact is 0 to 1 
+# Low disturbance is 1 to 4
+# Medium disturbance is 4 to 10
+# High disturbance is 10+ 
+# Maximum theoretical value is 66
+m <- c(0, 1, 0,
+       1, 4, 1,
+       4, 10, 2,
+       10, 100, 3) %>%
+  matrix(ncol = 3, byrow = T)
+
+disturbed_classified <- disturbed_resamp %>%
+  classify(m, include.lowest = T)
+
+writeRaster(disturbed_classified, 
+            here::here("inst", "app", "data", "bowen_island_human_footprint.tif"), 
+            overwrite=TRUE)
+
+```
+
+
+
 # Create environmental layers table
 ```{r table}
 # select only environmental rasters
@@ -384,6 +415,8 @@ layers_df <- data.frame(full_path = paste(bowen_island_env_rasters_dir, rasters_
 #             "environmental")
 # write.csv(layers_df, here::here("inst/app/data/bowen_island_env_rasters.csv"))
 ```
+
+
 
 # Read in from Google Sheets 
 ```{r}

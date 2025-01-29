@@ -16,8 +16,6 @@ bowen_map <- function(raster_layer,
                       subtitle,
                       caption,
                       legend_label) {
-  bowen_trails <- here::here("data-raw/Trails/Trails.shp") %>% sf::st_read()
-  bowen_roads <- here::here("data-raw/Roads/Bowen_Road_Inventory.shp") %>% sf::st_read()
   bowen_shoreline <- here::here("data-raw/shoreline_dem_smoothed2/shoreline_dem_smoothed2.shp") %>% sf::st_read()
 
   # basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
@@ -26,11 +24,24 @@ bowen_map <- function(raster_layer,
                       map_type = "backdrop",
                       map_token = "baL4WLstSFqSHP2fnYrE")
 
+  no_val <- raster_layer %>%
+    values() %>%
+    unique() %>%
+    unlist() %>%
+    is.nan()
 
-  output_plot <- ggplot2::ggplot() +
-    ggplot2::theme_bw() +
-    tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
-    tidyterra::geom_spatraster(data = raster_layer) +
+  if(length(no_val) > 1) {
+    output_plot <- ggplot2::ggplot() +
+      ggplot2::theme_bw() +
+      tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
+      tidyterra::geom_spatraster(data = raster_layer)
+  } else if (no_val) {
+    output_plot <- ggplot2::ggplot() +
+      ggplot2::theme_bw() +
+      tidyterra::geom_spatraster_rgb(data = basemap_for_plot)
+  }
+
+  output_plot <- output_plot +
     ggplot2::geom_sf(data = bowen_shoreline,
                      fill = NA,
                      colour = "#444544",

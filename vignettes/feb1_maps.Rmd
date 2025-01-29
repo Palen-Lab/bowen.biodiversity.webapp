@@ -23,15 +23,165 @@ library(tidyterra)
 library(ggplot2)
 library(basemaps)
 library(dplyr)
-```
 
-```{r}
-# Zonation5 input layers logic ----
+# Availabe layers ----
 species_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing") %>%
   dplyr::rename(layer_name = sci_name)
 environmental_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0")
-# Combine Species and Environmental df for now
+# Combine Species and Environmental df 
 layers_df <- dplyr::bind_rows(species_df, environmental_df)
+```
+
+# 01 Basic Map of Bowen Island
+```{r basic}
+# Template raster
+ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+empty_rast <- terra::rast(
+  ext(ex_sdm),
+  resolution = res(ex_sdm),
+  crs = crs(ex_sdm)
+)
+
+# Bowen details
+bowen_trails <- here::here("data-raw/Trails/Trails.shp") %>% sf::st_read()
+trails_colour <- "brown"
+bowen_roads <- here::here("data-raw/Roads/Bowen_Road_Inventory.shp") %>% sf::st_read()
+roads_colour <- "darkgrey"
+
+# Plot
+bowen_plot <- bowen_map(raster_layer = empty_rast,
+                        title = "Bowen Island",
+                        subtitle = "Base Bowen Island map with hillshade, roads, and trails.",
+                        caption = paste0("Map created on ", Sys.time(), " by Jay Matsushiba (jmatsush@sfu.ca) in the Palen Lab."),
+                        legend_label = "Priority") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+  
+# Save plot
+output_path <- here::here("vignettes/figures/feb1/01_bowen_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_01_bowen_map.png"),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+# 02 Summed SDMs (All)
+```{r sum_sdm}
+# List SDMs filepaths
+SDM_filepaths <- species_df$full_path %>% here::here()
+# Prepare SDM stack
+SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
+# Create summed SDM
+SDM_sum <- SDM_stack %>% sum(na.rm = T)
+
+# Create plot
+bowen_plot <- bowen_map(raster_layer = SDM_sum,
+                        title = "Summed Species Distribution Models on Bowen Island",
+                        subtitle = "193 species included in this analysis. The values from each species distribution model (ranging from 0 to 1 as probability of occurrence in the cell) are summed to provide a relative biodiversity layer. Higher values correspond to cells with higher probability of species occurring, and vice versa.",
+                        caption = paste0("Map created on ", Sys.time(), " by Jay Matsushiba (jmatsush@sfu.ca) in the Palen Lab."),
+                        legend_label = "Relative Biodiversity") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+# Save plot
+output_path <- here::here("vignettes/figures/feb1/02_bowen_summed_sdm_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_02_bowen_summed_sdm_map.png"),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+# 03 Species Richness (All)
+```{r species_richness}
+# Create species richness SDM 
+presence_threshold <- 0.7
+total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
+                                          presence_threshold = presence_threshold)
+# Create species richness plots: 
+## Each species is marked present in a cell, if they are above a certain 
+## threshold of probability in the input SDMs. 
+subtitle <- paste0("Based on >", 
+                   presence_threshold,
+                   " probability of occurrence in Species Distribution Models.")
+caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+
+title <- "Total Species Richness"
+total_richness_0.7_plot <- bowen_map(raster_layer = total_richness_0.7,
+                                     title = title,
+                                     subtitle = subtitle,
+                                     caption = caption,
+                                     legend_label = "Richness") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+output_path <- here::here("vignettes/figures/feb1/03_bowen_species_richness_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_03_bowen_species_richness_map.png")),
+  total_richness_0.7_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+# 04 Habitat Layers (MVSEI)
+```{r water}
+
+
+# Plots
+title <- "Total Species Richness"
+subtitle <- paste0("Based on >", 
+                   presence_threshold,
+                   " probability of occurrence in Species Distribution Models.")
+caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+
+bowen_plot <- bowen_map(raster_layer = total_richness_0.7,
+                        title = title,
+                        subtitle = subtitle,
+                        caption = caption,
+                        legend_label = "Water") 
+# Save plots
+output_path <- here::here("vignettes/figures/feb1/04_bowen_water_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_","04_bowen_water_map", ".png")),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
 ```
 
 # Map Zonation run all environmental and species layers weighted equally (weight of 1.0)
