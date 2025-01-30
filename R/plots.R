@@ -5,7 +5,7 @@
 #' @param subtitle Text, subtitle for map
 #' @param caption Text, caption for map
 #' @param legend_label Text, legend label
-#'
+#' @param pal Palette, from colorspace package
 #' @returns ggplot
 #'
 #' @import ggplot2
@@ -15,7 +15,8 @@ bowen_map <- function(raster_layer,
                       title,
                       subtitle,
                       caption,
-                      legend_label) {
+                      legend_label,
+                      pal = "ag_GrnYl") {
   bowen_shoreline <- here::here("data-raw/shoreline_dem_smoothed2/shoreline_dem_smoothed2.shp") %>% sf::st_read()
 
   # basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
@@ -34,7 +35,20 @@ bowen_map <- function(raster_layer,
     output_plot <- ggplot2::ggplot() +
       ggplot2::theme_bw() +
       tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
-      tidyterra::geom_spatraster(data = raster_layer)
+      tidyterra::geom_spatraster(data = raster_layer) +
+      colorspace::scale_fill_continuous_sequential(
+        na.value = NA,
+        palette = pal,
+        # limits = c(0,1),
+        # breaks = c(0, 0.5, 1),
+        guide = ggplot2::guide_colourbar(nbin = 100,
+                                         draw.ulim = FALSE,
+                                         draw.llim = FALSE,
+                                         title.position = "top"
+                                         # title.hjust = 0.5
+        ),
+        name = legend_label
+      )
   } else if (no_val) {
     output_plot <- ggplot2::ggplot() +
       ggplot2::theme_bw() +
@@ -46,35 +60,6 @@ bowen_map <- function(raster_layer,
                      fill = NA,
                      colour = "#444544",
                      linewidth = 1) +
-    colorspace::scale_fill_continuous_sequential(
-      na.value = NA,
-      palette = "ag_GrnYl",
-      # limits = c(0,1),
-      # breaks = c(0, 0.5, 1),
-      guide = ggplot2::guide_colourbar(nbin = 100,
-                                       draw.ulim = FALSE,
-                                       draw.llim = FALSE,
-                                       title.position = "top"
-                                       # title.hjust = 0.5
-      ),
-      name = legend_label
-    ) +
-    # ggplot2::geom_sf(data = bowen_trails,
-    #                  linewidth = 0.2,
-    #                  aes(color = "Trails")
-    # ) +
-    # ggplot2::geom_sf(data = bowen_roads,
-    #                  linewidth = 0.2,
-    #                  aes(color = "Roads")
-    # ) +
-    scale_color_manual(
-      values = c("#5c5c5c", "darkgrey", "lightgrey"),
-      guide = ggplot2::guide_legend(title = NULL,
-                                    theme = ggplot2::theme(
-                                      legend.text = element_text(size = 10, margin = margin(r = 5, l = 5, b = 5)),
-                                      legend.text.position = "top"
-                                    ))
-    ) +
     ggplot2::scale_x_continuous(expand = c(0,0)) +
     ggplot2::scale_y_continuous(expand = c(0,0)) +
     ggplot2::labs(
@@ -84,8 +69,8 @@ bowen_map <- function(raster_layer,
     ) +
     ggplot2::theme(
       plot.title = ggtext::element_textbox_simple(
-        size = 25,
-        margin = ggplot2::margin(0, 0, 10, 0)
+        size = 20,
+        margin = ggplot2::margin(0, 0, 20, 0)
       ),
       plot.subtitle = ggtext::element_textbox_simple(
         lineheight = 1.5,
@@ -100,6 +85,7 @@ bowen_map <- function(raster_layer,
       legend.key.width = ggplot2::unit(1.5, "cm"),
       legend.direction = "horizontal",
       legend.box = "horizontal",
+      legend.box.margin = margin(1, 1, 1, 1),
       plot.margin = unit(c(1.3,0.3,0.8,0), "cm")
     ) +
     ggspatial::annotation_scale(

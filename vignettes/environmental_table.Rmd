@@ -208,14 +208,11 @@ bsei_SEsubcl_codes$description <- c(
 write.csv(bsei_SEsubcl_codes, 
           here::here(download_data_path, "bowen_island_sei_subcl_codes.csv"))
 ```
-
-
-# Extract ecosystem types from MV SEI and turn into new raster layers
-
-# Water
+# Extract ecosystem / habitat types from MV SEI and turn into new raster layers
+## Water
 ```{r}
 # Create directory to save water rasters 
-directory <- here::here(download_data_path, "bowen_island_env_rasters/sei_water")
+directory <- here::here(download_data_path, "bowen_island_env_rasters/water")
 if(!dir.exists(directory)) {
   dir.create(directory)
 }
@@ -252,12 +249,107 @@ WN_bo_fn_sp <- bowen_island_sei %>%
 raster_WN_bo_fn_sp <- bowen_sf_to_rast(WN_bo_fn_sp)
 output_filename <- "WN_bo_fn_sp.tif"
 writeRaster(raster_WN_bo_fn_sp,
-            paste0(output_path, "/", output_filename),
+            paste0(directory, "/", output_filename),
             overwrite=T
 )
-
 ```
 
+## Old Forests
+```{r}
+# Create directory to save Old Forests rasters 
+directory <- here::here(download_data_path, "bowen_island_env_rasters/old_forests")
+if(!dir.exists(directory)) {
+  dir.create(directory)
+}
+
+#### OGMA (Old Growth Management Areas) ####
+ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+bowen_island_ogma_path <- paste0(directory, "/", "bowen_island_ogma.tif")
+# Extract OGMA from protectedareas
+if(!file.exists(bowen_island_ogma_path)) {
+  bowen_island_ogma <- bowen_island_protectedareas %>%
+    filter(NAME == "Old Growth Management Area") %>%
+    terra::vect() %>%
+    terra::project(ex_sdm)
+  bowen_island_ogma_rast <- terra::rasterize(bowen_island_ogma,
+                                             ex_sdm) 
+  terra::writeRaster(bowen_island_ogma_rast, 
+                     bowen_island_ogma_path, 
+                     overwrite=T)
+}
+# OF (Old Forest)
+OF <- bowen_island_sei %>%
+  filter(SECl_1 == "OF" | SECl_2 == "OF") 
+raster_OF <- bowen_sf_to_rast(OF)
+output_filename <- "OF.tif"
+writeRaster(raster_OF,
+            paste0(directory, "/", output_filename),
+            overwrite=T
+)
+# MF (Mature Forest)
+MF <- bowen_island_sei %>%
+  filter(SECl_1 == "MF" | SECl_2 == "MF") 
+raster_MF <- bowen_sf_to_rast(MF)
+output_filename <- "MF.tif"
+writeRaster(raster_MF,
+            paste0(directory, "/", output_filename),
+            overwrite=T
+)
+```
+## Other Vegetation
+```{r}
+# Create directory to save other vegetation rasters 
+directory <- here::here(download_data_path, "bowen_island_env_rasters/other_vegetation")
+if(!dir.exists(directory)) {
+  dir.create(directory)
+}
+
+sei_raster_by_class <- function(SECl, SEsubcl, output_path) {
+  selected_sei <- bowen_island_sei %>%
+    filter(SECl_1 == SECl | SECl_2 == SECl) %>%
+    filter(SEsubcl_1 == SEsubcl | SEsubcl_2 == SEsubcl)
+  raster_sei <- bowen_sf_to_rast(selected_sei)
+  output_filename <- paste0(SECl, "_", SEsubcl, ".tif")
+  writeRaster(raster_sei,
+              paste0(output_path, "/", output_filename),
+              overwrite=T
+  )
+}
+
+# HB cs (herbaceous coastal)
+sei_raster_by_class(SECl = "HB", SEsubcl = "cs", output_path = directory)
+# HB vs (herbaceous vegetated shoreline)
+sei_raster_by_class(SECl = "HB", SEsubcl = "vs", output_path = directory)
+# SV ro (sparse vegetation rocky outcrop)
+sei_raster_by_class(SECl = "SV", SEsubcl = "ro", output_path = directory)
+# WD co (woodland conifers)
+sei_raster_by_class(SECl = "WD", SEsubcl = "co", output_path = directory)
+# WD mx (woodland mix)
+sei_raster_by_class(SECl = "WD", SEsubcl = "mx", output_path = directory)
+# YF co (young forest conifer)
+sei_raster_by_class(SECl = "YF", SEsubcl = "co", output_path = directory)
+# YF mx (young forest mix)
+sei_raster_by_class(SECl = "YF", SEsubcl = "mx", output_path = directory)
+```
+
+## Other Ecosystems (Intertidal)
+```{r}
+# Create directory to save Old Forests rasters 
+directory <- here::here(download_data_path, "bowen_island_env_rasters/other")
+if(!dir.exists(directory)) {
+  dir.create(directory)
+}
+
+# OF (Old Forest)
+IT <- bowen_island_sei %>%
+  filter(SECl_1 == "IT" | SECl_2 == "IT") 
+raster_IT <- bowen_sf_to_rast(IT)
+output_filename <- "IT.tif"
+writeRaster(raster_IT,
+            paste0(directory, "/", output_filename),
+            overwrite=T
+)
+```
 
 ```{r}
 layers_to_rast <- foreach(i = 1:nrow(SE_cat),
@@ -290,26 +382,20 @@ foreach(layer_name = names(layers_to_rast)) %do% {
 }
 
 # Create plots to review habitat rasters
-habitat_rasters <- list.files(here::here("inst", "app", "data", "bowen_island_sei_all_cl_subcl"))
+habitat_rasters <- list.files(here::here("inst", "app", "data", "bowen_island_env_rasters"), recursive = T, full.names = T)
 foreach(habitat_raster = habitat_rasters) %do% {
-  sei_cl_subcl <- habitat_raster %>%
-    gsub("_raster.tiff", "", .) %>%
-    stringr::str_split("_")
-  sei_cl_desc <- mvsei_SECl_codes[mvsei_SECl_codes$code == sei_cl_subcl[[1]][1], "description"]
-  sei_subcl_desc <- bsei_SEsubcl_codes[bsei_SEsubcl_codes$SEsubcl == sei_cl_subcl[[1]][2], "description"]
-  
-  habitat_rast <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "bowen_island_sei", habitat_raster))
+  habitat_rast <- terra::rast(habitat_raster)
   # Plot
   bowen_plot <- bowen_map(raster_layer = habitat_rast,
-                          title = paste0(sei_cl_desc, " Class: ", sei_cl_subcl[[1]][1], " Subclass: ", sei_cl_subcl[[1]][2]),
-                          subtitle = sei_subcl_desc,
+                          title = basename(habitat_raster),
+                          subtitle = "",
                           caption = paste0("Map created on ", Sys.time(), " by Jay Matsushiba (jmatsush@sfu.ca) in the Palen Lab."),
                           legend_label = "Presence")
   # Save plot
-  output_path <- here::here("vignettes/figures/individual_habitat_layers")
+  output_path <- here::here("vignettes/figures/2025-01-29_individual_habitat_layers")
   dir.create(output_path)
   ggplot2::ggsave(
-    file = paste0(output_path, "/", sei_cl_subcl[[1]][1], "_", sei_cl_subcl[[1]][2], ".png"),
+    file = paste0(output_path, "/", basename(habitat_raster), ".png"),
     bowen_plot,
     device = ragg::agg_png,
     width = 9, height = 12, units = "in", res = 300
@@ -378,22 +464,7 @@ foreach(layer_name = names(layers_to_rast)) %do% {
 
 # Other environmental layers / features
 ```{r}
-ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
 
-bowen_island_ogma_path <- here::here(download_data_path, "bowen_island_env_rasters", "bowen_island_ogma.tif")
-#### OGMA (Old Growth Management Areas) ####
-# Extract from protectedareas
-if(!file.exists(bowen_island_ogma_path)) {
-  bowen_island_ogma <- bowen_island_protectedareas %>%
-    filter(NAME == "Old Growth Management Area") %>%
-    terra::vect() %>%
-    terra::project(ex_sdm)
-  bowen_island_ogma_rast <- terra::rasterize(bowen_island_ogma,
-                                             ex_sdm) 
-  terra::writeRaster(bowen_island_ogma_rast, 
-                     bowen_island_ogma_path, 
-                     overwrite=T)
-}
 ```
 
 # Human Disturbance
@@ -403,6 +474,9 @@ ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Isl
 disturbed_path <- "/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/human_footprint_30m_v2.tif"
 disturbed <- terra::rast(disturbed_path)
 disturbed_resamp <- terra::resample(disturbed, ex_sdm)
+writeRaster(disturbed_resamp, 
+            here::here("inst", "app", "data", "bowen_island_human_footprint.tif"), 
+            overwrite=TRUE)
 
 # https://www.facetsjournal.com/doi/10.1139/facets-2021-0063#sec-2 
 # Intact is 0 to 1 
@@ -420,7 +494,7 @@ disturbed_classified <- disturbed_resamp %>%
   classify(m, include.lowest = T)
 
 writeRaster(disturbed_classified, 
-            here::here("inst", "app", "data", "bowen_island_human_footprint.tif"), 
+            here::here("inst", "app", "data", "bowen_island_human_footprint_classified.tif"), 
             overwrite=TRUE)
 
 ```
@@ -441,10 +515,10 @@ layers_df <- data.frame(full_path = paste(bowen_island_env_rasters_dir, rasters_
 
 # This sheet was uploaded to Google Sheets
 # WARNING: DO NOT RUN OR WILL OVERWRITE MANUAL INPUT TO GOOGLE SHEETS
-# write_sheet(layers_df,
-#             "https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0",
-#             "environmental")
-# write.csv(layers_df, here::here("inst/app/data/bowen_island_env_rasters.csv"))
+write_sheet(layers_df,
+            "https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0",
+            "environmental")
+write.csv(layers_df, here::here("inst/app/data/bowen_island_env_rasters.csv"))
 ```
 
 
