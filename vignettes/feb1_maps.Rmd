@@ -83,14 +83,6 @@ ggplot2::ggsave(
 # 2 Species
 ## 2.1 Bird Species Richness
 ```{r}
-# List SDMs filepaths
-SDM_filepaths <- species_df[species_df$taxon_group == "Bird" , "full_path"] %>% here::here()
-# Prepare SDM stack
-SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
-# Create species richness SDM 
-presence_threshold <- 0.7
-total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
-                                          presence_threshold = presence_threshold)
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
 ## threshold of probability in the input SDMs. 
@@ -639,7 +631,7 @@ ggplot2::ggsave(
 habitat_df <- environmental_df %>%
   filter(filename != "bowen_island_normal_inverse_human_footprint.tif") %>%
   filter(filename != "old_forests/bowen_island_ogma.tif")
-habitat_filepaths <- layers_df$full_path %>% here::here()
+habitat_filepaths <- habitat_df$full_path %>% here::here()
 # Prepare habitat stack
 habitat_stack <- lapply(habitat_filepaths, rast) %>% rast()
 # Sum habitat stack 
