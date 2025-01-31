@@ -784,7 +784,8 @@ output_path <- here::here("vignettes/figures/feb1/4_3_combined_protectedareas")
 dir.create(output_path)
 # Protected Areas polygons
 protected_areas <- sf::st_read(here::here("inst/app/data/bowen_island_protectedareas")) %>%
-  filter(NAME == "Old Growth Management Area") %>%
+# protected_areas <- sf::st_read("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BOWEN GIS LAYERS BY JOHN /Eco-Reserve-JD.gpkg") %>%
+  filter(NAME != "Old Growth Management Area") %>%
   sf::st_make_valid()
 protected_areas_colour <- "#EE964B"
 
@@ -824,7 +825,7 @@ output_path <- here::here("vignettes/figures/feb1/4_4_top_30_protectedareas")
 dir.create(output_path)
 # Protected Areas polygons
 protected_areas <- sf::st_read(here::here("inst/app/data/bowen_island_protectedareas")) %>%
-  filter(NAME == "Old Growth Management Area") %>%
+  filter(NAME != "Old Growth Management Area") %>%
   sf::st_make_valid()
 protected_areas_colour <- "#EE964B"
 
@@ -856,7 +857,7 @@ percent_in_protected_areas <- ncell_in_protected_areas / ncell_top
 # Plot
 zonation_plot <- bowen_map(zonation_rast_top,
                                     title = "Top 30% Biodiversity Value with Protected Areas",
-                                    subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on top of the Zonation priotization output. 20.2% of the top biodiversity value areas are found within protected areas.",
+                                    subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on top of the Zonation priotization output. 21.5% of the top biodiversity value areas are found within protected areas.",
                                     caption = caption,
                                     legend_label = "Priority") +
   geom_sf(data = protected_areas, 
@@ -1184,35 +1185,35 @@ ggplot2::ggsave(
 
 # Map Zonation run all environmental and species layers weighted equally (weight of 1.0)
 ```{r}
-# Run Zonation5
-zonation5(layers_df)
-# Load output from Zonation
-zonation_input_path <- here("inst", "app", "zonation", "zonation_input")
-zonation_output_path <- here("inst", "app", "zonation", "zonation_output")
-zonation_rast <- terra::rast(here::here(zonation_output_path, "rankmap.tif"))
-# Plot
-bowen_plot <- bowen_map(raster_layer = zonation_rast,
-                        title = "Equal Weighted Prioritization of All Environmental and Species Layers",
-                        subtitle = "Zonation5 Prioritization Algorithm of Locations on Bowen Island.",
-                        caption = paste0("Map created on ", Sys.time(), " by Jay Matsushiba (jmatsush@sfu.ca) in the Palen Lab."),
-                        legend_label = "Priority")
-# Save plot
-output_path <- here::here("vignettes/figures/equal_weight_zonation")
-dir.create(output_path)
-ggplot2::ggsave(
-  paste0(output_path, "/", Sys.Date(), "_equal_weight_zonation.png"),
-  bowen_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
-# Save rankmap.tif, settings.z5, features.txt
-file.copy(here::here(zonation_output_path, "rankmap.tif"), 
-          here::here(output_path, "rankmap.tif"),
-          overwrite = T)
-file.copy(here::here(zonation_input_path, "settings.z5"), 
-          here::here(output_path, "settings.z5"),
-          overwrite = T)
-file.copy(here::here(zonation_input_path, "features.txt"), 
-          here::here(output_path, "features.txt"),
-          overwrite = T)
+# # Run Zonation5
+# zonation5(layers_df)
+# # Load output from Zonation
+# zonation_input_path <- here("inst", "app", "zonation", "zonation_input")
+# zonation_output_path <- here("inst", "app", "zonation", "zonation_output")
+# zonation_rast <- terra::rast(here::here(zonation_output_path, "rankmap.tif"))
+# # Plot
+# bowen_plot <- bowen_map(raster_layer = zonation_rast,
+#                         title = "Equal Weighted Prioritization of All Environmental and Species Layers",
+#                         subtitle = "Zonation5 Prioritization Algorithm of Locations on Bowen Island.",
+#                         caption = paste0("Map created on ", Sys.time(), " by Jay Matsushiba (jmatsush@sfu.ca) in the Palen Lab."),
+#                         legend_label = "Priority")
+# # Save plot
+# output_path <- here::here("vignettes/figures/equal_weight_zonation")
+# dir.create(output_path)
+# ggplot2::ggsave(
+#   paste0(output_path, "/", Sys.Date(), "_equal_weight_zonation.png"),
+#   bowen_plot,
+#   device = ragg::agg_png,
+#   width = 9, height = 12, units = "in", res = 300
+# )
+# # Save rankmap.tif, settings.z5, features.txt
+# file.copy(here::here(zonation_output_path, "rankmap.tif"), 
+#           here::here(output_path, "rankmap.tif"),
+#           overwrite = T)
+# file.copy(here::here(zonation_input_path, "settings.z5"), 
+#           here::here(output_path, "settings.z5"),
+#           overwrite = T)
+# file.copy(here::here(zonation_input_path, "features.txt"), 
+#           here::here(output_path, "features.txt"),
+#           overwrite = T)
 ```
