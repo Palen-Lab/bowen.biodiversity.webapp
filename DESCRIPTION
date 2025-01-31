@@ -13,6 +13,7 @@ BugReports:
 Imports: 
     basemaps,
     bslib,
+    colorspace,
     config,
     dplyr,
     DT,

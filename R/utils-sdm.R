@@ -71,3 +71,49 @@ raster_prep_bowen <- function(input_rast,
                  na.policy = "omit") %>%
     terra::mask(bowen_shoreline)
 }
+
+#' Convert sf polygons to terra rast objects
+#'
+#' @param input_sf sf object to rasterize to Bowen Island extent
+#' @param varname varname to describe rast band
+#'
+#' @returns terra rast object
+#' @export
+bowen_sf_to_rast <- function(input_sf,
+                             varname = "Present") {
+  bowen_boundary <- sf::st_read(here::here("data-raw", "bowen_boundary", "Bowen_boundary.shp")) %>%
+    sf::st_transform(sf::st_crs(input_sf))
+  ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+
+  output_rast <- input_sf %>%
+    sf::st_intersection(bowen_boundary) %>% # Clip polygons to Bowen Island boundary, change to intersect?
+    terra::vect() %>% # Change to SpatVector for rasterization
+    terra::project(ex_sdm) %>% # Reproject to the SDM CRS
+    terra::rasterize(ex_sdm,
+                     touches = T,
+                     background = NA) # Rasterize to match SDM, set background values to NA
+  terra::varnames(output_rast) <- varname
+
+  output_rast
+}
+
+#' Normalize on 0 to 1 scale
+#'
+#' @param input_rast input raster
+#' @returns terra rast where the values are normalized
+normalize <- function(input_rast) {
+  mm <- terra::minmax(input_rast)
+  min <- mm[1]
+  max <- mm[2]
+  normalized <- (input_rast - min) / (max - min)
+}
+
+#' Invert raster, so max values are min and vice versa.
+#'
+#' @param input_rast input raster
+#' @returns terra rast that has been inverted
+invert <- function(input_rast) {
+  mm <- terra::minmax(input_rast)
+  max <- mm[2]
+  inverted <- max - input_rast
+}

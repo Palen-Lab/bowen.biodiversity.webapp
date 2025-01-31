@@ -1,0 +1,1219 @@
+---
+title: "overlap_maps"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{overlap_maps}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(terra)
+library(sf)
+library(here)
+library(tidyterra)
+library(ggplot2)
+library(basemaps)
+library(dplyr)
+
+# Availabe layers ----
+species_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing") %>%
+  dplyr::rename(layer_name = sci_name)
+environmental_df <- googlesheets4::read_sheet("https://docs.google.com/spreadsheets/d/1S7U53ukf74y3YaCDZUUSCh2Rv_wpbdZ4veH-BotoQKo/edit?gid=0#gid=0")
+# Combine Species and Environmental df 
+layers_df <- dplyr::bind_rows(species_df, environmental_df)
+
+# Template raster
+ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+empty_rast <- terra::rast(
+  ext(ex_sdm),
+  resolution = res(ex_sdm),
+  crs = crs(ex_sdm)
+)
+
+# Bowen details
+bowen_trails <- here::here("data-raw/Trails/Trails.shp") %>% sf::st_read()
+trails_colour <- "brown"
+bowen_roads <- here::here("data-raw/Roads/Bowen_Road_Inventory.shp") %>% sf::st_read()
+roads_colour <- "darkgrey"
+
+# Plots
+caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+```
+# 1 Overview
+## 1.1 Basic Map of Bowen Island
+```{r basic}
+# Plot
+bowen_plot <- bowen_map(raster_layer = empty_rast,
+                        title = "Transportation Network, Bowen Island",
+                        subtitle = "Base Bowen Island map with hillshade, roads, and trails.",
+                        caption = caption,
+                        legend_label = "Priority") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+  
+# Save plot
+output_path <- here::here("vignettes/figures/feb1/1_1_bowen_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_1_1_bowen_map.png"),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+# 2 Species
+## 2.1 Bird Species Richness
+```{r}
+# List SDMs filepaths
+SDM_filepaths <- species_df[species_df$taxon_group == "Bird" , "full_path"] %>% here::here()
+# Prepare SDM stack
+SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
+# Create species richness SDM 
+presence_threshold <- 0.7
+total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
+                                          presence_threshold = presence_threshold)
+# Create species richness plots: 
+## Each species is marked present in a cell, if they are above a certain 
+## threshold of probability in the input SDMs. 
+title <- "Bird Species Richness"
+subtitle <- paste0("Based on >", 
+                   presence_threshold,
+                   " probability of occurrence in Species Distribution Models.")
+
+total_richness_0.7_plot <- bowen_map(raster_layer = total_richness_0.7,
+                                     title = title,
+                                     subtitle = subtitle,
+                                     caption = caption,
+                                     legend_label = "Richness") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+output_path <- here::here("vignettes/figures/feb1/2_1_bird_species_richness_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_2_1_bird_species_richness_map.png")),
+  total_richness_0.7_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 2.2 Small Mammal Species Richness
+```{r}
+# List SDMs filepaths
+SDM_filepaths <- species_df[species_df$taxon_group == "MammalSmall" , "full_path"] %>% here::here()
+# Prepare SDM stack
+SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
+# Create species richness SDM 
+presence_threshold <- 0.7
+total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
+                                          presence_threshold = presence_threshold)
+# Create species richness plots: 
+## Each species is marked present in a cell, if they are above a certain 
+## threshold of probability in the input SDMs. 
+title <- "Small Mammal Species Richness"
+subtitle <- paste0("Based on >", 
+                   presence_threshold,
+                   " probability of occurrence in Species Distribution Models.")
+
+total_richness_0.7_plot <- bowen_map(raster_layer = total_richness_0.7,
+                                     title = title,
+                                     subtitle = subtitle,
+                                     caption = caption,
+                                     legend_label = "Richness") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+output_path <- here::here("vignettes/figures/feb1/2_2_small_mammal_species_richness_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_2_2_small_mammal_species_richness_map.png")),
+  total_richness_0.7_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 2.3 Amphibian & Reptile Species Richness
+```{r}
+# List SDMs filepaths
+SDM_filepaths <- species_df[species_df$taxon_group == "Amphibian" | species_df$taxon_group == "Reptile" , "full_path"] %>% here::here()
+# Prepare SDM stack
+SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
+# Create species richness SDM 
+presence_threshold <- 0.7
+total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
+                                          presence_threshold = presence_threshold)
+# Create species richness plots: 
+## Each species is marked present in a cell, if they are above a certain 
+## threshold of probability in the input SDMs. 
+title <- "Amphibian & Reptile Species Richness"
+subtitle <- paste0("Based on >", 
+                   presence_threshold,
+                   " probability of occurrence in Species Distribution Models.")
+
+total_richness_0.7_plot <- bowen_map(raster_layer = total_richness_0.7,
+                                     title = title,
+                                     subtitle = subtitle,
+                                     caption = caption,
+                                     legend_label = "Richness") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+output_path <- here::here("vignettes/figures/feb1/2_3_amphibian_reptile_species_richness_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_2_3_amphibian_reptile_species_richness_map.png")),
+  total_richness_0.7_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 2.4 Threatened & Endangered Species Richness 
+```{r}
+# List SDMs filepaths
+SDM_filepaths <- species_df[species_df$bc_status == "Red" | species_df$bc_status == "Blue" , "full_path"] %>% here::here()
+# Prepare SDM stack
+SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
+# Create species richness SDM 
+presence_threshold <- 0.7
+total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
+                                          presence_threshold = presence_threshold)
+# Create species richness plots: 
+## Each species is marked present in a cell, if they are above a certain 
+## threshold of probability in the input SDMs. 
+title <- "Threatened & Endangered Species Richness"
+subtitle <- paste0("Based on >", 
+                   presence_threshold,
+                   " probability of occurrence in Species Distribution Models. Species that are listed under the Red or Blue Lists according to the British Columbia Conservation Data Centre are included in this map. There are 24 of these species present on Bowen Island with species distribution models available.")
+
+total_richness_0.7_plot <- bowen_map(raster_layer = total_richness_0.7,
+                                     title = title,
+                                     subtitle = subtitle,
+                                     caption = caption,
+                                     legend_label = "Richness") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+output_path <- here::here("vignettes/figures/feb1/2_4_threatened_species_richness_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_2_4_threatened_species_richness_map.png")),
+  total_richness_0.7_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 2.5 Focal Species Richness
+```{r species_richness}
+# List SDMs filepaths
+SDM_filepaths <- species_df$full_path %>% here::here()
+# Prepare SDM stack
+SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
+# Create species richness SDM 
+presence_threshold <- 0.7
+total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
+                                          presence_threshold = presence_threshold)
+# Create species richness plots: 
+## Each species is marked present in a cell, if they are above a certain 
+## threshold of probability in the input SDMs. 
+title <- "Total Species Richness"
+subtitle <- paste0("Based on >", 
+                   presence_threshold,
+                   " probability of occurrence in Species Distribution Models.")
+
+total_richness_0.7_plot <- bowen_map(raster_layer = total_richness_0.7,
+                                     title = title,
+                                     subtitle = subtitle,
+                                     caption = caption,
+                                     legend_label = "Richness") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+output_path <- here::here("vignettes/figures/feb1/2_5_bowen_species_richness_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_2_5_bowen_species_richness_map.png")),
+  total_richness_0.7_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 2.6 Focal Species Distribution Models - Summed SDMs
+```{r sdm_stack}
+# List SDMs filepaths
+SDM_filepaths <- species_df$full_path %>% here::here()
+# Prepare SDM stack
+SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
+# Create summed SDM
+SDM_sum <- SDM_stack %>% sum(na.rm = T)
+
+# Create plot
+bowen_plot <- bowen_map(raster_layer = SDM_sum,
+                        title = "Total Species Diversity",
+                        subtitle = "193 species included in this analysis. The values from each species distribution model (ranging from 0 to 1 as probability of occurrence in the cell) are summed to provide a relative biodiversity layer. Higher values correspond to cells with higher probability of species occurring, and vice versa.",
+                        caption = caption,
+                        legend_label = "Relative Biodiversity") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+# Save plot
+output_path <- here::here("vignettes/figures/feb1/2_6_bowen_summed_sdm_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_2_6_bowen_summed_sdm_map.png"),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+# 3 Habitats
+## 3.1 ‘Freshwater Habitats: streams, wetlands, riparian corridors’ (use blue colour ramp/categories?)
+```{r water}
+# Plots
+title <- "Freshwater Habitats: streams, wetlands, riparian corridors"
+subtitle <- "Freshwater features on Bowen Island, derived from Metro Vancouver Sensitive Ecosystem Inventory (2021). "
+
+# Color Ramp
+cols <- RColorBrewer::brewer.pal(6, "YlGnBu")
+
+# Import Sensitive Ecosystem Inventory layers and define colours
+bowen_island_WN_bo_fn_sp <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "water", "WN_bo_fn_sp.tif"))
+bowen_island_WN_bo_fn_sp_colour <- cols[1]
+bowen_island_WN_sw <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "water", "WN_sw.tif"))
+bowen_island_WN_sw_colour <- cols[2]
+bowen_island_RI_ff <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "water", "RI_ff.tif"))
+bowen_island_RI_ff_colour <- cols[3]
+bowen_island_RI_gu <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "water", "RI_gu.tif"))
+bowen_island_RI_gu_colour <- cols[4]
+bowen_island_FW_la <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "water", "FW_la.tif"))
+bowen_island_FW_la_colour <- cols[5]
+bowen_island_FW_pd <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "water", "FW_pd.tif"))
+bowen_island_FW_pd_colour <- cols[6]
+
+bowen_plot <- bowen_map(raster_layer = empty_rast,
+                        title = title,
+                        subtitle = subtitle,
+                        caption = caption,
+                        legend_label = "Presence") +
+  tidyterra::geom_spatraster(data = bowen_island_FW_la,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Freshwater Lakes",
+                       colours = bowen_island_FW_la_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_FW_pd,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Freshwater Ponds",
+                       colours = bowen_island_FW_pd_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_RI_ff,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Riparian Fringe",
+                       colours = bowen_island_RI_ff_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_RI_gu,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Riparian Gully",
+                       colours = bowen_island_RI_gu_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_WN_sw,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Wetland Shallow Water",
+                       colours = bowen_island_WN_sw_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_WN_bo_fn_sp,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Wetland Bog/Fen/Swamp",
+                       colours = bowen_island_WN_bo_fn_sp_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  ggplot2::theme(
+    legend.margin = margin(-26,6,6,6),
+    legend.key.width = ggplot2::unit(0.5, "cm"),
+    legend.key.height = ggplot2::unit(0.5, "cm"),
+    legend.key.spacing.y = ggplot2::unit(0, "lines"),
+    legend.key.spacing.x = ggplot2::unit(0, "cm"),
+    legend.direction = "vertical",
+    legend.box = "vertical",
+    legend.box.background = element_rect(fill="white",
+                                         colour = "black"),
+    legend.box.margin = margin(20, 5, 5, 5),
+    legend.position = c(.05, .95),
+    legend.justification = c("left", "top"),
+    legend.box.just = "left"
+  ) +
+  guides(
+    
+  )
+# Save plots
+output_path <- here::here("vignettes/figures/feb1/3_1_bowen_water_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_", "3_1_bowen_water_map", ".png")),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 3.2 ‘Old and Large Forest: Old forest, Old growth management areas’ (use green colour ramp/categories?)
+```{r forests}
+# Plots
+title <- "Old and Large Forest: Old forest, Mature forest, Old growth management areas"
+subtitle <- "Forest features on Bowen Island, derived from Metro Vancouver Sensitive Ecosystem Inventory (2021). "
+
+# Color Ramp
+cols <- RColorBrewer::brewer.pal(3, "YlGn")
+
+# Import Sensitive Ecosystem Inventory layers and define colours
+bowen_island_OF <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "old_forests", "OF.tif"))
+bowen_island_OF_colour <- cols[1]
+bowen_island_OGMA <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "old_forests", "bowen_island_ogma.tif"))
+bowen_island_OGMA_colour <- cols[2]
+bowen_island_MF <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "old_forests", "MF.tif"))
+bowen_island_MF_colour <- cols[3]
+
+bowen_plot <- bowen_map(raster_layer = empty_rast,
+                        title = title,
+                        subtitle = subtitle,
+                        caption = caption,
+                        legend_label = "Presence") +
+  tidyterra::geom_spatraster(data = bowen_island_MF,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Mature Forest (80 to 250 years old)",
+                       colours = bowen_island_MF_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_OGMA,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Old Growth Management Areas",
+                       colours = bowen_island_OGMA_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_OF,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Old Forest (Greater than 250 years old)",
+                       colours = bowen_island_OF_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggplot2::theme(
+    legend.margin = margin(-26,6,6,6),
+    legend.key.width = ggplot2::unit(0.5, "cm"),
+    legend.key.height = ggplot2::unit(0.5, "cm"),
+    legend.key.spacing.y = ggplot2::unit(0, "lines"),
+    legend.key.spacing.x = ggplot2::unit(0, "cm"),
+    legend.direction = "vertical",
+    legend.box = "vertical",
+    legend.box.background = element_rect(fill="white",
+                                         colour = "black"),
+    legend.box.margin = margin(20, 5, 5, 5),
+    legend.position = c(.05, .95),
+    legend.justification = c("left", "top"),
+    legend.box.just = "left"
+  ) 
+
+# Save plots
+output_path <- here::here("vignettes/figures/feb1/3_2_bowen_forest_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_", "3_2_bowen_forest_map", ".png")),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 3.3 Other Vegetation: categories (SEI)
+```{r other_veg}
+# Plots
+title <- "Other Habitats: Sensitive Ecosystem Inventory"
+subtitle <- "Habitat features on Bowen Island, derived from Metro Vancouver Sensitive Ecosystem Inventory (2021). "
+
+# Color Ramp
+cols <- RColorBrewer::brewer.pal(7, "GnBu")
+
+# Import Sensitive Ecosystem Inventory layers and define colours
+bowen_island_YF_co <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "other_vegetation", "YF_co.tif"))
+bowen_island_YF_co_colour <- cols[1]
+bowen_island_YF_mx <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "other_vegetation", "YF_mx.tif"))
+bowen_island_YF_mx_colour <- cols[2]
+bowen_island_WD_co <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "other_vegetation", "WD_co.tif"))
+bowen_island_WD_co_colour <- cols[3]
+bowen_island_WD_mx <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "other_vegetation", "WD_mx.tif"))
+bowen_island_WD_mx_colour <- cols[4]
+bowen_island_SV_ro <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "other_vegetation", "SV_ro.tif"))
+bowen_island_SV_ro_colour <- cols[5]
+bowen_island_HB_cs <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "other_vegetation", "HB_cs.tif"))
+bowen_island_HB_cs_colour <- cols[6]
+bowen_island_HB_vs <- terra::rast(here::here("inst", "app", "data", "bowen_island_env_rasters", "other_vegetation", "HB_vs.tif"))
+bowen_island_HB_vs_colour <- cols[7]
+
+bowen_plot <- bowen_map(raster_layer = empty_rast,
+                        title = title,
+                        subtitle = subtitle,
+                        caption = caption,
+                        legend_label = "Presence") +
+  tidyterra::geom_spatraster(data = bowen_island_YF_co,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Young Forest Coniferous",
+                       colours = bowen_island_YF_co_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_YF_mx,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Young Forest Mixed",
+                       colours = bowen_island_YF_mx_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_WD_co,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Woodlands Coniferous",
+                       colours = bowen_island_WD_co_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_WD_mx,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Woodland Mixed",
+                       colours = bowen_island_WD_mx_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_SV_ro,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Sparse Vegetation Rocky Outcrops",
+                       colours = bowen_island_SV_ro_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_HB_cs,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Herbaceous Coastal",
+                       colours = bowen_island_HB_cs_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = bowen_island_HB_vs,
+                             aes(fill = layer)) +
+  scale_fill_gradientn(name = "",
+                       labels = "Herbaceous Vegetated Shoreline",
+                       colours = bowen_island_HB_vs_colour,
+                       guide = "legend",
+                       na.value = "transparent") +
+  ggplot2::theme(
+    legend.margin = margin(-26,6,6,6),
+    legend.key.width = ggplot2::unit(0.5, "cm"),
+    legend.key.height = ggplot2::unit(0.5, "cm"),
+    legend.key.spacing.y = ggplot2::unit(0, "lines"),
+    legend.key.spacing.x = ggplot2::unit(0, "cm"),
+    legend.direction = "vertical",
+    legend.box = "vertical",
+    legend.box.background = element_rect(fill="white",
+                                         colour = "black"),
+    legend.box.margin = margin(20, 5, 5, 5),
+    legend.position = c(.05, .95),
+    legend.justification = c("left", "top"),
+    legend.box.just = "left"
+  ) +
+  guides(
+    
+  )
+# Save plots
+output_path <- here::here("vignettes/figures/feb1/3_3_bowen_other_vegetation_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_", "3_3_bowen_other_vegetation_map", ".png")),
+  bowen_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 3.4 ‘Habitat Diversity: Number of habitats for each pixel’ All habitat layers combined (# of layers per pixel)
+```{r}
+# List habitat filepaths
+habitat_df <- environmental_df %>%
+  filter(filename != "bowen_island_normal_inverse_human_footprint.tif") %>%
+  filter(filename != "old_forests/bowen_island_ogma.tif")
+habitat_filepaths <- layers_df$full_path %>% here::here()
+# Prepare habitat stack
+habitat_stack <- lapply(habitat_filepaths, rast) %>% rast()
+# Sum habitat stack 
+habitat_richness <- habitat_stack %>% sum(na.rm = T)
+# Create species richness plots: 
+## Each species is marked present in a cell, if they are above a certain 
+## threshold of probability in the input SDMs. 
+title <- "Total Habitat Diversity: Number of habitat types by location"
+subtitle <- paste0("Total number of habitats found in each cell of the map. Habitats derived from Metro Vancouver Sensitive Ecosystem Inventory (2021).")
+
+habitats_plot <- bowen_map(raster_layer = habitat_richness,
+                                     title = title,
+                                     subtitle = subtitle,
+                                     caption = caption,
+                                     legend_label = "Richness") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+output_path <- here::here("vignettes/figures/feb1/3_4_bowen_habitat_richness_map")
+dir.create(output_path)
+ggplot2::ggsave(
+  here(output_path, "/", paste0(Sys.Date(), "_", "3_4_bowen_habitat_richness_map", ".png")),
+  habitats_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+# 4 Derived Data Products
+## 4.1 Combined Biodiversity Values (0-1)
+```{r}
+n_env_layers <- layers_df %>%
+  filter(is.na(taxon_group)) %>%
+  nrow()
+n_spec_layers <- layers_df %>%
+  filter(!is.na(taxon_group)) %>%
+  nrow()
+split_layers_df <- layers_df %>%
+  mutate(
+    weights = case_when(
+      is.na(taxon_group) ~ 12,
+      !is.na(taxon_group) ~ 1
+    )
+  )
+# Run Zonation5
+zonation5(split_layers_df)
+# Load output from Zonation
+zonation_input_path <- here("inst", "app", "zonation", "zonation_input")
+zonation_output_path <- here("inst", "app", "zonation", "zonation_output")
+zonation_rast <- terra::rast(here::here(zonation_output_path, "rankmap.tif"))
+
+# Plot
+combined_biodiversity_plot <- bowen_map(raster_layer = zonation_rast,
+                        title = "Biodiversity Value: Species & Habitats Combined",
+                        subtitle = "Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 18) combined weighted 50%, with species layers (n = 193) combined weighted 50%.",
+                        caption = caption,
+                        legend_label = "Priority")
+# Save plot
+output_path <- here::here("vignettes/figures/feb1/4_1_combined_biodiversity_values")
+dir.create(output_path)
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_","4_1_combined_biodiversity_values.png"),
+  combined_biodiversity_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+# Save rankmap.tif, settings.z5, features.txt
+file.copy(here::here(zonation_output_path, "rankmap.tif"), 
+          here::here(output_path, "rankmap.tif"),
+          overwrite = T)
+file.copy(here::here(zonation_input_path, "settings.z5"), 
+          here::here(output_path, "settings.z5"),
+          overwrite = T)
+file.copy(here::here(zonation_input_path, "features.txt"), 
+          here::here(output_path, "features.txt"),
+          overwrite = T)
+```
+## 4.2 Top 30% Biodiversity Values (0-1)
+```{r}
+# Zonation output to use
+filepath <- here::here("vignettes/figures/split_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(filepath)
+output_path <- here::here("vignettes/figures/feb1/4_2_top_30_biodiversity_values")
+# Location to save figures
+dir.create(output_path)
+
+top_value <- zonation_rast %>%
+  values() %>%
+  quantile(probs = .7, na.rm = T)
+
+m <- matrix(c(
+  0, top_value, NA,
+  top_value, 1, 1
+), ncol = 3, byrow = T)
+zonation_rast_top_mask <- zonation_rast %>%
+  classify(m) 
+
+zonation_rast_top <- zonation_rast_top_mask * zonation_rast
+
+# Create Plot
+top_30_plot <- bowen_map(zonation_rast_top,
+                                    title = "Top 30% Biodiversity Values",
+                                    subtitle = "Top 30% of biodiversity locations on Bowen Island. Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 18) combined weighted 50%, with species layers (n = 193) combined weighted 50%.",
+                                    caption = caption,
+                                    legend_label = "Relative Biodiversity") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_","4_2_top_30_biodiversity_values", ".png"),
+  top_30_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 4.3 Combined Biodiversity Values (0-1) overlap with Protected Areas
+```{r}
+# Zonation output to use
+filepath <- here::here("vignettes/figures/split_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(filepath)
+output_path <- here::here("vignettes/figures/feb1/4_3_combined_protectedareas")
+# Location to save figures
+dir.create(output_path)
+# Protected Areas polygons
+protected_areas <- sf::st_read(here::here("inst/app/data/bowen_island_protectedareas")) %>%
+# protected_areas <- sf::st_read("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/BOWEN GIS LAYERS BY JOHN /Eco-Reserve-JD.gpkg") %>%
+  filter(NAME != "Old Growth Management Area") %>%
+  sf::st_make_valid()
+protected_areas_colour <- "#EE964B"
+
+zonation_plot <- bowen_map(zonation_rast,
+                                    title = "Biodiversity Value with Protected Areas",
+                                    subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on top of the Zonation priotization output.",
+                                    caption = caption,
+                                    legend_label = "Priority") +
+  geom_sf(data = protected_areas, 
+          aes(fill = protected_areas_colour, 
+              color = protected_areas_colour), 
+          alpha = 0.1,
+          linewidth = 1) + 
+  scale_fill_identity(name = "",
+                      breaks = c(protected_areas_colour),
+                      labels = c("Protected Areas"),
+                      guide = "legend") +
+  scale_colour_identity(name = "",
+                        breaks = c(protected_areas_colour),
+                        labels = c("Protected Areas"),
+                        guide = "legend")
+
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_","4_3_combined_protectedareas", ".png"),
+  zonation_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 4.4 Top 30% overlap with Protected Areas (% protected)
+```{r}
+# Zonation output to use
+filepath <- here::here("vignettes/figures/split_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(filepath)
+output_path <- here::here("vignettes/figures/feb1/4_4_top_30_protectedareas")
+# Location to save figures
+dir.create(output_path)
+# Protected Areas polygons
+protected_areas <- sf::st_read(here::here("inst/app/data/bowen_island_protectedareas")) %>%
+  filter(NAME != "Old Growth Management Area") %>%
+  sf::st_make_valid()
+protected_areas_colour <- "#EE964B"
+
+top_value <- zonation_rast %>%
+  values() %>%
+  quantile(probs = .7, na.rm = T)
+
+m <- matrix(c(
+  0, top_value, NA,
+  top_value, 1, 1
+), ncol = 3, byrow = T)
+zonation_rast_top_mask <- zonation_rast %>%
+  classify(m) 
+
+zonation_rast_top <- zonation_rast_top_mask * zonation_rast
+
+# Calculate top 30% cells within and outside protected areas
+protected_areas_vect <- terra::vect(protected_areas) %>%
+  terra::project(zonation_rast_top_mask)
+ncell_top <- zonation_rast_top_mask %>% 
+  terra::values(na.rm = T) %>%
+  sum()
+ncell_in_protected_areas <- zonation_rast_top_mask %>% 
+  terra::mask(protected_areas_vect) %>% 
+  terra::values(na.rm = T) %>%
+  sum()
+percent_in_protected_areas <- ncell_in_protected_areas / ncell_top
+
+# Plot
+zonation_plot <- bowen_map(zonation_rast_top,
+                                    title = "Top 30% Biodiversity Value with Protected Areas",
+                                    subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on top of the Zonation priotization output. 21.5% of the top biodiversity value areas are found within protected areas.",
+                                    caption = caption,
+                                    legend_label = "Priority") +
+  geom_sf(data = protected_areas, 
+          aes(fill = protected_areas_colour, 
+              color = protected_areas_colour), 
+          alpha = 0.1,
+          linewidth = 1) + 
+  scale_fill_identity(name = "",
+                      breaks = c(protected_areas_colour),
+                      labels = c("Protected Areas"),
+                      guide = "legend") +
+  scale_colour_identity(name = "",
+                        breaks = c(protected_areas_colour),
+                        labels = c("Protected Areas"),
+                        guide = "legend")
+
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_","4_4_top_30_protectedareas", ".png"),
+  zonation_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 4.5 Combined Biodiversity Values (0-1) overlap with Private Land
+```{r}
+# Zonation output to use
+filepath <- here::here("vignettes/figures/split_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(filepath)
+output_path <- here::here("vignettes/figures/feb1/4_5_combined_properties")
+# Location to save figures
+dir.create(output_path)
+# Protected Areas polygons
+properties <- sf::st_read(here::here("inst/app/data/bowen_island_properties")) %>%
+  sf::st_make_valid() %>%
+  summarise()
+properties_colour <- "brown"
+
+zonation_plot <- bowen_map(zonation_rast,
+                                    title = "Biodiversity Value with Private Land",
+                                    subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Private Land is visualized as an overlay on top of the Zonation priotization output.",
+                                    caption = caption,
+                                    legend_label = "Priority") +
+  geom_sf(data = properties, 
+          aes(fill = properties_colour, 
+              color = properties_colour), 
+          alpha = 0.2,
+          linewidth = 1) + 
+  scale_fill_identity(name = "",
+                      breaks = c(properties_colour),
+                      labels = c("Private Land"),
+                      guide = "legend") +
+  scale_colour_identity(name = "",
+                        breaks = c(properties_colour),
+                        labels = c("Private Land"),
+                        guide = "legend")
+
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_","4_5_combined_properties", ".png"),
+  zonation_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 4.6 Top 30% overlap with Private land (% private)
+```{r}
+# Zonation output to use
+filepath <- here::here("vignettes/figures/split_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(filepath)
+output_path <- here::here("vignettes/figures/feb1/4_6_top_30_properties")
+# Location to save figures
+dir.create(output_path)
+# Protected Areas polygons
+properties <- sf::st_read(here::here("inst/app/data/bowen_island_properties")) %>%
+  sf::st_make_valid() %>%
+  summarise()
+properties_colour <- "brown"
+
+top_value <- zonation_rast %>%
+  values() %>%
+  quantile(probs = .7, na.rm = T)
+
+m <- matrix(c(
+  0, top_value, NA,
+  top_value, 1, 1
+), ncol = 3, byrow = T)
+zonation_rast_top_mask <- zonation_rast %>%
+  classify(m) 
+
+zonation_rast_top <- zonation_rast_top_mask * zonation_rast
+
+# Calculate top 30% cells within and outside protected areas
+properties_vect <- terra::vect(properties) %>%
+  terra::project(zonation_rast_top_mask)
+ncell_top <- zonation_rast_top_mask %>% 
+  terra::values(na.rm = T) %>%
+  sum()
+ncell_in_properties <- zonation_rast_top_mask %>% 
+  terra::mask(properties_vect) %>% 
+  terra::values(na.rm = T) %>%
+  sum()
+percent_in_properties <- ncell_in_properties / ncell_top
+
+# Plot
+zonation_plot <- bowen_map(zonation_rast_top,
+                           title = "Top 30% Biodiversity Value with Private Land",
+                           subtitle = "Biodiversity hotspots, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Private Land is visualized as an overlay on top of the Zonation priotization output. 67.4% of the top biodiversity value areas are found within private lands.",
+                           caption = caption,
+                           legend_label = "Priority") +
+  geom_sf(data = properties, 
+          aes(fill = properties_colour, 
+              color = properties_colour), 
+          alpha = 0.2,
+          linewidth = 1) + 
+  scale_fill_identity(name = "",
+                      breaks = c(properties_colour),
+                      labels = c("Private Land"),
+                      guide = "legend") +
+  scale_colour_identity(name = "",
+                        breaks = c(properties_colour),
+                        labels = c("Private Land"),
+                        guide = "legend")
+
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_","4_6_top_30_properties", ".png"),
+  zonation_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 4.7 Human disturbance (categorical) for entire Island
+```{r}
+# Zonation output to use
+filepath <- here::here("vignettes/figures/split_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(filepath)
+output_path <- here::here("vignettes/figures/feb1/4_7_categorical_humandisturbance")
+# Location to save figures
+dir.create(output_path)
+# Human Footprint
+disturbed_classified <- here::here("inst", "app", "data", "bowen_island_human_footprint_classified.tif") %>%
+  terra::rast() %>%
+  as.factor()
+
+# Plot
+bowen_map_2 <- function(raster_layer,
+                      title,
+                      subtitle,
+                      caption,
+                      legend_label) {
+  bowen_shoreline <- here::here("data-raw/shoreline_dem_smoothed2/shoreline_dem_smoothed2.shp") %>% sf::st_read()
+  
+  # basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
+  basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer,
+                                              map_service = "maptiler",
+                                              map_type = "backdrop",
+                                              map_token = "baL4WLstSFqSHP2fnYrE")
+  
+  output_plot <- ggplot2::ggplot() +
+    ggplot2::theme_bw() +
+    tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
+    tidyterra::geom_spatraster(data = raster_layer) +
+    scale_fill_manual(
+      name = "Level of Disturbance",
+      na.translate = F,
+      na.value = NA,
+      values = c("1" = "#ffeda0", "2" = "#feb24c", "3" = "#f03b20"),
+      labels = c("Low", "Medium", "High"),
+    ) +
+    ggplot2::geom_sf(data = bowen_shoreline,
+                     fill = NA,
+                     colour = "#444544",
+                     linewidth = 1) +
+    ggplot2::scale_x_continuous(expand = c(0,0)) +
+    ggplot2::scale_y_continuous(expand = c(0,0)) +
+    ggplot2::labs(
+      title = title,
+      subtitle = subtitle,
+      caption = caption
+    ) +
+    ggplot2::theme(
+      plot.title = ggtext::element_textbox_simple(
+        size = 20,
+        margin = ggplot2::margin(0, 0, 20, 0)
+      ),
+      plot.subtitle = ggtext::element_textbox_simple(
+        lineheight = 1.5,
+        margin= ggplot2::margin(0, 0, 10, 0)
+      ),
+      axis.text.y = ggplot2::element_text(
+        angle = 90, vjust = 1, hjust = 0.5
+      ),
+      legend.position = "bottom",
+      legend.title = ggplot2::element_text(size = 10),
+      legend.key.height = ggplot2::unit(0.5, "cm"),
+      legend.key.width = ggplot2::unit(1.5, "cm"),
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.box.margin = margin(1, 1, 1, 1),
+      plot.margin = unit(c(1.3,0.3,0.8,0), "cm")
+    ) +
+    ggspatial::annotation_scale(
+      location = "br",
+      bar_cols = c("grey60", "white")
+    ) +
+    ggspatial::annotation_north_arrow(
+      location = "br", which_north = "true",
+      pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+      style = ggspatial::north_arrow_nautical(
+        fill = c("grey40", "white"),
+        line_col = "grey20"
+      )
+    ) 
+}
+
+zonation_plot <- bowen_map_2(disturbed_classified,
+                           title = "Current Human Disturbance",
+                           subtitle = "Categorical map of human disturbance on Bowen Island. Categorization of levels of human disturbance based on values from:   Kristen Hirsh-Pearson, Chris J. Johnson, Richard Schuster, Roger D. Wheate, and Oscar Venter. 2022. Canada’s human footprint reveals large intact areas juxtaposed against areas under immense anthropogenic pressure. FACETS. 7: 398-419.",
+                           caption = caption,
+                           legend_label = "Disturbance") 
+
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_","4_7_categorical_humandisturbance", ".png"),
+  zonation_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 4.8 Human disturbance (continuous) for entire Island
+```{r}
+# Zonation output to use
+filepath <- here::here("vignettes/figures/split_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(filepath)
+output_path <- here::here("vignettes/figures/feb1/4_8_continuous_humandisturbance")
+# Location to save figures
+dir.create(output_path)
+# Protected Areas polygons
+disturbed <- here::here("inst", "app", "data", "bowen_island_human_footprint.tif") %>%
+  terra::rast()
+
+zonation_plot <- bowen_map(disturbed,
+                           title = "Current Human Disturbance",
+                           subtitle = "Continuous map of human disturbance on Bowen Island.",
+                           caption = caption,
+                           legend_label = "Disturbance",
+                           pal = "Heat") 
+
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_","4_8_continuous_humandisturbance", ".png"),
+  zonation_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+
+## 4.9 Top 30% overlap with Human disturbance (% in each of 3 categories)
+```{r}
+# Zonation output to use
+filepath <- here::here("vignettes/figures/split_weight_zonation/rankmap.tif")
+zonation_rast <- terra::rast(filepath)
+output_path <- here::here("vignettes/figures/feb1/4_9_top_30_humandisturbance")
+# Location to save figures
+dir.create(output_path)
+
+top_value <- zonation_rast %>%
+  values() %>%
+  quantile(probs = .7, na.rm = T)
+
+m <- matrix(c(
+  0, top_value, NA,
+  top_value, 1, 1
+), ncol = 3, byrow = T)
+zonation_mask <- zonation_rast %>%
+  classify(m) 
+
+disturbed <- here::here("inst", "app", "data", "bowen_island_human_footprint.tif") %>%
+  terra::rast()
+
+disturbed_top <- zonation_mask * disturbed
+
+# Calculate top 30 within each category
+disturbed_classified <- here::here("inst", "app", "data", "bowen_island_human_footprint_classified.tif") %>%
+  terra::rast() %>%
+  terra::project(zonation_mask)
+zonation_disturbed_classified <- zonation_mask * disturbed_classified %>%
+  terra::as.factor() 
+zonation_disturbed_classified %>% freq()
+# low (n = 32)
+# medium (n = 1104)
+# high (n = 327)
+# total (n = 1463)
+
+# Create Plot
+bowen_trails <- here::here("data-raw/Trails/Trails.shp") %>% sf::st_read()
+trails_colour <- "brown"
+bowen_roads <- here::here("data-raw/Roads/Bowen_Road_Inventory.shp") %>% sf::st_read()
+roads_colour <- "darkgrey"
+human_footprint_plot <- bowen_map(disturbed_top,
+                                  title = "Biodiversity Hotspots and Human Footprint",
+                                  subtitle = "Top 30% of biodiversity locations on Bowen Island, with scale corresponding to relative human disturbance. Higher values indicate higher levels of disturbance from human activity. Lower values show lower levels of disturbance. Less than 1 considered intact (0% of top biodiversity cells). Between 1 and 4 considered Low Disturbance (2.1% of top biodiversity cells). Between 4 and 10 are consideredMedium Disturbance (75.5% of top biodiversity cells). Above 10 are highly disturbed (22.4% of top biodiversity cells).",
+                                  caption = "Jay Matsushiba January 27 2025",
+                                  legend_label = "Human Disturbance",
+                                  pal = "Heat") +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend")
+
+ggplot2::ggsave(
+  paste0(output_path, "/", Sys.Date(), "_4_9_top_30_humandisturbance.png"),
+  human_footprint_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+## 4.10 Combined Biodiversity Values (0-1) overlap with FWater habitats
+
+## 4.11 Top 30% overlap with FWater habitats (% overlap with FW)
+
+# Map Zonation run all environmental and species layers weighted equally (weight of 1.0)
+```{r}
+# # Run Zonation5
+# zonation5(layers_df)
+# # Load output from Zonation
+# zonation_input_path <- here("inst", "app", "zonation", "zonation_input")
+# zonation_output_path <- here("inst", "app", "zonation", "zonation_output")
+# zonation_rast <- terra::rast(here::here(zonation_output_path, "rankmap.tif"))
+# # Plot
+# bowen_plot <- bowen_map(raster_layer = zonation_rast,
+#                         title = "Equal Weighted Prioritization of All Environmental and Species Layers",
+#                         subtitle = "Zonation5 Prioritization Algorithm of Locations on Bowen Island.",
+#                         caption = paste0("Map created on ", Sys.time(), " by Jay Matsushiba (jmatsush@sfu.ca) in the Palen Lab."),
+#                         legend_label = "Priority")
+# # Save plot
+# output_path <- here::here("vignettes/figures/equal_weight_zonation")
+# dir.create(output_path)
+# ggplot2::ggsave(
+#   paste0(output_path, "/", Sys.Date(), "_equal_weight_zonation.png"),
+#   bowen_plot,
+#   device = ragg::agg_png,
+#   width = 9, height = 12, units = "in", res = 300
+# )
+# # Save rankmap.tif, settings.z5, features.txt
+# file.copy(here::here(zonation_output_path, "rankmap.tif"), 
+#           here::here(output_path, "rankmap.tif"),
+#           overwrite = T)
+# file.copy(here::here(zonation_input_path, "settings.z5"), 
+#           here::here(output_path, "settings.z5"),
+#           overwrite = T)
+# file.copy(here::here(zonation_input_path, "features.txt"), 
+#           here::here(output_path, "features.txt"),
+#           overwrite = T)
+```

@@ -23,7 +23,14 @@ library(dplyr)
 library(googlesheets4)
 ```
 
-```{r}
+```{r download}
+# TODO: code to download spatial layers hosted on Google Drive
+
+
+```
+
+
+```{r table}
 # select only SDMs
 features <- list.files(here::here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island"),
                        recursive = T)

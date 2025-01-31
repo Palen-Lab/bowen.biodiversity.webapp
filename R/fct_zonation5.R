@@ -13,7 +13,7 @@ zonation5 <- function(layers_df) {
       sep = "\n")
 
   for(i in 1:nrow(layers_df)) {
-    full_system_path <- paste(here::here(), layers_df[i, "full_path"], sep = "/")
+    full_system_path <- paste0('"', here::here(), "/", layers_df[i, "full_path"], '"')
     next_row <- paste0(layers_df[i, "weights"], " ", full_system_path)
     cat(next_row,
         file = features_txt_path,
@@ -30,7 +30,7 @@ zonation5 <- function(layers_df) {
   zonation5_output <- here::here("inst","app","zonation","zonation_output")
 
   zonation5_command <- stringr::str_glue(
-    '{zonation5_location} --mode={zonation5_mode} {zonation5_settings} {zonation5_output}',
+    '{zonation5_location} --mode={zonation5_mode} {zonation5_settings} {zonation5_output} -w',
     zonation5_location = zonation5_location,
     zonation5_mode = zonation5_mode,
     zonation5_settings = zonation5_settings,
