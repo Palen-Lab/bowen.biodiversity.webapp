@@ -47,17 +47,78 @@ https://adaptwest.databasin.org/pages/adaptwest-climatena/
 ```{r}
 # EXT: extreme maximum temperature over 30 years
 ## 1961 - 1990
-EXT_1961_1990 <- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/Normal_1961_1990_bioclim/Normal_1961_1990/Normal_1961_1990_bioclim/Normal_1961_1990_EXT.tif")
+EXT_1961_1990 <- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/Normal_1961_1990_bioclim/Normal_1961_1990/Normal_1961_1990_bioclim/Normal_1961_1990_EXT.tif") %>%
+  terra::project(ex_sdm)
 ## 2071 - 2100 
-EXT_2071_2100<- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100_EXT.tif")
+EXT_2071_2100<- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100_EXT.tif") %>%
+  terra::project(ex_sdm)
 
 ## Resample 
-bowen_ext_past <- terra::resample(EXT_1961_1990, ex_sdm) %>%
-  project(ex_sdm)
-bowen_ext_future <- terra::resample(EXT_2071_2100, ex_sdm)
+bowen_ext_past <- terra::resample(EXT_1961_1990, ex_sdm) 
+bowen_ext_future <- terra::resample(EXT_2071_2100, ex_sdm) 
 
 # Difference
 bowen_ext_change <- bowen_ext_future - bowen_ext_past
-writeRaster(bowen_ext_change, here::here("inst/app/data/bowen_island_climate/bowen_ext_change_1961_2100.tif"))
+
+bowen_boundary <- here::here("data-raw/bowen_boundary") %>%
+  sf::st_read()
+ggplot() +
+  tidyterra::geom_spatraster(data = bowen_ext_past) +
+  geom_sf(data = bowen_boundary)
+writeRaster(bowen_ext_change, 
+            here::here("inst/app/data/bowen_island_climate/bowen_ext_change_1961_2100.tif"),
+            overwrite = T)
+
+
+
+# MSP:  mean summer (May to Sep) precipitation (mm)
+## 1961 - 1990
+MSP_1961_1990 <- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/Normal_1961_1990_bioclim/Normal_1961_1990/Normal_1961_1990_bioclim/Normal_1961_1990_MSP.tif") %>%
+  terra::project(ex_sdm)
+## 2071 - 2100 
+MSP_2071_2100<- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100_MSP.tif") %>%
+  terra::project(ex_sdm)
+
+## Resample 
+bowen_MSP_past <- terra::resample(MSP_1961_1990, ex_sdm) 
+bowen_MSP_future <- terra::resample(MSP_2071_2100, ex_sdm) 
+
+# Difference
+bowen_MSP_change <- bowen_MSP_future - bowen_MSP_past
+
+bowen_boundary <- here::here("data-raw/bowen_boundary") %>%
+  sf::st_read()
+ggplot() +
+  tidyterra::geom_spatraster(data = bowen_MSP_change) +
+  geom_sf(data = bowen_boundary)
+writeRaster(bowen_MSP_change, 
+            here::here("inst/app/data/bowen_island_climate/bowen_MSP_change_1961_2100.tif"),
+            overwrite = T)
+
+
+# PAS:  precipitation as snow (mm)
+## 1961 - 1990
+PAS_1961_1990 <- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/Normal_1961_1990_bioclim/Normal_1961_1990/Normal_1961_1990_bioclim/Normal_1961_1990_PAS.tif") %>%
+  terra::project(ex_sdm)
+## 2071 - 2100 
+PAS_2071_2100<- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100_PAS.tif") %>%
+  terra::project(ex_sdm)
+
+## Resample 
+bowen_PAS_past <- terra::resample(PAS_1961_1990, ex_sdm) 
+bowen_PAS_future <- terra::resample(PAS_2071_2100, ex_sdm) 
+
+# Difference
+bowen_PAS_change <- bowen_PAS_future - bowen_PAS_past
+
+bowen_boundary <- here::here("data-raw/bowen_boundary") %>%
+  sf::st_read()
+ggplot() +
+  tidyterra::geom_spatraster(data = bowen_PAS_change) +
+  geom_sf(data = bowen_boundary)
+writeRaster(bowen_PAS_change, 
+            here::here("inst/app/data/bowen_island_climate/bowen_PAS_change_1961_2100.tif"),
+            overwrite = T)
+
 ```
 
