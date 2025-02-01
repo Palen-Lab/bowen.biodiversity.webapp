@@ -781,8 +781,9 @@ protected_areas <- sf::st_read(here::here("inst/app/data/bowen_island_protecteda
   sf::st_make_valid()
 protected_areas_colour <- "#EE964B"
 
-# Calculate proportion of Bowen Island covered by Protected Areas (Not Including Hutt Island)
-bowen_island_shoreline <- sf::st_read(here::here("data-raw/shoreline_dem_smoothed2")) 
+# Calculate proportion of Bowen Island covered by Protected Areas (Including Hutt Island)
+bowen_island_shoreline <- sf::st_read(here::here("data-raw/bowen_island_shoreline_w_hutt.gpkg"),
+                                      "bowen_island_shoreline_w_hutt__bowen_islands")
 bowen_island_area <- bowen_island_shoreline %>% sf::st_area() %>% sum() # 50334212 [m^2]
 bowen_island_protected_areas_area <- protected_areas %>% sf::st_area() %>% sum() # 9042669 [m^2]
 bowen_island_prop_protected <- bowen_island_protected_areas_area / bowen_island_area # 0.18
