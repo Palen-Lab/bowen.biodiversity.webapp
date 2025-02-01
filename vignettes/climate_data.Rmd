@@ -1,0 +1,63 @@
+---
+title: "climate_data"
+author: "Jay Matsushiba"
+date: "2025-01-31"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# load the `ncdf4` and the `CFtime` packages
+library(ncdf4)
+library(CFtime)
+library(lattice)
+library(RColorBrewer)
+library(terra)
+
+ex_sdm <- terra::rast(here::here("inst/app/rasters/2024_12_11_SDM_100m_Bowen_Island/Amphibian_mask/Ambystoma.gracile_BowenIsland_100m.tif"))
+```
+
+## Climate Data from Pacific Climate Impacts Consortium - learning how to read netCDF
+```{r}
+#### CanESM5 Model SSP5-8.5 scenario ####
+# Worse case scenario, fossil fuel driven development
+# Precipitation per day (mm)
+pr_day_path <- here::here("inst/app/data/bowen_island_climate/pr_day_MBCn+PCIC-Blend_CanESM5_historical+ssp585_r1i1p2f1_gn_19500101-21001231.nc.nc")
+pr_day <- terra::rast(pr_day_path)
+# Maximum temperature per day (deg C)
+tasmax_path <- here::here("inst/app/data/bowen_island_climate/tasmax_day_MBCn+PCIC-Blend_CanESM5_historical+ssp585_r1i1p2f1_gn_19500101-21001231.nc.nc")
+tasmax <- terra::rast(tasmax_path)
+# Minimum temperature per day (deg C)
+tasmin_path <- here::here("inst/app/data/bowen_island_climate/tasmin_day_MBCn+PCIC-Blend_CanESM5_historical+ssp585_r1i1p2f1_gn_19500101-21001231.nc.nc")
+tasmin <- terra::rast(tasmin_path)
+
+# Data includes 55115 days from 1950-01-01 to 2100-12-31
+
+# Test plot first day of precipitation in this dataset
+pr_day_1 <- subset(pr_day, s = 1)
+plot(pr_day_1)
+writeRaster(pr_day_1, here::here("test_pr_day_1.tif"))
+pr_day_366 <- subset(pr_day, s = 366)
+pr_day_366
+plot(pr_day_366)
+```
+# AdaptWest Climate Database
+Current and projected climate data for North America (CMIP6 scenarios generated using ClimateNA v7.3)
+https://adaptwest.databasin.org/pages/adaptwest-climatena/
+```{r}
+# EXT: extreme maximum temperature over 30 years
+## 1961 - 1990
+EXT_1961_1990 <- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/Normal_1961_1990_bioclim/Normal_1961_1990/Normal_1961_1990_bioclim/Normal_1961_1990_EXT.tif")
+## 2071 - 2100 
+EXT_2071_2100<- terra::rast("/media/jay/2TB_Drive/2024_Bowen_Biodiversity_Project/ClimateNA/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100/ensemble_8GCMs_ssp585_2071_2100_bioclim/ensemble_8GCMs_ssp585_2071_2100_EXT.tif")
+
+## Resample 
+bowen_ext_past <- terra::resample(EXT_1961_1990, ex_sdm) %>%
+  project(ex_sdm)
+bowen_ext_future <- terra::resample(EXT_2071_2100, ex_sdm)
+
+# Difference
+bowen_ext_change <- bowen_ext_future - bowen_ext_past
+writeRaster(bowen_ext_change, here::here("inst/app/data/bowen_island_climate/bowen_ext_change_1961_2100.tif"))
+```
+
