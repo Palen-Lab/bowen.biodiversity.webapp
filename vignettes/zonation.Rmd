@@ -16,5 +16,68 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(bowen.biodiversity.webapp)
+library(here)
+library(dplyr)
+library(stringr)
+library(sf)
+library(terra)
+library(tidyterra)
 ```
+# Loading Datasets
 
+## Species Distribution Models
+
+## Metro Vancouver Sensitive Ecosystems Inventory
+
+## Human Disturbance
+
+## Private Lands
+
+## Protected Areas
+
+## Notes on Data Management
+Raw data (temp files) into `data-raw` and added to `data-raw/.gitignore` Save finished outputs (as used by the application) into `inst/extdata` - Convention is to save files that are not `.rda` into this folder (<https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages>)
+
+```{r}
+#### Species Distribution Models ####
+# Contents of "data-raw/species-distribution-models" downloaded from Cumulative effects - SFU Teams Sharepoint 
+# https://1sfu.sharepoint.com/:f:/r/teams/Cumulativeeffects-SFUTeams9/Shared%20Documents/BCH_project_backup/SPECIES?csf=1&web=1&e=FpNkgc 
+# Directory Path: BCH_project_backup/SPECIES/
+# Paper: https://www.nature.com/articles/s41598-020-64501-7#MOESM1
+# See Wendy Palen (SFU) for access 
+
+#### Metro Vancouver Sensitive Ecosystems Inventory ####
+# Contents of "data-raw/metrovancouver_sensitive_ecosystem_inventory" downloaded from MetroVancouver Open Data Catalogue
+# GeoPackage download: https://arcg.is/TnfXL 
+# Reports download: https://metrovancouver.org/services/regional-planning/sensitive-ecosystem-inventory-mapping-app
+
+#### Human Disturbance #### 
+# Contents of "data-raw/human_disturbance" received from Miguel Arias Patino (marias@unbc.ca)
+# https://1sfu.sharepoint.com/:f:/r/teams/Cumulativeeffects-SFUTeams9/Shared%20Documents/General/BC%20Hydro%202025%20IRP/Environmental%20Layers/Human%20Footprint?csf=1&web=1&e=hUYDs7 
+# Thesis (methods): https://unbc.arcabc.ca/islandora/object/unbc%3A59107
+# Paper (methods): https://doi.org/10.1016/j.ecolind.2024.112407 
+# Paper (methods): https://doi.org/10.1139/facets-2021-0063  
+
+#### Private Lands ####
+
+#### Protected Areas #### 
+
+```
+# Data Processing 
+Creating individual layers
+```{r}
+#### Species Distribution Models ####
+
+#### Metro Vancouver Sensitive Ecosystems Inventory ####
+
+#### Human Disturbance #### 
+
+#### Private Lands ####
+
+#### Protected Areas #### 
+
+```
+# Zonation 
+Running zonation with all inputs
+
+# Output
