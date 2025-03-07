@@ -6,6 +6,8 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+# Bowen Island Biodiversity Prioritization - Zonation5
+https://github.com/zonationteam/Zonation5 
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -23,19 +25,19 @@ library(sf)
 library(terra)
 library(tidyterra)
 ```
-# Loading Datasets
+## Loading Datasets
 
-## Species Distribution Models
+### Species Distribution Models
 
-## Metro Vancouver Sensitive Ecosystems Inventory
+### Metro Vancouver Sensitive Ecosystems Inventory
 
-## Human Disturbance
+### Human Disturbance
 
-## Private Lands
+### Private Lands
 
-## Protected Areas
+### Protected Areas
 
-## Notes on Data Management
+### Notes on Data Management
 Raw data (temp files) into `data-raw` and added to `data-raw/.gitignore` Save finished outputs (as used by the application) into `inst/extdata` - Convention is to save files that are not `.rda` into this folder (<https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages>)
 
 ```{r}
@@ -63,7 +65,7 @@ Raw data (temp files) into `data-raw` and added to `data-raw/.gitignore` Save fi
 #### Protected Areas #### 
 
 ```
-# Data Processing 
+## Data Processing 
 Creating individual layers
 ```{r}
 #### Species Distribution Models ####
@@ -77,7 +79,7 @@ Creating individual layers
 #### Protected Areas #### 
 
 ```
-# Zonation 
+## Zonation 
 Running zonation with all inputs
 
-# Output
+## Output
