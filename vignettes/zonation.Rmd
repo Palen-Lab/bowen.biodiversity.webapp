@@ -488,11 +488,10 @@ zonation5_command <- str_glue(
   str_c()
 #### ZONATION RUN ####
 system(command = zonation5_command)
-
+```
+## Output
+```{r}
 #### VISUALIZE OUTPUT ####
 rankmap <- here("vignettes/zonation/output/rankmap.tif") %>% rast()
 plot(rankmap)
 ```
-
-
-## Output
