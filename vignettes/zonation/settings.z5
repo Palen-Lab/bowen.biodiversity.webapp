@@ -1,1 +1,2 @@
 feature list file = features.txt
+analysis area mask layer = /home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/bowen_mask.tif

@@ -78,8 +78,9 @@ dsm_smooth <- dsm %>%
   terra::resample(sample_sdm, method = "average")
 m <- c(-1, 35, 1) %>% matrix(ncol = 3, byrow=T)
 bowen_island_mask <- dsm_smooth %>% 
-  classify(m)
-writeRaster(bowen_island_mask, here("inst/extdata/bowen_mask.tif"))
+  classify(m) %>%
+  as.int()
+writeRaster(bowen_island_mask, here("inst/extdata/bowen_mask.tif"), overwrite = T)
 # Weights for terra::focal() function that provides moving window average
 # - Smoothing algorithm 
 # - Use this to fill some empty cells on Bowen Island with weighted mean of the neighbouring cells.
@@ -365,11 +366,15 @@ write.csv(sei_rasters_df, here("inst/extdata/", "bowen_sei_rasters_info.csv"))
 # Paper (methods): https://doi.org/10.1139/facets-2021-0063  
 disturb_path <- here("data-raw/human_disturbance/human_footprint_30m_v2.tif")
 disturb <- terra::rast(disturb_path)
-# Resample raster to Bowen Island
+# Load Bowen Island Mask Created Previously
+bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
+  rast()
+#### Resample Raster to Bowen Island ####
 disturb_resamp <- terra::resample(disturb, bowen_island_mask)
 writeRaster(disturb_resamp, 
             here::here("inst/extdata", "bowen_human_footprint.tif"), 
             overwrite=TRUE)
+#### Reclassify Raster to Intact, Low, Medium, High ####
 # https://www.facetsjournal.com/doi/10.1139/facets-2021-0063#sec-2 
 # Intact is 0 to 1 
 # Low disturbance is 1 to 4
@@ -387,22 +392,107 @@ disturb_recl <- disturb_resamp %>%
 writeRaster(disturb_recl, 
             here::here("inst/extdata", "bowen_human_footprint_recl.tif"), 
             overwrite=TRUE)
-```
-## Data Processing 
-Creating individual layers
-```{r}
-#### Species Distribution Models ####
-
-#### Metro Vancouver Sensitive Ecosystems Inventory ####
-
-#### Human Disturbance #### 
-
-#### Private Lands ####
-
-#### Protected Areas #### 
+#### Inverse Disturbance ####
+#' Normalize on 0 to 1 scale
+normalize <- function(input_rast) {
+  mm <- minmax(input_rast)
+  min <- mm[1]
+  max <- mm[2]
+  normalized <- (input_rast - min) / (max - min)
+}
+#' Invert raster, so max values are min and vice versa. 
+invert <- function(input_rast) {
+  mm <- minmax(input_rast)
+  max <- mm[2]
+  inverted <- max - input_rast 
+}
+# Normalize and invert the disturbance, so its positive as Zonation input
+disturb_inv <- disturb_resamp %>% 
+  normalize() %>%
+  invert()
+writeRaster(disturb_inv, here("inst/extdata/bowen_human_footprint_inv.tif"), overwrite=TRUE)
 
 ```
 ## Zonation 
 Running zonation with all inputs
+```{r}
+#### CREATE DATAFRAME FOR INPUT LAYERS ####
+# Bowen Island SDM Table
+load(here("inst/extdata/bowen_sdm_focal.rda"))
+bowen_sdm_rasters_df <- bowen_sdm_focal %>% select(filepath, weights)
+bowen_sdm_rasters_df$filepath <- bowen_sdm_rasters_df$filepath %>% unlist()
+bowen_sdm_rasters_df$type <- "sdm"
+# Bowen Island SEI Table
+load(here("inst/extdata/bowen_sei_rasters_info.rda")) 
+sei_rasters_df <- sei_rasters_df %>% select(filepath, weights)
+sei_rasters_df$type <- "habitat"
+# Bowen Island Disturbance
+disturb_rasters_df <- data.frame(filepath = "bowen_human_footprint_inv.tif",
+                                 weights = 1.0)
+disturb_rasters_df$type <- "habitat"
+# Bind all input layers together
+layers_df <- bind_rows(bowen_sdm_rasters_df, sei_rasters_df, disturb_rasters_df)
+#### Set weights based on "species" and "habitat" type so 50/50 weight
+# Get SDM weight
+n_sdm <- layers_df %>%
+  filter(type == "sdm") %>%
+  nrow()
+weight_sdm <- 1/n_sdm
+# Get habitat weight
+n_habitat <- layers_df %>%
+  filter(type == "habitat") %>%
+  nrow()
+weight_habitat <- 1/n_habitat
+# Set weights
+layers_df <- layers_df %>%
+  mutate(
+    weights = case_when(
+      type == "sdm" ~ weight_sdm,
+      type == "habitat" ~ weight_habitat
+    )
+  )
+#### Get fullpaths for filenames in inst/extdata
+rasters_df <- data.frame(fullpath = here("inst/extdata/", list.files(path = here("inst/extdata"), recursive = T, pattern = "*.tif$")))
+rasters_df$filepath <- basename(rasters_df$fullpath)
+# Merge with weights
+weights_df <- merge(layers_df, rasters_df, by = "filepath")
+#### CREATE features.txt FOR ZONATION RUN ####
+# Create features.txt from files available in data
+features_path <- here("vignettes/zonation/features.txt")
+cat('"weight" "filename"', 
+    file = features_path,
+    sep = "\n")
+for(i in 1:nrow(weights_df)) {
+  next_row <- paste0(weights_df[i, "weights"], " ", weights_df[i, "fullpath"])
+  cat(next_row,
+      file = features_path,
+      append = TRUE,
+      sep = "\n")
+}
+#### SET PARAMS FOR ZONATION RUN ####
+zonation5_location <- here("vignettes/zonation/zonation5") 
+zonation5_mode <- "CAZ2"
+# Zonation5 Setting Text File
+zonation5_settings <-  here("vignettes/zonation/settings.z5")
+zonation5_settings_txt <- c("feature list file = features.txt", 
+                            paste0("analysis area mask layer = ", here("inst/extdata/bowen_mask.tif"))) # Add Bowen Island Mask
+writeLines(zonation5_settings_txt, zonation5_settings)
+zonation5_output <- here("vignettes/zonation/output") 
+zonation5_command <- str_glue(
+  '{zonation5_location} -a --mode={zonation5_mode} {zonation5_settings} {zonation5_output}',
+  zonation5_location = zonation5_location,
+  zonation5_mode = zonation5_mode,
+  zonation5_settings = zonation5_settings,
+  zonation5_output = zonation5_output
+) %>%
+  str_c()
+#### ZONATION RUN ####
+system(command = zonation5_command)
+
+#### VISUALIZE OUTPUT ####
+rankmap <- here("vignettes/zonation/output/rankmap.tif") %>% rast()
+plot(rankmap)
+```
+
 
 ## Output

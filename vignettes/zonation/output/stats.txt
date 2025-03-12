@@ -1,23 +1,23 @@
-Arguments given: --gui --mode=CAZ2 /home/jay/Programming_Projects/bowen.biodiversity.zonation/settings.z5 /home/jay/Programming_Projects/bowen.biodiversity.zonation/output
-Settings filename: /home/jay/Programming_Projects/bowen.biodiversity.zonation/settings.z5
-Feature list filename: /home/jay/Programming_Projects/bowen.biodiversity.zonation/features.txt
-Map dimensions (width * height): 92*104
-Number of grid cells in map (width * height): 9568
-Number of grid cells in map with data: 5345
-Input feature layer count: 200
-Feature layer count: 200
-Positive weight feature count: 200
+Arguments given: -a --mode=CAZ2 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/output
+Settings filename: /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5
+Feature list filename: /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/features.txt
+Map dimensions (width * height): 96*108
+Number of grid cells in map (width * height): 10368
+Number of grid cells in map with data: 5408
+Input feature layer count: 213
+Feature layer count: 213
+Positive weight feature count: 213
 Negative weight feature count: 0
 Zero weight feature count: 0
-Total number of pixels with data across features: 1037096
+Total number of pixels with data across features: 1063547
 Mean feature extent across study area: 100.00%
-Memory usage of feature data: 1.07MB
-Mean quantization error: 0.00224764%
+Memory usage of feature data: 1.15MB
+Mean quantization error: 0.00209658%
 Time used to read and preprocess layer data: 0s
 Time used in prioritization: 0s
-Number of iterations: 38
-Final convergence level: 0.00972307%
-Area under curve: 0.545146
+Number of iterations: 30
+Final convergence level: 0.00975454%
+Area under curve: 0.552109
 Total time used: 0s
 Number of errors: 0
 Number of warnings: 0
