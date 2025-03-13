@@ -15,15 +15,10 @@ app_ui <- function(request) {
         "Map",
         mod_main_map_ui("main_map")
       ),
-      bslib::nav_panel(
-        "Zonation",
-        mod_zonation_param_ui("zonation_param")
-      ),
       fillable = c("Map"),
       sidebar = bslib::sidebar({
         tagList(
-          h1("Zonation5 Tool"),
-          actionButton(label = "Zonation","zonation_button")
+          h1("Submit")
         )
       }),
       title = div(

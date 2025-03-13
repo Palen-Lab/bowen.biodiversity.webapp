@@ -10,6 +10,7 @@
 mod_main_map_ui <- function(id) {
   ns <- NS(id)
   tagList(
+    actionButton(label = "Submit", ns("submit_button")),
     leaflet::leafletOutput(ns("map"))
   )
 }
@@ -17,24 +18,28 @@ mod_main_map_ui <- function(id) {
 #' main_map Server Functions
 #'
 #' @noRd
-mod_main_map_server <- function(id, main_raster, zonation_val){
-  stopifnot(is.reactive(main_raster))
-  stopifnot(zonational_val <= 1 & zonation_val >= 0)
+mod_main_map_server <- function(id){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    bowen_island_admin <- sf::st_read(here::here("data-raw/bowen_boundary")) %>%
+      sf::st_transform(crs = 4326)
+    # leaflet::leafletProxy("main_map", data = bowen_island_admin)
+
     # TODO: add interactive legend, to reveal top % of zonation output
     output$map <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron,
                                   options = leaflet::providerTileOptions(noWrap = TRUE)
-        ) %>%
-        leaflet::addRasterImage(x = main_raster(),
-                                colors = "Spectral") %>%
-        leaflet::addLegend(values = terra::values(main_raster()),
-                           pal = leaflet::colorNumeric(palette = "Spectral",
-                                                       domain = terra::values(main_raster())
-                                                       )
-                           )
+        )
+      # %>% leaflet::addPolygons(data = bowen_island_admin)
+    })
+    # TODO: pass list of objects in from outside of module
+    # TODO: dynamically create UI for each item in list
+    # TODO: probably module within a module
+    # TODO: https://rstudio.github.io/leaflet/articles/showhide.html
+    observeEvent(input$submit_button, {
+      leaflet::leafletProxy("map", data = bowen_island_admin) %>%
+        leaflet::addPolygons()
     })
   })
 }
