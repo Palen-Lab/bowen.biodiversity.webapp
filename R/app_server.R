@@ -6,18 +6,11 @@
 #' @noRd
 app_server <- function(input, output, session) {
   # Your application server logic
+  layers_df <- data.frame(package = c("sf", "terra"),
+                          full_path = c("data-raw/bowen_boundary", "inst/extdata/bowen_human_footprint.tif"),
+                          group = c("Admin Boundary", "Human Footprint"))
 
 
   # Main map module ----
-  mod_main_map_server("main_map")
-  # test_raster <- terra::rast("inst/extdata/bowen_human_footprint.tif")
-  # leaflet::leafletProxy("main_map") %>%
-  #   leaflet::addRasterImage(test_raster)
-#
-#   bowen_island_admin <- sf::st_read(here::here("data-raw/bowen_boundary")) %>%
-#     sf::st_transform(crs = 4326)
-#
-#   observeEvent("submit_button", {
-#
-#   })
+  mod_main_map_server("main_map", layers_df)
 }
