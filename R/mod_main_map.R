@@ -11,7 +11,7 @@ mod_main_map_ui <- function(id) {
   ns <- NS(id)
   tagList(
     # actionButton(label = "Submit", ns("submit_button")),
-    leaflet::leafletOutput(ns("map"))
+    leaflet::leafletOutput(ns("map"), height=1000)
   )
 }
 
@@ -25,27 +25,33 @@ mod_main_map_server <- function(id, layers_df){
     # TODO: add interactive legend, to reveal top % of zonation output
     output$map <- leaflet::renderLeaflet({
       leaflet::leaflet() %>%
+        leaflet::setView(-123.3698, 49.3738, zoom = 12) %>%
         leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron,
                                   options = leaflet::providerTileOptions(noWrap = TRUE)
         )
     })
     # Add sf (vectors)
     sf_objects <- layers_df[layers_df$package == "sf",]
-    for(i in 1:nrow(sf_objects)) {
-      layer_sf <- sf::st_read(here::here(sf_objects[i,"full_path"])) %>%
-        sf::st_transform(crs = 4326)
-      leaflet::leafletProxy("map") %>%
-        leaflet::addPolygons(data = layer_sf,
-                             group = sf_objects[i, "group"])
+    if(nrow(sf_objects) > 0) {
+      for(i in 1:nrow(sf_objects)) {
+        layer_sf <- sf::st_read(here::here(sf_objects[i,"relpath"])) %>%
+          sf::st_transform(crs = 4326)
+        leaflet::leafletProxy("map") %>%
+          leaflet::addPolygons(data = layer_sf,
+                               group = sf_objects[i, "group"])
+      }
     }
     # Add terra (rasters)
     terra_objects <- layers_df[layers_df$package == "terra",]
-    for(i in 1:nrow(terra_objects)) {
-      layer_terra <- terra::rast(here::here(terra_objects[i,"full_path"])) %>%
-        terra::project("epsg:4326")
-      leaflet::leafletProxy("map") %>%
-        leaflet::addRasterImage(x = layer_terra,
-                                group = terra_objects[i, "group"])
+    if(nrow(terra_objects) > 0) {
+      for(i in 1:nrow(terra_objects)) {
+        layer_terra <- terra::rast(here::here(terra_objects[i,"relpath"])) %>%
+          terra::project("epsg:4326")
+        leaflet::leafletProxy("map") %>%
+          leaflet::addRasterImage(x = layer_terra,
+                                  group = terra_objects[i, "group"]) %>%
+          leaflet::hideGroup(group = terra_objects[i, "group"])
+      }
     }
     # Add Legend with Visibility Control
     leaflet::leafletProxy("map") %>%

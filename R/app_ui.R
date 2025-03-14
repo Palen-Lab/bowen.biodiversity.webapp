@@ -16,11 +16,11 @@ app_ui <- function(request) {
         mod_main_map_ui("main_map")
       ),
       fillable = c("Map"),
-      sidebar = bslib::sidebar({
-        tagList(
-          h1("Submit")
-        )
-      }),
+      # sidebar = bslib::sidebar({
+      #   tagList(
+      #     h1("Submit")
+      #   )
+      # }),
       title = div(
         img(
           src = "www/bowenisland_brandmark.png",
