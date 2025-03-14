@@ -36,9 +36,20 @@ mod_main_map_server <- function(id, layers_df){
       for(i in 1:nrow(sf_objects)) {
         layer_sf <- sf::st_read(here::here(sf_objects[i,"relpath"])) %>%
           sf::st_transform(crs = 4326)
-        leaflet::leafletProxy("map") %>%
-          leaflet::addPolygons(data = layer_sf,
-                               group = sf_objects[i, "group"])
+        if(sf_objects[i,"type"] == "point") {
+          leaflet::leafletProxy("map") %>%
+            leaflet::addCircles(data = layer_sf,
+                                 group = sf_objects[i, "group"])
+        } else if (sf_objects[i,"type"] == "line") {
+          leaflet::leafletProxy("map") %>%
+            leaflet::addPolylines(data = layer_sf,
+                                 group = sf_objects[i, "group"])
+        } else if (sf_objects[i,"type"] == "polygon") {
+          leaflet::leafletProxy("map") %>%
+            leaflet::addPolygons(data = layer_sf,
+                                 group = sf_objects[i, "group"])
+
+        }
       }
     }
     # Add terra (rasters)

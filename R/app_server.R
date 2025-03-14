@@ -16,15 +16,25 @@ app_server <- function(input, output, session) {
 
   #### DEFINE LAYERS FOR APP ####
   # Create layers_df that holds information about all layers on the web map
-  layers_df <- data.frame(package = as.character(),
-                          relpath = as.character(),
-                          group = as.character())
+  layers_df <- data.frame(package = as.character(), # either "sf" or "terra"
+                          type = as.character(), # raster, point, line, polygon
+                          relpath = as.character(), # relative path within repository
+                          group = as.character()) # name to provide for display in LayersControl
 
   # Add Bowen Admin Boundary to layers_df
   bowen_boundary_df <- data.frame(package = "sf",
+                                  type = "polygon",
                                   relpath = here::here("inst/extdata/bowen_boundary"),
                                   group = "Admin Boundary")
-  layers_df <- layers_df %>% dplyr::bind_rows(bowen_boundary_df)
+  bowen_roads_df <- data.frame(package = "sf",
+                               type = "line",
+                               relpath = here::here("inst/extdata/bowen_roads"),
+                               group = "Roads")
+  bowen_trails_df <- data.frame(package = "sf",
+                                type = "line",
+                                relpath = here::here("inst/extdata/bowen_trails"),
+                                group = "Trails")
+  layers_df <- layers_df %>% dplyr::bind_rows(bowen_boundary_df, bowen_roads_df, bowen_trails_df)
 
   #### MAIN MAP MODULE ####
   mod_main_map_server("main_map", layers_df)
