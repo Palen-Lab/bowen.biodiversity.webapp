@@ -20,6 +20,7 @@ app_server <- function(input, output, session) {
                           type = as.character(), # raster, point, line, polygon
                           relpath = as.character(), # relative path within repository
                           group = as.character()) # name to provide for display in LayersControl
+                          # pal = as.character()) # pal
 
   # Add Bowen Admin Boundary to layers_df
   bowen_boundary_df <- data.frame(package = "sf",
@@ -35,6 +36,13 @@ app_server <- function(input, output, session) {
                                 relpath = here::here("inst/extdata/bowen_trails"),
                                 group = "Trails")
   layers_df <- layers_df %>% dplyr::bind_rows(bowen_boundary_df, bowen_roads_df, bowen_trails_df)
+
+  # Add rasters
+  zonation <- data.frame(package = "terra",
+                         type = "raster",
+                         relpath = here::here("inst/extdata/rankmap.tif"),
+                         group = "Conservation Value")
+  layers_df <- layers_df %>% dplyr::bind_rows(zonation)
 
   #### MAIN MAP MODULE ####
   mod_main_map_server("main_map", layers_df)

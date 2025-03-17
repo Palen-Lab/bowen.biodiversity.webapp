@@ -230,7 +230,8 @@ bowen_sdm_focal <- bowen_SDM_iNat_ebird %>%
 # write_sheet(bowen_sdm_focal,
 #             "https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing",
 #             "species")
-# write.csv(bowen_sdm_focal, here("inst/extdata/species_distribution_models_focal_bowen_info.csv"))
+species_distribution_models_focal_bowen_info <- bowen_sdm_focal
+save(species_distribution_models_focal_bowen_info, file = here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
 ```
 #### Creating Species Information Spreadsheet 
 This spreadsheet contains all of the information on species name, taxon group, threatened status, weights to use for Zonation. 
@@ -238,7 +239,7 @@ This spreadsheet contains all of the information on species name, taxon group, t
 Visit this link to see the spreadsheet hosted on Google Drive.
 https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing
 ```{r}
-bowen_sdm_focal <- read.csv(here("inst/extdata/species_distribution_models_focal_bowen_info.csv"))
+load(here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
 #### REVISION ####
 # - This section necessary, since Google Sheet was uploaded at earlier time
 # - Changes since made to the creation of Bowen SDM Focal
@@ -247,11 +248,11 @@ bowen_sdm_focal <- read.csv(here("inst/extdata/species_distribution_models_focal
 sdm_googlesheet <- read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing") %>%
   select(!c("full_path", "filename"))
 # Drop duplicate columns, keep columns for n eBird and iNaturalist observations, max SDM values
-bowen_sdm_focal_sel <- bowen_sdm_focal %>%
+bowen_sdm_focal_sel <- species_distribution_models_focal_bowen_info %>%
   select(!c("taxon_group", "prov_status", "fed_status", "IUCN_status", "weights"))
 # Merge
 bowen_sdm_status <- merge(bowen_sdm_focal_sel, sdm_googlesheet, by.x = "species", by.y = "sci_name", all.x = T) 
-save(bowen_sdm_focal, file = here("inst/extdata/bowen_sdm_focal.rda"))
+save(bowen_sdm_status, file = here("inst/extdata/bowen_sdm_status.rda"))
 ```
 ### Metro Vancouver Sensitive Ecosystems Inventory
 ```{r}
@@ -418,13 +419,17 @@ Running zonation with all inputs
 ```{r}
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
 # Bowen Island SDM Table
-load(here("inst/extdata/bowen_sdm_focal.rda"))
-bowen_sdm_rasters_df <- bowen_sdm_focal %>% select(filepath, weights)
+load(here("inst/extdata/bowen_sdm_status.rda"))
+bowen_sdm_rasters_df <- bowen_sdm_status %>% 
+  select(species, filepath, weights) %>%
+  rename(group = species)
 bowen_sdm_rasters_df$filepath <- bowen_sdm_rasters_df$filepath %>% unlist()
 bowen_sdm_rasters_df$type <- "sdm"
 # Bowen Island SEI Table
 load(here("inst/extdata/bowen_sei_rasters_info.rda")) 
-sei_rasters_df <- sei_rasters_df %>% select(filepath, weights)
+sei_rasters_df <- sei_rasters_df %>% 
+  select(sei_habitat, filepath, weights) %>%
+  rename(group = sei_habitat)
 sei_rasters_df$type <- "habitat"
 # Bowen Island Disturbance
 disturb_rasters_df <- data.frame(filepath = "bowen_human_footprint_inv.tif",
@@ -456,6 +461,9 @@ rasters_df <- data.frame(fullpath = here("inst/extdata/", list.files(path = here
 rasters_df$filepath <- basename(rasters_df$fullpath)
 # Merge with weights
 weights_df <- merge(layers_df, rasters_df, by = "filepath")
+weights_df$relpath <- weights_df$fullpath %>%
+  gsub(paste0(here(),"/"), "", .) # Prepare paths for Shiny app 
+save(weights_df, file = here("inst/extdata/weights_df.rda"))
 #### CREATE features.txt FOR ZONATION RUN ####
 # Create features.txt from files available in data
 features_path <- here("vignettes/zonation/features.txt")
