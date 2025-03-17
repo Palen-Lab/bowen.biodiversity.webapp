@@ -60,9 +60,13 @@ app_server <- function(input, output, session) {
   zonation <- terra::rast(here::here("inst/extdata/rankmap.tif")) %>%
     terra::project("epsg:4326")
   zonation_group <- "Relative Conservation Value"
+  zonation_pal <- leaflet::colorNumeric(c("#0C2C84", "#41B6C4", "#FFFFCC"), c(0,1),
+                      na.color = "transparent")
   leaflet::leafletProxy("map") %>%
     leaflet::addRasterImage(x = zonation,
-                            group = zonation_group) %>%
+                            group = zonation_group,
+                            colors = zonation_pal) %>%
+    leaflet::addLegend(pal = zonation_pal, values =  c(0,1), title = "Rel. Conservation Value") %>%
     leaflet::hideGroup(group = zonation_group)
   groups <- append(groups, zonation_group)
   # Add Legend with Visibility Control
