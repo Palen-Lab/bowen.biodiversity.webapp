@@ -56,7 +56,7 @@ app_server <- function(input, output, session) {
                           color = "brown",
                           opacity = 1.0)
   groups <- append(groups, bowen_trails_group)
-  #### Add Zonation Output ####
+  #### Add Zonation Output Raster ####
   zonation <- terra::rast(here::here("inst/extdata/rankmap.tif")) %>%
     terra::project("epsg:4326")
   zonation_group <- "Relative Conservation Value"
@@ -66,9 +66,27 @@ app_server <- function(input, output, session) {
     leaflet::addRasterImage(x = zonation,
                             group = zonation_group,
                             colors = zonation_pal) %>%
-    leaflet::addLegend(pal = zonation_pal, values =  c(0,1), title = "Rel. Conservation Value") %>%
-    leaflet::hideGroup(group = zonation_group)
+    leaflet::addLegend(pal = zonation_pal,
+                       values =  c(0,1),
+                       title = "Rel. Conservation Value",
+                       group = zonation_group)
   groups <- append(groups, zonation_group)
+  #### Add Human Footprint Raster ####
+  human_footprint <- terra::rast(here::here("inst/extdata/bowen_human_footprint.tif")) %>%
+    terra::project("epsg:4326")
+  human_footprint_group <- "Human Footprint"
+  human_footprint_domain <- c(0, terra::minmax(human_footprint)[2])
+  human_footprint_pal <- leaflet::colorNumeric(c("#1a9641", "#a6d96a", "#ffffbf", "#fdae61", "#d7191c"), human_footprint_domain,
+                                        na.color = "transparent")
+  leaflet::leafletProxy("map") %>%
+    leaflet::addRasterImage(x = human_footprint,
+                            group = human_footprint_group,
+                            colors = human_footprint_pal) %>%
+    leaflet::addLegend(pal = human_footprint_pal,
+                       values =  human_footprint_domain,
+                       title = "Human Footprint",
+                       group = human_footprint_group)
+  groups <- append(groups, human_footprint_group)
   # Add Legend with Visibility Control
   leaflet::leafletProxy("map") %>%
     leaflet::addLayersControl(
