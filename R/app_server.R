@@ -5,45 +5,70 @@
 #' @import shiny
 #' @noRd
 app_server <- function(input, output, session) {
-  # load(here::here("inst/extdata/weights_df.rda"))
-  # layers_df <- weights_df %>%
-  #   dplyr::mutate(package = "terra") %>%
-  #   dplyr::select(package, relpath, group)
-  # layers_sf <- data.frame(package = "sf",
-  #                         relpath = here::here("inst/extdata/bowen_boundary"),
-  #                         group = "Admin Boundary")
-  # layers_output <- dplyr::bind_rows(layers_df, layers_sf)
-
-  #### DEFINE LAYERS FOR APP ####
-  # Create layers_df that holds information about all layers on the web map
-  layers_df <- data.frame(package = as.character(), # either "sf" or "terra"
-                          type = as.character(), # raster, point, line, polygon
-                          relpath = as.character(), # relative path within repository
-                          group = as.character()) # name to provide for display in LayersControl
-                          # pal = as.character()) # pal
-
-  # Add Bowen Admin Boundary to layers_df
-  bowen_boundary_df <- data.frame(package = "sf",
-                                  type = "polygon",
-                                  relpath = here::here("inst/extdata/bowen_boundary"),
-                                  group = "Admin Boundary")
-  bowen_roads_df <- data.frame(package = "sf",
-                               type = "line",
-                               relpath = here::here("inst/extdata/bowen_roads"),
-                               group = "Roads")
-  bowen_trails_df <- data.frame(package = "sf",
-                                type = "line",
-                                relpath = here::here("inst/extdata/bowen_trails"),
-                                group = "Trails")
-  layers_df <- layers_df %>% dplyr::bind_rows(bowen_boundary_df, bowen_roads_df, bowen_trails_df)
-
-  # Add rasters
-  zonation <- data.frame(package = "terra",
-                         type = "raster",
-                         relpath = here::here("inst/extdata/rankmap.tif"),
-                         group = "Conservation Value")
-  layers_df <- layers_df %>% dplyr::bind_rows(zonation)
-
-  #### MAIN MAP MODULE ####
-  mod_main_map_server("main_map", layers_df)
+  #### Init Main Map ####
+  # TODO: add interactive legend, to reveal top % of zonation output
+  output$map <- leaflet::renderLeaflet({
+    leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = TRUE,
+                                              zoomSnap = 0.25,
+                                              zoomDelta = 1)
+                     ) %>%
+      leaflet::setView(-123.3698, 49.3738, zoom = 12) %>%
+      leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron,
+                                options = leaflet::providerTileOptions(noWrap = TRUE, minZoom = 10, maxZoom = 18)
+      )
+  })
+  # Create groups list to add overlay groups for visibility control
+  groups <- list()
+  #### Add Bowen Admin Boundary ####
+  bowen_boundary <- sf::st_read(here::here("inst/extdata/bowen_boundary")) %>%
+    sf::st_transform(crs = 4326)
+  bowen_boundary_group <- "Admin Boundary"
+  leaflet::leafletProxy("map") %>%
+    leaflet::addPolygons(data = bowen_boundary,
+                         group = bowen_boundary_group,
+                         stroke = TRUE,
+                         color = "darkgrey",
+                         fill = FALSE)
+  groups <- append(groups, bowen_boundary_group)
+  #### Add Bowen Island Roads ####
+  bowen_roads <- sf::st_read(here::here("inst/extdata/bowen_roads")) %>%
+    sf::st_transform(crs = 4326)
+  # addPolylines can't handle multilinestrings for some reason, need to convert to LINESTRINGS
+  bowen_roads_ls <- sf::st_cast(bowen_roads, "LINESTRING")
+  bowen_roads_group <- "Roads"
+  leaflet::leafletProxy("map") %>%
+    leaflet::addPolylines(data = bowen_roads_ls,
+                          group = bowen_roads_group,
+                          stroke = T,
+                          weight = 3,
+                          color = "grey",
+                          opacity = 1.0)
+  groups <- append(groups, bowen_roads_group)
+  #### Add Bowen Island Trails ####
+  bowen_trails <- sf::st_read(here::here("inst/extdata/bowen_trails")) %>%
+    sf::st_transform(crs = 4326)
+  bowen_trails_group <- "Trails"
+  leaflet::leafletProxy("map") %>%
+    leaflet::addPolylines(data = bowen_trails,
+                          group = bowen_trails_group,
+                          stroke = T,
+                          weight = 2,
+                          color = "brown",
+                          opacity = 1.0)
+  groups <- append(groups, bowen_trails_group)
+  #### Add Zonation Output ####
+  zonation <- terra::rast(here::here("inst/extdata/rankmap.tif")) %>%
+    terra::project("epsg:4326")
+  zonation_group <- "Relative Conservation Value"
+  leaflet::leafletProxy("map") %>%
+    leaflet::addRasterImage(x = zonation,
+                            group = zonation_group) %>%
+    leaflet::hideGroup(group = zonation_group)
+  groups <- append(groups, zonation_group)
+  # Add Legend with Visibility Control
+  leaflet::leafletProxy("map") %>%
+    leaflet::addLayersControl(
+      overlayGroups = unique(groups),
+      options = leaflet::layersControlOptions(collapsed = F)
+    )
 }
