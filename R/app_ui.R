@@ -13,6 +13,7 @@ app_ui <- function(request) {
       bslib::nav_spacer(),
       bslib::nav_panel(
         "Map",
+        sliderInput("opacity_slider", "Opacity", 0, 1, 1),
         tags$style(type = "text/css", "#map {height: calc(100vh - 90px) !important;}"),
         leaflet::leafletOutput("map")
       ),

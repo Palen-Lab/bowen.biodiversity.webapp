@@ -5,6 +5,9 @@
 #' @import shiny
 #' @noRd
 app_server <- function(input, output, session) {
+  opacity <- reactive({input$opacity_slider})
+
+
   #### Init Main Map ####
   # TODO: add interactive legend, to reveal top % of zonation output
   output$map <- leaflet::renderLeaflet({
@@ -17,6 +20,8 @@ app_server <- function(input, output, session) {
                                 options = leaflet::providerTileOptions(noWrap = TRUE, minZoom = 10, maxZoom = 18)
       )
   })
+
+
   # Create groups list to add overlay groups for visibility control
   groups <- list()
   #### Add Bowen Admin Boundary ####
@@ -60,16 +65,24 @@ app_server <- function(input, output, session) {
   zonation <- terra::rast(here::here("inst/extdata/rankmap.tif")) %>%
     terra::project("epsg:4326")
   zonation_group <- "Relative Conservation Value"
-  zonation_pal <- leaflet::colorNumeric(c("#0C2C84", "#41B6C4", "#FFFFCC"), c(0,1),
-                      na.color = "transparent")
-  leaflet::leafletProxy("map") %>%
-    leaflet::addRasterImage(x = zonation,
-                            group = zonation_group,
-                            colors = zonation_pal) %>%
-    leaflet::addLegend(pal = zonation_pal,
-                       values =  c(0,1),
-                       title = "Rel. Conservation Value",
-                       group = zonation_group)
+  zonation_pal <- leaflet::colorNumeric(c("#FFFFCC", "#41B6C4", "#0C2C84"), c(0,1),
+                                        na.color = "transparent")
+  observe({
+    leaflet::leafletProxy("map") %>%
+      leaflet::removeControl("zonation_legend") %>%
+      leaflet::removeImage("zonation_raster") %>%
+      leaflet::addRasterImage(x = zonation,
+                              layerId = "zonation_raster",
+                              group = zonation_group,
+                              colors = zonation_pal,
+                              opacity = opacity()) %>%
+      leaflet::addLegend(pal = zonation_pal,
+                         layerId = "zonation_legend",
+                         values =  c(0,1),
+                         title = "Rel. Conservation Value",
+                         group = zonation_group) %>%
+      leaflet::hideGroup(zonation_group)
+  })
   groups <- append(groups, zonation_group)
   #### Add Human Footprint Raster ####
   human_footprint <- terra::rast(here::here("inst/extdata/bowen_human_footprint.tif")) %>%
@@ -87,6 +100,22 @@ app_server <- function(input, output, session) {
                        title = "Human Footprint",
                        group = human_footprint_group)
   groups <- append(groups, human_footprint_group)
+  #### Add Species Richness ####
+  species_richness <- terra::rast(here::here("inst/extdata/bowen_sdm_richness.tif")) %>%
+    terra::project("epsg:4326")
+  species_richness_group <- "Species Richness"
+  species_richness_domain <- c(0, terra::minmax(species_richness)[2])
+  species_richness_pal <- leaflet::colorNumeric(c('#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'), species_richness_domain,
+                                               na.color = "transparent")
+  leaflet::leafletProxy("map") %>%
+    leaflet::addRasterImage(x = species_richness,
+                            group = species_richness_group,
+                            colors = species_richness_pal) %>%
+    leaflet::addLegend(pal = species_richness_pal,
+                       values =  species_richness_domain,
+                       title = "Species Richness",
+                       group = species_richness_group)
+  groups <- append(groups, species_richness_group)
   # Add Legend with Visibility Control
   leaflet::leafletProxy("map") %>%
     leaflet::addLayersControl(
