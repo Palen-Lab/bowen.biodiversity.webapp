@@ -1,0 +1,57 @@
+---
+title: "fire"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{fire}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(here)
+library(sf)
+library(ggplot2)
+library(leaflet)
+library(tidyverse)
+library(terra)
+```
+
+# Bowen Wildland Urban Interfaces (WUI)
+Sources: 
+https://www2.gov.bc.ca/gov/content/safety/wildfire-status/prevention/fire-fuel-management/wui-risk-class-maps/wui-downloads 
+https://www.for.gov.bc.ca/ftp/HPR/external/!publish/WUI_RiskClass/Maps/Coast/WUI_RiskClass_36x48L_92G_SW.pdf 
+![Bowen WUI](images/bowen_wui.png)
+Previous to this step, the KMZ files were loaded into QGIS and clipped to `data-raw/bowen_boundary/Bowen_boundary.shp`. This clipped KMZ was saved as `data-raw/bowen_wui.gpkg`. 
+```{r plots}
+bowen_wui <- here("data-raw/bowen_wui.gpkg") %>% 
+  st_read() %>%
+  select(Name, PSTA) %>%
+  rename(WUI = Name) %>%
+  mutate(WUI_PSTA = paste0(WUI, "_", PSTA))
+
+ggplot(bowen_wui) + 
+  geom_sf(aes(fill = PSTA))
+
+ggplot(bowen_wui) + 
+  geom_sf(aes(fill = WUI))
+
+ggplot(bowen_wui) + 
+  geom_sf(aes(fill = WUI_PSTA))
+```
+## Convert to raster matching the resolution and extent of Zonation inputs
+```{r}
+bowen_mask <- here("inst/extdata/bowen_mask.tif") %>% rast()
+bowen_wui_vect <- bowen_wui %>% vect() %>% project(bowen_mask)
+
+bowen_wui_rast <- bowen_wui_vect %>%
+  rasterize(bowen_mask, "WUI_PSTA", touches = T)
+```
+
