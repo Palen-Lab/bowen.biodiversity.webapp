@@ -16,10 +16,9 @@ knitr::opts_chunk$set(
 )
 ```
 
-This vignette describes the first-look exploration and analysis with the BC Assessment data, providing sales history and values of real estate properties throughout British Columbia. The purpose for utilizing this data is to create some spatial layer for modelling development pressures on Bowen Island. 
+This vignette describes the first-look exploration and analysis with the BC Assessment data, providing sales history and values of real estate properties throughout British Columbia. The purpose for utilizing this data is to create some spatial layer for modelling development pressures on Bowen Island.
 
-Data citation:
-BC Assessment, 2020, "BC Assessment Data Advice and Inventory Extracts, 2016-2022", https://hdl.handle.net/11272.1/AB2/LAPUAB, Abacus Data Network, V6 
+Data citation: BC Assessment, 2020, "BC Assessment Data Advice and Inventory Extracts, 2016-2022", <https://hdl.handle.net/11272.1/AB2/LAPUAB>, Abacus Data Network, V6
 
 ```{r setup}
 library(bowen.biodiversity.webapp)
@@ -31,7 +30,9 @@ library(leaflet)
 ```
 
 ## BC Assessment Sales Data
-This section deals with the data wrangling steps for the Bowen Island sales information. This data wrangling assumes that prices only increase, so lowest prices are associated with the earlier sale dates and vice versa. 
+
+This section deals with the data wrangling steps for the Bowen Island sales information. This data wrangling assumes that prices only increase, so lowest prices are associated with the earlier sale dates and vice versa.
+
 ```{r bca_sales}
 bowen_sales_history <- here("data-raw/bc_assessment/bca_folios_spatial_file_20230103/bca_folios.gpkg.gpkg") %>%
   # Bowen Island Municipality JURISDICTION_CODE is 321
@@ -57,8 +58,10 @@ bowen_sales_summary  <- bowen_sales_history %>%
   filter(!is.infinite(price_days_slope) & !is.na(price_days_slope)) # Remove invalid price changes (ex. property has no records of being sold in open market)
 ```
 
-### BC Assessment Line Plot 
-Each property is one line segment on this plot with start and end points. The start point is the lowest price and first available sale date. The end point is the highest price and most recent sale date. 
+### BC Assessment Line Plot
+
+Each property is one line segment on this plot with start and end points. The start point is the lowest price and first available sale date. The end point is the highest price and most recent sale date.
+
 ```{r line_plot}
 ggplot(bowen_sales_summary) +
   geom_segment(aes(x = first_date, xend = last_date, y = lowest_price, yend = highest_price, colour = change_type), alpha = 0.2) +
@@ -67,7 +70,9 @@ ggplot(bowen_sales_summary) +
 ```
 
 ### BC Assessment Interactive Map
-Properties that have available change in price over time are plotted on an interactive Leaflet map. 
+
+Properties that have available change in price over time are plotted on an interactive Leaflet map.
+
 ```{r spatial_leaflet}
 # Join with spatial data
 bowen_folio_addresses <- here("data-raw/bc_assessment/bca_folios_spatial_file_20230103/bca_folios.gpkg.gpkg") %>%
@@ -89,4 +94,3 @@ leaflet(bowen_sales_summary_sf) %>%
               ) %>%
   addLegend(pal = pal, values = ~price_days_slope)
 ```
-
