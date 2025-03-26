@@ -1,0 +1,61 @@
+---
+title: "tree_density_from_lidar"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{tree_density_from_lidar}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(here)
+library(sf)
+library(leaflet)
+library(leaflet.extras)
+library(future)
+library(dplyr)
+
+# install.packages('lasR', repos = 'https://r-lidar.r-universe.dev')
+library(lasR)
+```
+
+# 
+Downloaded from LidarBC: 
+https://lidar.gov.bc.ca/ 
+
+# Convert from .laz to .las
+
+
+# 
+```{r lasR, eval=F}
+set_parallel_strategy(concurrent_files(4))
+# Read las 
+ctg <- readLAScatalog(here("temp/las"))
+
+del = triangulate(filter = keep_ground())
+norm = transform_with(del, "-")
+write = write_las(here("temp/normalized/*_normalized.las"))
+chm = rasterize(2, "max", ofile = here("temp/chm/chm.tif"))
+lm = local_maximum_raster(chm, 5)
+pipeline2 = reader() + del + norm + write + chm + lm
+
+ans = exec(pipeline2, on = ctg)
+ttops <- ans$local_maximum %>% st_transform(4326)
+st_write(ttops, here("data-raw/ttops.gpkg"))
+```
+```{r visualize}
+ttops <- st_read(here("data-raw/ttops.gpkg")) 
+ttops_coord <- ttops %>% st_coordinates() %>% as.data.frame()
+leaflet(ttops_coord) %>%      
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addHeatmap(lng=~X, lat=~Y, blur= 15, max = 65, radius = 30)
+
+```
