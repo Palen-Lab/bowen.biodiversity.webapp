@@ -23,32 +23,6 @@ library(tidyverse)
 library(leaflet)
 ```
 
-# Exploring data
-```{r eval=FALSE}
-bca_folio_addresses <- here("data-raw/bc_assessment/data_advice_COMP22_20220101/bca_folio_addresses_20220101_COMP22.csv") %>%
-  read.csv()
-
-bowen_folio_addresses <- bca_folio_addresses[bca_folio_addresses$JURISDICTION_CODE == 321,]
-bowen_folio_grnl_property_values <- here("data-raw/bc_assessment/data_advice_COMP22_20220101/bca_folio_gnrl_property_values_20220101_COMP22.csv") %>%
-  read.csv() %>%
-  filter(JURISDICTION_CODE == 321)
-
-# ParcelMapBC filtered to Bowen Island, Municipality in QGIS 
-bowen_parcelmap <- here("data-raw/bowen_parcelmap.gpkg") %>% 
-  st_read()
-
-# Spatial data, query by Jurisdiction Code (321 for Bowen Island)
-bca_folios <- here("data-raw/bc_assessment/bca_folios_spatial_file_20230103/bca_folios.gpkg.gpkg") %>%
-  st_read(query = 'SELECT * FROM WHSE_HUMAN_CULTURAL_ECONOMIC_BCA_FOLIO_GNRL_PROP_VALUES_SV WHERE JURISDICTION_CODE LIKE 321')
-
-
-# Sales data
-bca_sales_history <- here("data-raw/bc_assessment/bca_folios_spatial_file_20230103/bca_folios.gpkg.gpkg") %>%
-  st_read(query = 'SELECT * FROM WHSE_HUMAN_CULTURAL_ECONOMIC_BCA_FOLIO_SALES_SV WHERE JURISDICTION_CODE LIKE 321')
-
-
-```
-
 # BCA sales data
 ```{r}
 bowen_sales_history <- here("data-raw/bc_assessment/bca_folios_spatial_file_20230103/bca_folios.gpkg.gpkg") %>%
