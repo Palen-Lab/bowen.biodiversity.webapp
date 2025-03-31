@@ -25,6 +25,7 @@ library(abacusBCA)
 library(DBI)
 library(dplyr)
 library(sf)
+library(here)
 
 # Plotting
 library(ggplot2)
@@ -57,7 +58,7 @@ download_bca_data <- function(persistent_id,api_key,path) {
 selected_dataset <- bca_datasets %>%
   filter(Year == 2025, series == "spatial")
 
-cache_path <- Sys.getenv("ABACUS_CACHE_PATH") # Path to download files, defined in .Renviron
+cache_path <- here(Sys.getenv("ABACUS_CACHE_PATH")) # Path to download files, defined in .Renviron
 tmp <- tempfile(fileext = ".zip") # Download zip to tmp location
 download_bca_data(persistent_id = selected_dataset$persistent_id[1],
                   api_key = Sys.getenv("ABACUS_API_TOKEN"), # API key defined in .Renviron
@@ -69,7 +70,7 @@ unlink(tmp)
 ## Visualization of data
 ```{r}
 # Read in downloaded layer
-spatial_path <- "data-raw/bc_assessment/abacusBCA/bca_folios_spatial_file_20250110/bca_folios_20250110.gpkg.gpkg"
+spatial_path <- here("data-raw/bc_assessment/abacusBCA/bca_folios_spatial_file_20250110/bca_folios_20250110.gpkg.gpkg")
 st_layers(spatial_path)
 # Select only the Bowen Island properties
 bca_folios_bowen <- st_read(spatial_path,
