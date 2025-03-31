@@ -19,216 +19,23 @@ library(bowen.biodiversity.webapp)
 library(here)
 library(terra)
 library(magrittr)
-library(ggtext)
 library(stringr)
-library(googlesheets4)
 ```
 
-```{r sdm_stack}
-# List SDMs filepaths
-SDM_filepaths <- here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island") %>%
-  list.files(recursive = T, full.names = T)
-SDM_filepaths_birds <- SDM_filepaths[str_detect(SDM_filepaths, "Bird")]
-SDM_filepaths_mammals <- SDM_filepaths[str_detect(SDM_filepaths, "Mammal")]
-SDM_filepaths_herptiles <- SDM_filepaths[str_detect(SDM_filepaths, "Amphibian|Reptile")]
-
-# Prepare SDM stack
-SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
-SDM_stack_birds <- lapply(SDM_filepaths_birds, rast) %>% rast()
-SDM_stack_mammals <- lapply(SDM_filepaths_mammals, rast) %>% rast()
-SDM_stack_herptiles <- lapply(SDM_filepaths_herptiles, rast) %>% rast()
-```
 
 ```{r}
-```
-
-
-
-```{r sdm_0.7}
+# Created using vignettes/zonation.Rmd
+# Contains all SDM layers included in Zonation output 
+load(here("inst/extdata/bowen_sdm_status.rda"))
+# Create relative path to read in each SDM
+bowen_sdm_status$relpath <- paste0("inst/extdata/species_distribution_models_bowen/", bowen_sdm_status$filepath)
+# Create all species raster stack 
+sdm_stack <- lapply(bowen_sdm_status$relpath, function(x) {here(x) %>% rast()}) %>% rast()
 # Create species richness SDM 
 presence_threshold <- 0.7
-total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
+total_richness_0.7 <- sdm_to_species_richness(SDM_stack = sdm_stack,
                                           presence_threshold = presence_threshold)
-birds_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack_birds,
-                                          presence_threshold = presence_threshold)
-mammals_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack_mammals,
-                                          presence_threshold = presence_threshold)
-herptiles_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack_herptiles,
-                                          presence_threshold = presence_threshold)
-
-# Create species richness plots: 
-## Each species is marked present in a cell, if they are above a certain 
-## threshold of probability in the input SDMs. 
-subtitle <- paste0("Based on >", 
-                   presence_threshold,
-                   " probability of occurrence in Species Distribution Models.")
-caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
-
-title <- "Total Species Richness"
-total_richness_0.7_plot <- bowen_map(raster_layer = total_richness_0.7,
-                      title = title,
-                      subtitle = subtitle,
-                      caption = caption,
-                      legend_label = "Richness")
-ggplot2::ggsave(
-  here("vignettes", "figures", paste0(Sys.Date(), "_total_richness_0.7.png")),
-  total_richness_0.7_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
-
-title <- "Bird Species Richness"
-birds_richness_0.7_plot <- bowen_map(raster_layer = birds_richness_0.7,
-                      title = title,
-                      subtitle = subtitle,
-                      caption = caption,
-                      legend_label = "Richness")
-ggplot2::ggsave(
-  here("vignettes", "figures", paste0(Sys.Date(), "_birds_richness_0.7.png")),
-  birds_richness_0.7_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
-
-title <- "Mammal Species Richness"
-mammals_richness_0.7_plot <- bowen_map(raster_layer = mammals_richness_0.7,
-                      title = title,
-                      subtitle = subtitle,
-                      caption = caption,
-                      legend_label = "Richness")
-ggplot2::ggsave(
-  here("vignettes", "figures", paste0(Sys.Date(), "_mammals_richness_0.7.png")),
-  mammals_richness_0.7_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
-
-
-title <- "Herptiles Species Richness"
-herptiles_richness_0.7_plot <- bowen_map(raster_layer = herptiles_richness_0.7,
-                      title = title,
-                      subtitle = subtitle,
-                      caption = caption,
-                      legend_label = "Richness")
-ggplot2::ggsave(
-  here("vignettes", "figures", paste0(Sys.Date(), "_herptiles_richness_0.7.png")),
-  herptiles_richness_0.7_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
+writeRaster(total_richness_0.7, here("inst/extdata/bowen_sdm_richness.tif"))
 ```
 
-
-```{r sdm_0.5}
-# Create species richness SDM 
-presence_threshold <- 0.5
-total_richness_0.5 <- sdm_to_species_richness(SDM_stack = SDM_stack,
-                                          presence_threshold = presence_threshold)
-birds_richness_0.5 <- sdm_to_species_richness(SDM_stack = SDM_stack_birds,
-                                          presence_threshold = presence_threshold)
-mammals_richness_0.5 <- sdm_to_species_richness(SDM_stack = SDM_stack_mammals,
-                                          presence_threshold = presence_threshold)
-herptiles_richness_0.5 <- sdm_to_species_richness(SDM_stack = SDM_stack_herptiles,
-                                          presence_threshold = presence_threshold)
-
-# Create species richness plots: 
-## Each species is marked present in a cell, if they are above a certain 
-## threshold of probability in the input SDMs. 
-subtitle <- paste0("Based on >", 
-                   presence_threshold,
-                   " probability of occurrence in Species Distribution Models.")
-caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
-
-title <- "Total Species Richness"
-total_richness_0.5_plot <- bowen_map(raster_layer = total_richness_0.5,
-                      title = title,
-                      subtitle = subtitle,
-                      caption = caption,
-                      legend_label = "Richness")
-ggplot2::ggsave(
-  here("vignettes", "figures", paste0(Sys.Date(), "_total_richness_0.5.png")),
-  total_richness_0.5_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
-
-title <- "Bird Species Richness"
-birds_richness_0.5_plot <- bowen_map(raster_layer = birds_richness_0.5,
-                      title = title,
-                      subtitle = subtitle,
-                      caption = caption,
-                      legend_label = "Richness")
-ggplot2::ggsave(
-  here("vignettes", "figures", paste0(Sys.Date(), "_birds_richness_0.5.png")),
-  birds_richness_0.5_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
-
-title <- "Mammal Species Richness"
-mammals_richness_0.5_plot <- bowen_map(raster_layer = mammals_richness_0.5,
-                      title = title,
-                      subtitle = subtitle,
-                      caption = caption,
-                      legend_label = "Richness")
-ggplot2::ggsave(
-  here("vignettes", "figures", paste0(Sys.Date(), "_mammals_richness_0.5.png")),
-  mammals_richness_0.5_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
-
-
-title <- "Herptiles Species Richness"
-herptiles_richness_0.5_plot <- bowen_map(raster_layer = herptiles_richness_0.5,
-                      title = title,
-                      subtitle = subtitle,
-                      caption = caption,
-                      legend_label = "Richness")
-ggplot2::ggsave(
-  here("vignettes", "figures", paste0(Sys.Date(), "_herptiles_richness_0.5.png")),
-  herptiles_richness_0.5_plot,
-  device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
-)
-```
-
-
-# Species richness plots by threatened status
-```{r }
-# Read species information table from Google Sheets
-species <- read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing")
-
-SDM_filepaths <- here("inst", "app", "rasters", "2024_12_11_SDM_100m_Bowen_Island") %>%
-  list.files(recursive = T, full.names = T)
-SDM_filepaths_birds <- SDM_filepaths[str_detect(SDM_filepaths, "Bird")]
-SDM_filepaths_mammals <- SDM_filepaths[str_detect(SDM_filepaths, "Mammal")]
-SDM_filepaths_herptiles <- SDM_filepaths[str_detect(SDM_filepaths, "Amphibian|Reptile")]
-
-# Prepare SDM stack
-SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
-SDM_stack_birds <- lapply(SDM_filepaths_birds, rast) %>% rast()
-SDM_stack_mammals <- lapply(SDM_filepaths_mammals, rast) %>% rast()
-SDM_stack_herptiles <- lapply(SDM_filepaths_herptiles, rast) %>% rast()
-
-# Create species richness SDM 
-presence_threshold <- 0.7
-total_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack,
-                                          presence_threshold = presence_threshold)
-birds_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack_birds,
-                                          presence_threshold = presence_threshold)
-mammals_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack_mammals,
-                                          presence_threshold = presence_threshold)
-herptiles_richness_0.7 <- sdm_to_species_richness(SDM_stack = SDM_stack_herptiles,
-                                          presence_threshold = presence_threshold)
-
-# Create species richness plots: 
-## Each species is marked present in a cell, if they are above a certain 
-## threshold of probability in the input SDMs. 
-subtitle <- paste0("Based on >", 
-                   presence_threshold,
-                   " probability of occurrence in Species Distribution Models.")
-caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
-
-```
 

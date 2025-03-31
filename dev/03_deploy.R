@@ -27,15 +27,15 @@ devtools::build(vignettes = FALSE)
 
 ## Docker ----
 ## If you want to deploy via a generic Dockerfile
-golem::add_dockerfile_with_renv()
+# golem::add_dockerfile_with_renv()
 ## If you want to deploy to ShinyProxy
-golem::add_dockerfile_with_renv_shinyproxy()
+# golem::add_dockerfile_with_renv_shinyproxy()
 
 ## Posit ----
 ## If you want to deploy on Posit related platforms
-golem::add_positconnect_file()
+# golem::add_positconnect_file()
 golem::add_shinyappsio_file()
-golem::add_shinyserver_file()
+# golem::add_shinyserver_file()
 
 ## Deploy to Posit Connect or ShinyApps.io ----
 
@@ -43,9 +43,10 @@ golem::add_shinyserver_file()
 # rsconnect::writeManifest()
 
 ## In command line.
+options(rsconnect.packrat = TRUE)
 rsconnect::deployApp(
-  appName = desc::desc_get_field("Package"),
-  appTitle = desc::desc_get_field("Package"),
+  appName = "Bowen-Biodiversity-WebApp",
+  appTitle = "Bowen-Biodiversity-WebApp",
   appFiles = c(
     # Add any additional files unique to your app here.
     "R/",

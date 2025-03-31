@@ -1,0 +1,505 @@
+---
+title: "zonation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{zonation}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+# Bowen Island Biodiversity Prioritization - Zonation5
+https://github.com/zonationteam/Zonation5 
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+#### Palen Lab Packages ####
+library(bowen.biodiversity.webapp)
+# remotes::install_github("Palen-Lab/sdmcsr")
+library(sdmcsr) # SDM congruence functions with iNaturalist observations
+# remotes::install_github("Palen-Lab/rinat") # Fork by Jay Matsushiba
+library(rinat) 
+
+#### Other Packages ####
+library(here)
+library(dplyr)
+library(stringr)
+library(foreach)
+library(sf)
+library(terra)
+library(tidyterra)
+library(readxl)
+library(googlesheets4)
+
+#### Common Objects Across Analyses ####
+# Defining CRS to make sure all SDMs have the same
+sdm_crs <- "+proj=aea +lat_0=45 +lon_0=-126 +lat_1=50 +lat_2=58.5 +x_0=1000000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
+# Bowen Island Administrative Boundary (from Metro Vancouver)
+bowen_island_admin <- vect(here("data-raw/bowen_boundary")) %>%
+  project(sdm_crs)
+```
+## Loading Datasets
+
+### Notes on Data Management
+Raw data (temp files) into `data-raw` and added to `data-raw/.gitignore` Save finished outputs (as used by the application) into `inst/extdata` - Convention is to save files that are not `.rda` into this folder (<https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages>)
+
+### Species Distribution Models
+```{r, eval=FALSE}
+#### SPECIES DISTRIBUTION MODELS ####
+# Contents of "data-raw/species_distribution_models/" downloaded from Cumulative effects - SFU Teams Sharepoint 
+# https://1sfu.sharepoint.com/:f:/r/teams/Cumulativeeffects-SFUTeams9/Shared%20Documents/BCH_project_backup/SPECIES?csf=1&web=1&e=FpNkgc 
+# Directory Path: BCH_project_backup/SPECIES/
+# Paper: https://www.nature.com/articles/s41598-020-64501-7#MOESM1
+# See Wendy Palen (SFU) for access 
+#### PROCESSING SDM ####
+# Get list of available SDMs
+sdm_folder <- here("data-raw/species_distribution_models")
+sdm_folder_tif <- list.files(sdm_folder, recursive = T, pattern = "*.tif$") # Get only .tif files
+# Correspondence with Viorel Popescu confirms that _NAs_ should be SDMs with rock, ice, large lakes layers masked
+sdm_folder_tif_NAs <- sdm_folder_tif[grepl("_NAs_", sdm_folder_tif)] # Get only .tif with "_NAs_" in filename
+# Directory to save SDMs
+sdm_output_dir <- here("inst/extdata/species_distribution_models_bowen")
+if(!dir.exists(sdm_output_dir)) {
+  dir.create(sdm_output_dir)
+}
+# Create Bowen Island mask using DSM
+sample_sdm <- rast(here(sdm_folder, sdm_folder_tif_NAs[1])) %>%
+  terra::project(y = sdm_crs) %>%
+  terra::crop(bowen_island_admin, snap = "out") %>%
+  terra::disagg(fact = 4)
+dsm <- rast(here("data-raw/bowen_dsm/chm.tif"))
+dsm_smooth <- dsm %>% 
+  focal(w=9, fun=mean, na.policy="only", na.rm=T) %>% 
+  terra::project(y = sdm_crs) %>%
+  terra::resample(sample_sdm, method = "average")
+m <- c(-1, 35, 1) %>% matrix(ncol = 3, byrow=T)
+bowen_island_mask <- dsm_smooth %>% 
+  classify(m) %>%
+  as.int()
+writeRaster(bowen_island_mask, here("inst/extdata/bowen_mask.tif"), overwrite = T)
+# Weights for terra::focal() function that provides moving window average
+# - Smoothing algorithm 
+# - Use this to fill some empty cells on Bowen Island with weighted mean of the neighbouring cells.
+weights <- matrix(c(0, 0, 1, 1, 1, 0, 0,
+                    0, 1, 1, 2, 1, 1, 0,
+                    1, 1, 3, 3, 3, 1, 1,
+                    1, 2, 3, 5, 3, 2, 1,
+                    1, 1, 3, 3, 3, 1, 1,
+                    0, 1, 1, 2, 1, 1, 0,
+                    0, 0, 1, 1, 1, 0, 0
+), nrow=7)
+#### PREPARE SDMs TO BOWEN ISLAND ####
+# Loop through SDMs
+foreach(sdm_tif = sdm_folder_tif_NAs) %do% {
+  sdm_path <- here(sdm_folder, sdm_tif) 
+  sdm_output_path <- here(sdm_output_dir, basename(sdm_tif))
+  sdm <- rast(sdm_path)
+  # Normalize SDMs that range from 0 to 1000
+  sdm_minmax <- terra::minmax(sdm)
+  if(sdm_minmax[2] > 1) {
+    sdm <- sdm / 1000
+  }
+  sdm_output <- sdm %>%
+    #### Reproject SDM ####
+    terra::project(y = sdm_crs) %>%
+    #### Crop SDM ####
+    # Figured out why the SDMs were cropped incorrectly
+    # The default for cropping a raster by a polygon is to snap = "near"
+    # This means that the polygon extent is snapped to the closest raster
+    # We need snap = "out" to make sure the full extent of the polygon is covered by the output raster
+    terra::crop(bowen_island_admin, snap = "out") %>%
+    #### Extrapolate for Southern Parts of Bowen Island
+    # - fills the NA values missing in south part of Bowen Island
+    terra::focal(w = weights,
+                 fun = "mean",
+                 na.policy = "only") %>%
+    #### Downsamples ####
+    # - from 400 m to 100 m resolution
+    terra::disagg(fact = 4) %>%
+    #### Smooths the raster ####
+    terra::focal(w = weights,
+                 fun = "mean",
+                 na.rm = T,
+                 na.policy = "omit") %>%
+    terra::mask(bowen_island_mask)
+  
+  writeRaster(sdm_output, sdm_output_path, overwrite = T)
+}
+# Create species list from available SDMs
+species_list <- sdm_folder_tif_NAs %>%
+  basename() %>%
+  stringr::str_extract("^\\S+\\.[a-zA-Z]+_") %>%
+  stringr::str_remove("_") %>%
+  stringr::str_replace("\\.", " ")
+# Create taxon list 
+taxon_list <- sdm_folder_tif_NAs %>%
+  dirname() %>%
+  str_remove("_mask")
+# Get iNaturalist and SDM congruence
+sdm_inat <- foreach(i = 1:length(species_list), .combine = "rbind") %do% {
+  # Progress Message 
+  print(paste0("Currently working on species ", i, " out of ", length(species_list),". This is ", species_list[i], "."))
+  # Query iNaturalist by species name and Bowen Island Administrative Boundaries
+  rinat_results_sf <- tryCatch({
+    Sys.sleep(3) # Need to slow down queries to prevent requests being blocked
+    rinat::get_inat_obs_sf(taxon_name = species_list[i],
+                           area = st_as_sf(bowen_island_admin),
+                           maxresults = 10000)
+  }, error = function(cond) {
+    NA
+  })
+  # Get number of iNaturalist observations
+  if(!is.data.frame(rinat_results_sf)) {
+    inat_n_obs <- 0
+  } else {
+    inat_n_obs <- nrow(rinat_results_sf)
+  }
+  # Get Bowen Island SDM
+  sdm <- paste0(str_replace(species_list[i], " ", "."), "_NAs_pu_mask.tif") %>%
+    here(sdm_output_dir, .) %>%
+    rast()
+  # Get highest value in SDM
+  sdm_max <- sdm %>% 
+    minmax() %>% 
+    max()
+  # PREPARE OUTPUT ROW
+  # 1. scientific species name
+  # 2. highest SDM cell value within area 
+  # 3. observation count from iNaturalist
+  result <- data.frame(species = species_list[i],
+                       sdm_max_value = sdm_max,
+                       inat_n_obs = inat_n_obs)
+}
+sdm_inat$taxon_group <- taxon_list
+#### Query eBird for birds ####
+# Number of eBird observations by bird species on Bowen Island
+# - Results from Natasha Beauregard (Summer 2024 USRA)
+bowen_ebird <- read.csv(here("data-raw/bowen_ebird/final_bird.csv")) %>%
+  select(c("scientific_name", "n_ebird"))
+# Combine eBird and iNaturalist counts
+bowen_SDM_iNat_ebird <- merge(sdm_inat, 
+                              bowen_ebird, 
+                              by.x = "species", 
+                              by.y = "scientific_name",
+                              all.x = TRUE) %>%
+  rename(n_obs_inat = inat_n_obs,
+         n_obs_ebird = n_ebird) %>%
+  select(
+    species,
+    sdm_max_value,
+    taxon_group,
+    n_obs_inat,
+    n_obs_ebird
+  )
+# Query Pottinger Report (2005) for small mammals
+bowen_mammals <- read_xlsx(here("data-raw/pottinger_report/Appendix 2 - Expected Occurrence of Wildlife Species In The Cape Roger Curtis Area.xlsx")) %>%
+  filter(`Documented on Bowen` == "y" | `Documented on Bowen` == "?" | `Documented on Bowen` == "One or more spp" )
+# Include Species if they meet any of the following criteria:
+# - eBird observations > 0
+# - iNaturalist observations > 0
+# - included in Pottinger Report 
+include_threshold <- 0.5 # Min SDM cell value somewhere on Bowen Island for including species into focal list
+bowen_SDM_obs_focal_df <- bowen_SDM_iNat_ebird %>%
+  mutate(include = case_when(
+    (n_obs_inat > 0 | n_obs_ebird > 0 ) & sdm_max_value > include_threshold ~ "y",
+    species %in% bowen_mammals$`Scientific name` ~ "y")
+  )
+# Create list of species names to include
+bowen_focal_list <- bowen_SDM_obs_focal_df %>%
+  filter(include == "y") %>%
+  select(species) %>%
+  unlist() %>%
+  unname() 
+# Get filepath for each SDM
+bowen_SDM_iNat_ebird$filepath <- lapply(bowen_SDM_iNat_ebird$species, function(x) {paste0(str_replace(x, " ", "."), "_NAs_pu_mask.tif")})
+# Add columns that can be adjusted manually
+bowen_SDM_iNat_ebird$prov_status <- ""
+bowen_SDM_iNat_ebird$fed_status <- ""
+bowen_SDM_iNat_ebird$IUCN_status <- ""
+bowen_SDM_iNat_ebird$weights <- 1.0
+# Dataframe for focal species on Bowen Island
+bowen_sdm_focal <- bowen_SDM_iNat_ebird %>%
+  filter(species %in% bowen_focal_list)
+#### UPLOAD ####
+# This sheet was uploaded to Google Sheets
+# WARNING: DO NOT RUN OR WILL OVERWRITE MANUAL INPUT TO GOOGLE SHEETS
+# write_sheet(bowen_sdm_focal,
+#             "https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing",
+#             "species")
+species_distribution_models_focal_bowen_info <- bowen_sdm_focal
+save(species_distribution_models_focal_bowen_info, file = here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
+```
+#### Creating Species Information Spreadsheet 
+This spreadsheet contains all of the information on species name, taxon group, threatened status, weights to use for Zonation. 
+
+Visit this link to see the spreadsheet hosted on Google Drive.
+https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing
+```{r}
+load(here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
+#### REVISION ####
+# - This section necessary, since Google Sheet was uploaded at earlier time
+# - Changes since made to the creation of Bowen SDM Focal
+# - Michael Tylo (USRA Spring 2025) did the work in the Google Sheet
+# Manually look up species and correct taxonomy, add conservation status
+sdm_googlesheet <- read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing") %>%
+  select(!c("full_path", "filename"))
+# Drop duplicate columns, keep columns for n eBird and iNaturalist observations, max SDM values
+bowen_sdm_focal_sel <- species_distribution_models_focal_bowen_info %>%
+  select(!c("taxon_group", "prov_status", "fed_status", "IUCN_status", "weights"))
+# Merge
+bowen_sdm_status <- merge(bowen_sdm_focal_sel, sdm_googlesheet, by.x = "species", by.y = "sci_name", all.x = T) 
+save(bowen_sdm_status, file = here("inst/extdata/bowen_sdm_status.rda"))
+```
+### Metro Vancouver Sensitive Ecosystems Inventory
+```{r}
+#### Metro Vancouver Sensitive Ecosystems Inventory ####
+# Contents of "data-raw/metrovancouver_sensitive_ecosystem_inventory/" downloaded from MetroVancouver Open Data Catalogue
+# GeoPackage download: https://arcg.is/TnfXL 
+# Reports download: https://metrovancouver.org/services/regional-planning/sensitive-ecosystem-inventory-mapping-app
+mvsei <- st_read(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg")) %>%
+  st_transform(crs = sdm_crs)
+# Create directory to save SEI rasters 
+sei_dir <- here("inst/extdata/bowen_sei_rasters")
+if(!dir.exists(sei_dir)) {
+  dir.create(sei_dir)
+}
+# Load Bowen Island Mask Created Previously
+bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
+  rast()
+# Bowen Island SEI 
+bowen_sei <- mvsei %>% 
+  st_intersection(st_as_sf(bowen_island_admin))
+#### SEI sf Into spatRaster Function ####
+sei_raster_by_class <- function(sei, SECl, SEsubcl = NA, mask) {
+  # Filter by SEI classes
+  if(!is.na(SEsubcl)) {
+    selected_sei <- sei %>%
+      filter(SECl_1 == SECl | SECl_2 == SECl) %>%
+      filter(SEsubcl_1 == SEsubcl | SEsubcl_2 == SEsubcl)
+    sei_name <- paste0(SECl, "_", SEsubcl)
+  } else {
+    selected_sei <- sei %>%
+      filter(SECl_1 == SECl | SECl_2 == SECl) 
+    sei_name <- SECl
+  }
+  output_rast <- selected_sei %>%
+    terra::vect() %>% # Change to SpatVector for rasterization
+    terra::project(mask) %>% # Reproject to the mask CRS
+    terra::rasterize(mask,
+                     touches = T,
+                     background = NA) # Rasterize to match mask, set background values to NA
+  names(output_rast) <- sei_name
+  return(output_rast)
+}
+#### Running SEI Function to Create Habitat Layers ####
+#### WATER
+# RI ff (riparian fringe)
+RI_ff <- sei_raster_by_class(sei = bowen_sei, SECl = "RI", SEsubcl = "ff", mask = bowen_island_mask)
+# RI gu (riparian gully)
+RI_gu <- sei_raster_by_class(sei = bowen_sei, SECl = "RI", SEsubcl = "gu", mask = bowen_island_mask)
+# WN sw (wetland shallow water)
+WN_sw <- sei_raster_by_class(sei = bowen_sei, SECl = "WN", SEsubcl = "sw", mask = bowen_island_mask)
+# FW la (freshwater lake)
+FW_la <- sei_raster_by_class(sei = bowen_sei, SECl = "FW", SEsubcl = "la", mask = bowen_island_mask)
+# FW pd (freshwater pond)
+FW_pd <- sei_raster_by_class(sei = bowen_sei, SECl = "FW", SEsubcl = "pd", mask = bowen_island_mask)
+# WN bo (bog)
+WN_bo <- sei_raster_by_class(sei = bowen_sei, SECl = "WN", SEsubcl = "bo", mask = bowen_island_mask)
+# WN fn (fen)
+WN_fn <- sei_raster_by_class(sei = bowen_sei, SECl = "WN", SEsubcl = "fn", mask = bowen_island_mask)
+# WN sp (swamp)
+WN_sp <- sei_raster_by_class(sei = bowen_sei, SECl = "WN", SEsubcl = "sp", mask = bowen_island_mask)
+# WN (wetland) for bo, fn, sp
+WN_bo_fn_sp <- terra::allNA(c(WN_bo, WN_fn, WN_sp)) %>%
+  terra::as.int() %>% # TRUE FALSE to 1 0
+  classify(rbind(c(1, NA), c(0, 1))) # Change 1 to NA, 0 to 1 
+names(WN_bo_fn_sp) <- "WN_bo_fn_sp"
+#### VEGETATION
+# HB cs (herbaceous coastal)
+HB_cs <- sei_raster_by_class(sei = bowen_sei, SECl = "HB", SEsubcl = "cs", mask = bowen_island_mask)
+# HB vs (herbaceous vegetated shoreline)
+HB_vs <- sei_raster_by_class(sei = bowen_sei, SECl = "HB", SEsubcl = "vs", mask = bowen_island_mask)
+# SV ro (sparse vegetation rocky outcrop)
+SV_ro <- sei_raster_by_class(sei = bowen_sei, SECl = "SV", SEsubcl = "ro", mask = bowen_island_mask)
+# WD co (woodland conifers)
+WD_co <- sei_raster_by_class(sei = bowen_sei, SECl = "WD", SEsubcl = "co", mask = bowen_island_mask)
+# WD mx (woodland mix)
+WD_mx <- sei_raster_by_class(sei = bowen_sei, SECl = "WD", SEsubcl = "mx", mask = bowen_island_mask)
+# YF co (young forest conifer)
+YF_co <- sei_raster_by_class(sei = bowen_sei, SECl = "YF", SEsubcl = "co", mask = bowen_island_mask)
+# YF mx (young forest mix)
+YF_mx <- sei_raster_by_class(sei = bowen_sei, SECl = "YF", SEsubcl = "mx", mask = bowen_island_mask)
+# MF (Mature Forest)
+MF <- sei_raster_by_class(sei = bowen_sei, SECl = "MF", mask = bowen_island_mask)
+# OF (Old Forest)
+OF <- sei_raster_by_class(sei = bowen_sei, SECl = "OF", mask = bowen_island_mask)
+#### INTERTIDAL
+## IT mf (Mudflats)
+IT_mf <- sei_raster_by_class(sei = bowen_sei, SECl = "IT", SEsubcl = "mf", mask = bowen_island_mask)
+## IT el (Eelgrass)
+IT_el <- sei_raster_by_class(sei = bowen_sei, SECl = "IT", SEsubcl = "el", mask = bowen_island_mask)
+## IT bs (Beaches)
+IT_bs <- sei_raster_by_class(sei = bowen_sei, SECl = "IT", SEsubcl = "bs", mask = bowen_island_mask)
+#### EXPORT AS RASTER AND DOCUMENT LAYERS IN CSV ####
+sei_rasters <- c(RI_ff, RI_gu, FW_la, FW_pd, WN_sw, WN_bo_fn_sp, HB_cs, HB_vs, SV_ro, WD_co, WD_mx, YF_co, YF_mx, MF, OF, IT_mf, IT_el, IT_bs)
+sei_rasters %>%
+  lapply(function(x) {
+    sei_name <- names(x)
+    writeRaster(x, here(sei_dir, paste0(sei_name, ".tif")), overwrite=TRUE)
+  })
+sei_rasters_df <- data.frame(sei_habitat = names(sei_rasters))
+sei_rasters_df$filepath <- paste0(sei_rasters_df$sei_habitat, ".tif")
+sei_rasters_df$weights <- 1.0
+save(sei_rasters_df, file = here("inst/extdata/", "bowen_sei_rasters_info.rda"))
+write.csv(sei_rasters_df, here("inst/extdata/", "bowen_sei_rasters_info.csv"))
+```
+### Human Disturbance
+```{r}
+#### Human Disturbance #### 
+# Contents of "data-raw/human_disturbance/" received from Miguel Arias Patino (marias@unbc.ca)
+# https://1sfu.sharepoint.com/:f:/r/teams/Cumulativeeffects-SFUTeams9/Shared%20Documents/General/BC%20Hydro%202025%20IRP/Environmental%20Layers/Human%20Footprint?csf=1&web=1&e=hUYDs7 
+# Thesis (methods): https://unbc.arcabc.ca/islandora/object/unbc%3A59107
+# Paper (methods): https://doi.org/10.1016/j.ecolind.2024.112407 
+# Paper (methods): https://doi.org/10.1139/facets-2021-0063  
+disturb_path <- here("data-raw/human_disturbance/human_footprint_30m_v2.tif")
+disturb <- terra::rast(disturb_path)
+# Load Bowen Island Mask Created Previously
+bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
+  rast()
+#### Resample Raster to Bowen Island ####
+disturb_resamp <- terra::resample(disturb, bowen_island_mask)
+writeRaster(disturb_resamp, 
+            here::here("inst/extdata", "bowen_human_footprint.tif"), 
+            overwrite=TRUE)
+#### Reclassify Raster to Intact, Low, Medium, High ####
+# https://www.facetsjournal.com/doi/10.1139/facets-2021-0063#sec-2 
+# Intact is 0 to 1 
+# Low disturbance is 1 to 4
+# Medium disturbance is 4 to 10
+# High disturbance is 10+ 
+# Maximum theoretical value is 66
+disturb_m <- c(0, 1, 0,
+       1, 4, 1,
+       4, 10, 2,
+       10, 100, 3) %>%
+  matrix(ncol = 3, byrow = T)
+# Reclassify disturbance to levels
+disturb_recl <- disturb_resamp %>%
+  classify(disturb_m, include.lowest = T)
+writeRaster(disturb_recl, 
+            here::here("inst/extdata", "bowen_human_footprint_recl.tif"), 
+            overwrite=TRUE)
+#### Inverse Disturbance ####
+#' Normalize on 0 to 1 scale
+normalize <- function(input_rast) {
+  mm <- minmax(input_rast)
+  min <- mm[1]
+  max <- mm[2]
+  normalized <- (input_rast - min) / (max - min)
+}
+#' Invert raster, so max values are min and vice versa. 
+invert <- function(input_rast) {
+  mm <- minmax(input_rast)
+  max <- mm[2]
+  inverted <- max - input_rast 
+}
+# Normalize and invert the disturbance, so its positive as Zonation input
+disturb_inv <- disturb_resamp %>% 
+  normalize() %>%
+  invert()
+writeRaster(disturb_inv, here("inst/extdata/bowen_human_footprint_inv.tif"), overwrite=TRUE)
+
+```
+## Zonation 
+Running zonation with all inputs
+```{r}
+#### CREATE DATAFRAME FOR INPUT LAYERS ####
+# Bowen Island SDM Table
+load(here("inst/extdata/bowen_sdm_status.rda"))
+bowen_sdm_rasters_df <- bowen_sdm_status %>% 
+  select(species, filepath, weights) %>%
+  rename(group = species)
+bowen_sdm_rasters_df$filepath <- bowen_sdm_rasters_df$filepath %>% unlist()
+bowen_sdm_rasters_df$type <- "sdm"
+# Bowen Island SEI Table
+load(here("inst/extdata/bowen_sei_rasters_info.rda")) 
+sei_rasters_df <- sei_rasters_df %>% 
+  select(sei_habitat, filepath, weights) %>%
+  rename(group = sei_habitat)
+sei_rasters_df$type <- "habitat"
+# Bowen Island Disturbance
+disturb_rasters_df <- data.frame(filepath = "bowen_human_footprint_inv.tif",
+                                 weights = 1.0)
+disturb_rasters_df$type <- "habitat"
+# Bind all input layers together
+layers_df <- bind_rows(bowen_sdm_rasters_df, sei_rasters_df, disturb_rasters_df)
+#### Set weights based on "species" and "habitat" type so 50/50 weight
+# Get SDM weight
+n_sdm <- layers_df %>%
+  filter(type == "sdm") %>%
+  nrow()
+weight_sdm <- 1/n_sdm
+# Get habitat weight
+n_habitat <- layers_df %>%
+  filter(type == "habitat") %>%
+  nrow()
+weight_habitat <- 1/n_habitat
+# Set weights
+layers_df <- layers_df %>%
+  mutate(
+    weights = case_when(
+      type == "sdm" ~ weight_sdm,
+      type == "habitat" ~ weight_habitat
+    )
+  )
+#### Get fullpaths for filenames in inst/extdata
+rasters_df <- data.frame(fullpath = here("inst/extdata/", list.files(path = here("inst/extdata"), recursive = T, pattern = "*.tif$")))
+rasters_df$filepath <- basename(rasters_df$fullpath)
+# Merge with weights
+weights_df <- merge(layers_df, rasters_df, by = "filepath")
+weights_df$relpath <- weights_df$fullpath %>%
+  gsub(paste0(here(),"/"), "", .) # Prepare paths for Shiny app 
+save(weights_df, file = here("inst/extdata/weights_df.rda"))
+#### CREATE features.txt FOR ZONATION RUN ####
+# Create features.txt from files available in data
+features_path <- here("vignettes/zonation/features.txt")
+cat('"weight" "filename"', 
+    file = features_path,
+    sep = "\n")
+for(i in 1:nrow(weights_df)) {
+  next_row <- paste0(weights_df[i, "weights"], " ", weights_df[i, "fullpath"])
+  cat(next_row,
+      file = features_path,
+      append = TRUE,
+      sep = "\n")
+}
+#### SET PARAMS FOR ZONATION RUN ####
+zonation5_location <- here("vignettes/zonation/zonation5") 
+zonation5_mode <- "CAZ2"
+# Zonation5 Setting Text File
+zonation5_settings <-  here("vignettes/zonation/settings.z5")
+zonation5_settings_txt <- c("feature list file = features.txt", 
+                            paste0("analysis area mask layer = ", here("inst/extdata/bowen_mask.tif"))) # Add Bowen Island Mask
+writeLines(zonation5_settings_txt, zonation5_settings)
+zonation5_output <- here("vignettes/zonation/output") 
+zonation5_command <- str_glue(
+  '{zonation5_location} -a --mode={zonation5_mode} {zonation5_settings} {zonation5_output}',
+  zonation5_location = zonation5_location,
+  zonation5_mode = zonation5_mode,
+  zonation5_settings = zonation5_settings,
+  zonation5_output = zonation5_output
+) %>%
+  str_c()
+#### ZONATION RUN ####
+system(command = zonation5_command)
+```
+## Output
+```{r}
+#### VISUALIZE OUTPUT ####
+rankmap <- here("vignettes/zonation/output/rankmap.tif") %>% rast()
+plot(rankmap)
+```

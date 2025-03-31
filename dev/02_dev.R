@@ -59,6 +59,7 @@ usethis::use_test("app")
 # Documentation
 
 ## Vignette ----
+usethis::use_vignette("zonation")
 usethis::use_vignette("species_table.Rmd")
 usethis::use_vignette("environmental_table.Rmd")
 usethis::use_vignette("overlap_maps.Rmd")

@@ -13,19 +13,11 @@ app_ui <- function(request) {
       bslib::nav_spacer(),
       bslib::nav_panel(
         "Map",
-        mod_main_map_ui("main_map")
-      ),
-      bslib::nav_panel(
-        "Zonation",
-        mod_zonation_param_ui("zonation_param")
+        # sliderInput("opacity_slider", "Opacity", 0, 1, 1),
+        tags$style(type = "text/css", "#map {height: calc(100vh - 90px) !important;}"),
+        leaflet::leafletOutput("map")
       ),
       fillable = c("Map"),
-      sidebar = bslib::sidebar({
-        tagList(
-          h1("Zonation5 Tool"),
-          actionButton(label = "Zonation","zonation_button")
-        )
-      }),
       title = div(
         img(
           src = "www/bowenisland_brandmark.png",
