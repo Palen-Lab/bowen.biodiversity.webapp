@@ -2,7 +2,7 @@
 title: "Threats: Development"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{threats_development}
+  %\VignetteIndexEntry{"Threats: Development"}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
