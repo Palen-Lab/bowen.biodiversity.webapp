@@ -1,0 +1,91 @@
+---
+title: "threats_development_abacusapi"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{threats_development_abacusapi}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Threats: Development - Accessing Data via Abacus API
+Due to difficulties faced with downloading data via browser on Abacus site, I am going to use the API to download instead. There is also the `abacusBCA` R package (https://github.com/mountainMath/abacusBCA/tree/main), which I attempted to use with some difficulty. Ultimately, I was able to download files through the Abacus API interface with some of the code in the `abacusBCA`. Not all functionality seemed to work though, so I couldn't use the package directly. 
+
+## Basic setup with packages 
+```{r setup}
+library(bowen.biodiversity.webapp)
+# remotes::install_github("mountainmath/abacusBCA")
+library(abacusBCA)
+library(DBI)
+library(dplyr)
+library(sf)
+
+# Plotting
+library(ggplot2)
+library(leaflet)
+```
+
+## Download function 
+```{r, eval = F}
+# Get the persistentId necessary for the download using the abacusBCA package
+bca_datasets <- abacusBCA::list_bca_datasets()
+# Copied the download_bca_data function from the abacusBCA package
+# This is not exported from the package, so needed to copy and paste
+# Could not get the existing get_bca_data() to work for some reason
+download_bca_data <- function(persistent_id,api_key,path) {
+  r<-httr::GET(url="https://abacus.library.ubc.ca/api/access/datafile/:persistentId/",
+               query=list(persistentId=persistent_id),
+               httr::add_headers("X-Dataverse-key"=api_key),
+               httr::write_disk(path, overwrite=TRUE))
+  if (r$status_code != 200) {
+    stop(paste0("Problem downloading the data:\n",
+                "Persistent ID: ",persistent_id,"\n",
+                httr::content(r)$message))
+  }
+}
+```
+
+## Downloading and extracting data 
+```{r}
+# Filter to one dataset
+selected_dataset <- bca_datasets %>%
+  filter(Year == 2025, series == "spatial")
+
+cache_path <- Sys.getenv("ABACUS_CACHE_PATH") # Path to download files, defined in .Renviron
+tmp <- tempfile(fileext = ".zip") # Download zip to tmp location
+download_bca_data(persistent_id = selected_dataset$persistent_id[1],
+                  api_key = Sys.getenv("ABACUS_API_TOKEN"), # API key defined in .Renviron
+                  path = tmp)
+fs<-zip::unzip(tmp,exdir=cache_path) # unzip from tmp location to cache path
+unlink(tmp)
+```
+
+## Visualization of data
+```{r}
+# Read in downloaded layer
+spatial_path <- "data-raw/bc_assessment/abacusBCA/bca_folios_spatial_file_20250110/bca_folios_20250110.gpkg.gpkg"
+st_layers(spatial_path)
+# Select only the Bowen Island properties
+bca_folios_bowen <- st_read(spatial_path,
+                            query = 'SELECT * FROM WHSE_HUMAN_CULTURAL_ECONOMIC_BCA_FOLIO_GNRL_PROP_VALUES_SV WHERE JURISDICTION_CODE LIKE 321') %>%
+  st_transform(4326)
+
+# LEAFLET
+pal <- colorNumeric(
+  palette = "Blues",
+  domain = bca_folios_bowen$GEN_NET_LAND_VALUE)
+leaflet(bca_folios_bowen) %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addPolygons(color = "#444444", weight = 0.1,,
+              fillColor = ~pal(GEN_NET_LAND_VALUE),
+              fillOpacity = 0.7
+  ) %>%
+  addLegend(pal = pal, values = ~GEN_NET_LAND_VALUE)
+```
+
