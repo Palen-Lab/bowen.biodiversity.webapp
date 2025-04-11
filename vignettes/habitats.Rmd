@@ -1,0 +1,151 @@
+---
+title: "habitats"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{habitat_wetlands}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(here)
+library(sf)
+library(tidyverse)
+library(terra)
+library(leaflet)
+
+# Load Bowen Island Mask Created Previously
+bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
+  rast() %>%
+  project(project_crs)
+
+
+```
+
+# Main Goal
+
+Prepare habitat layers for input into Zonation. Previously, for the Feb 1 2025 workshop, we used the Sensitive Ecosystem Inventory from Metro Vancouver. These habitat types were originally represented as polygon areas, which was converted to raster.
+
+```{r}
+#### Metro Vancouver Sensitive Ecosystems Inventory ####
+# Contents of "data-raw/metrovancouver_sensitive_ecosystem_inventory/" downloaded from MetroVancouver Open Data Catalogue
+# GeoPackage download: https://arcg.is/TnfXL 
+# Reports download: https://metrovancouver.org/services/regional-planning/sensitive-ecosystem-inventory-mapping-app
+mvsei <- st_read(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg")) %>%
+  st_transform(crs = bowen.biodiversity.webapp::project_crs)
+# Bowen Island SEI 
+bowen_sei <- mvsei %>% 
+  st_intersection(st_as_sf(bowen.biodiversity.webapp::bowen_boundary)) 
+```
+
+## Wetlands
+
+There were some areas identified as potentially incorrect during the Feb 1 2025 workshop. We followed up with Alan Whitehead and John Dowler via email for additional details. See issue here: <https://github.com/Palen-Lab/bowen.biodiversity.webapp/issues/23>
+
+Alan Whitehead provided ponds and wetlands shapefiles, that he had created over the years as an environmental consultant on Bowen Island. 
+
+In the first Zonation run, we combined WN for both SECl_1 and SECl_2. This overestimated wetland extent, since this included areas that were more likely to have another habitat quality based off of MV methodology (which was mostly based on aerial surveys). We also pulled out the "Shallow Water" subcategory into its seperate layer. 
+
+To improve wetland extent: 
+- Consider all wetland categories in the SEI 
+- Create ranking system of wetland likelihood, by creating separate rasters and summing 
+   - WN category in SECl_1
+   - WN category in SECl_2
+   - Alan Whitehead's Wetland Layer
+
+The idea would be that where all three of these agree has the highest likelihood for wetland ecosystems. 
+```{r}
+# Alan Whitehead's Wetland Layer
+wetlands_aw <- bowen.biodiversity.webapp::bowen_wetlands_whitehead_consultants
+# Bowen SEI SECl_1 
+bowen_sei_wn_1 <- bowen_sei %>%
+  filter(SECl_1 == "WN")
+# Bowen SEI SECl_2
+bowen_sei_wn_2 <- bowen_sei %>%
+  filter(SECl_2 == "WN")
+
+bowen_rasterize <- function(sf) {
+  output <- sf %>% 
+    terra::vect() %>% # Change to SpatVector for rasterization
+    # terra::project(project_crs) # Reproject to the mask CRS
+    terra::rasterize(bowen_island_mask,
+                     touches = T,
+                     background = NA) # Rasterize to match mask, set background values to NA
+}
+wetlands_aw_rast <- bowen_rasterize(wetlands_aw)
+
+
+leaflet() %>%
+  addTiles() %>%
+  addRasterImage(x = bowen_island_mask) %>%
+  addPolygons(data = st_set_crs(wetlands_aw, 32610))
+
+
+#### SEI sf Into spatRaster Function ####
+sei_raster_by_class <- function(sei, SECl, SEsubcl = NA, mask) {
+  # Filter by SEI classes
+  if(!is.na(SEsubcl)) {
+    selected_sei <- sei %>%
+      filter(SECl_1 == SECl | SECl_2 == SECl) %>%
+      filter(SEsubcl_1 == SEsubcl | SEsubcl_2 == SEsubcl)
+    sei_name <- paste0(SECl, "_", SEsubcl)
+  } else {
+    selected_sei <- sei %>%
+      filter(SECl_1 == SECl | SECl_2 == SECl) 
+    sei_name <- SECl
+  }
+  output_rast <- selected_sei %>%
+    terra::vect() %>% # Change to SpatVector for rasterization
+    terra::project(mask) %>% # Reproject to the mask CRS
+    terra::rasterize(mask,
+                     touches = T,
+                     background = NA) # Rasterize to match mask, set background values to NA
+  names(output_rast) <- sei_name
+  return(output_rast)
+}
+# WN sw (wetland shallow water)
+WN_sw <- sei_raster_by_class(sei = bowen_sei, SECl = "WN", SEsubcl = "sw", mask = bowen_island_mask)
+# WN bo (bog)
+WN_bo <- sei_raster_by_class(sei = bowen_sei, SECl = "WN", SEsubcl = "bo", mask = bowen_island_mask)
+# WN fn (fen)
+WN_fn <- sei_raster_by_class(sei = bowen_sei, SECl = "WN", SEsubcl = "fn", mask = bowen_island_mask)
+# WN sp (swamp)
+WN_sp <- sei_raster_by_class(sei = bowen_sei, SECl = "WN", SEsubcl = "sp", mask = bowen_island_mask)
+# WN (wetland) for bo, fn, sp
+WN_bo_fn_sp <- terra::allNA(c(WN_bo, WN_fn, WN_sp)) %>%
+  terra::as.int() %>% # TRUE FALSE to 1 0
+  classify(rbind(c(1, NA), c(0, 1))) # Change 1 to NA, 0 to 1 
+names(WN_bo_fn_sp) <- "WN_bo_fn_sp"
+
+
+# Create directory to save SEI rasters 
+sei_dir <- here("inst/extdata/bowen_sei_rasters")
+if(!dir.exists(sei_dir)) {
+  dir.create(sei_dir)
+}
+```
+
+```{r}
+#### Running SEI Function to Create Habitat Layers ####
+#### WATER
+# RI ff (riparian fringe)
+RI_ff <- sei_raster_by_class(sei = bowen_sei, SECl = "RI", SEsubcl = "ff", mask = bowen_island_mask)
+# RI gu (riparian gully)
+RI_gu <- sei_raster_by_class(sei = bowen_sei, SECl = "RI", SEsubcl = "gu", mask = bowen_island_mask)
+# FW la (freshwater lake)
+FW_la <- sei_raster_by_class(sei = bowen_sei, SECl = "FW", SEsubcl = "la", mask = bowen_island_mask)
+# FW pd (freshwater pond)
+FW_pd <- sei_raster_by_class(sei = bowen_sei, SECl = "FW", SEsubcl = "pd", mask = bowen_island_mask)
+
+ponds_aw <- bowen.biodiversity.webapp::bowen_ponds_whitehead_consultants
+
+```
+
