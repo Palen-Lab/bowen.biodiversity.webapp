@@ -26,8 +26,6 @@ library(leaflet)
 bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
   rast() %>%
   project(project_crs)
-
-
 ```
 
 # Main Goal
@@ -86,10 +84,11 @@ bowen_sei_wn_2_rast <- bowen_rasterize(bowen_sei_wn_2)
 
 wetlands <- sum(c(wetlands_aw_rast, bowen_sei_wn_1_rast, bowen_sei_wn_2_rast), na.rm = T)
 
-leaflet() %>%
+leaflet(width = "100%", height = "800px") %>%
   addTiles() %>%
   addRasterImage(x = wetlands_aw_rast, group = "A. Whitehead Wetlands", colors = "red") %>%
   addRasterImage(x = bowen_sei_wn_1_rast, group = "Bowen SEI SECl_1 Wetlands", colors = "yellow") %>%
   addRasterImage(x = bowen_sei_wn_2_rast, group = "Bowen SEI SECl_2 Wetlands", colors = "blue") %>%
-  addLayersControl(overlayGroups = c("A. Whitehead Wetlands", "Bowen SEI SECl_1 Wetlands", "Bowen SEI SECl_2 Wetlands"))
+  addLayersControl(overlayGroups = c("A. Whitehead Wetlands", "Bowen SEI SECl_1 Wetlands", "Bowen SEI SECl_2 Wetlands"),
+                   options = layersControlOptions(collapsed = F))
 ```

@@ -18,3 +18,9 @@
 #'   \item{geometry}{sf geometry}
 #' }
 "bowen_fish_whitehead_consultants"
+
+#' Project Coordinate Reference System
+#'
+#' Coordinate Reference System for the Bowen Biodiversity Webapp Project
+#' @format ## `project_crs`
+"project_crs"
