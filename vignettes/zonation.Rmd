@@ -6,22 +6,25 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
 # Bowen Island Biodiversity Prioritization - Zonation5
-https://github.com/zonationteam/Zonation5 
+
+<https://github.com/zonationteam/Zonation5>
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+# Adding text 
 ```
 
 ```{r setup}
 #### Palen Lab Packages ####
 library(bowen.biodiversity.webapp)
-# remotes::install_github("Palen-Lab/sdmcsr")
+#remotes::install_github("Palen-Lab/sdmcsr")
 library(sdmcsr) # SDM congruence functions with iNaturalist observations
-# remotes::install_github("Palen-Lab/rinat") # Fork by Jay Matsushiba
+#remotes::install_github("Palen-Lab/rinat") # Fork by Jay Matsushiba
 library(rinat) 
 
 #### Other Packages ####
@@ -39,15 +42,20 @@ library(googlesheets4)
 # Defining CRS to make sure all SDMs have the same
 sdm_crs <- "+proj=aea +lat_0=45 +lon_0=-126 +lat_1=50 +lat_2=58.5 +x_0=1000000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
 # Bowen Island Administrative Boundary (from Metro Vancouver)
-bowen_island_admin <- vect(here("data-raw/bowen_boundary")) %>%
+bowen_island_admin <- vect(here("inst/extdata/bowen_boundary")) %>%
   project(sdm_crs)
 ```
+
 ## Loading Datasets
 
 ### Notes on Data Management
+
 Raw data (temp files) into `data-raw` and added to `data-raw/.gitignore` Save finished outputs (as used by the application) into `inst/extdata` - Convention is to save files that are not `.rda` into this folder (<https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages>)
 
 ### Species Distribution Models
+
+The species distribution models (SDMs) included in the Bowen Island Conservation Plan analyses were originally produced by Viorel Popescu (Popescu et al., 2020). Out of the 341 SDMs available, we included 193 of the SDMs. Occurrence locations of small vertebrate species were gathered from Global Biodiversity Information Facility (data.gbif.org) and Nature Counts (birdscanada.org/birdmon) open-access databases. Inclusion of small mammal species was based on Appendix 2 & 3 from the 2005 Environmental Inventory report, which states species presence on Bowen Island. We used the iNaturalist and eBird databases of observations for the inclusion criteria for reptiles, amphibians, and birds (described in further detail in Methods).
+
 ```{r, eval=FALSE}
 #### SPECIES DISTRIBUTION MODELS ####
 # Contents of "data-raw/species_distribution_models/" downloaded from Cumulative effects - SFU Teams Sharepoint 
@@ -233,11 +241,17 @@ bowen_sdm_focal <- bowen_SDM_iNat_ebird %>%
 species_distribution_models_focal_bowen_info <- bowen_sdm_focal
 save(species_distribution_models_focal_bowen_info, file = here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
 ```
-#### Creating Species Information Spreadsheet 
-This spreadsheet contains all of the information on species name, taxon group, threatened status, weights to use for Zonation. 
 
-Visit this link to see the spreadsheet hosted on Google Drive.
-https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing
+#### Creating Species Information Spreadsheet
+
+Conservation statuses for species at the provincial, federal, and global levels were obtained from the BC Species & Ecosystems Explorer and the IUCN Red List. Provincial statuses followed the Red, Blue, and Yellow List classifications, while federal statuses were based on COSEWIC assessments where applicable. In cases of taxonomic discrepancies, species names were updated to reflect current classifications and documented accordingly.
+
+BC Species and Ecosystems Explorer: <https://a100.gov.bc.ca/pub/eswp/> IUCN Red List: <https://www.iucnredlist.org/>
+
+The spreadsheet below contains all of the information on species name, taxon group, threatened status, weights to use for Zonation.
+
+Visit this link to view the spreadsheet, hosted on Google Drive. <https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing>
+
 ```{r}
 load(here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
 #### REVISION ####
@@ -254,7 +268,17 @@ bowen_sdm_focal_sel <- species_distribution_models_focal_bowen_info %>%
 bowen_sdm_status <- merge(bowen_sdm_focal_sel, sdm_googlesheet, by.x = "species", by.y = "sci_name", all.x = T) 
 save(bowen_sdm_status, file = here("inst/extdata/bowen_sdm_status.rda"))
 ```
+
 ### Metro Vancouver Sensitive Ecosystems Inventory
+
+We derived Habitat Type layers from the Metro Vancouver Sensitive Ecosystem Inventory (MVSEI) mapping app. Data was downloaded from the Open Data Catalogue as a GeoPackage. Habitats were grouped into three main categories: water, vegetation, and intertidal.
+
+Water subcategories included riparian fringe, riparian gully, wetland shallow water, freshwater lake, freshwater pond, and wetland, with bog, fen, and swamp habitats grouped under wetland.
+
+For vegetation, we generated habitat layers for herbaceous coastal, herbaceous vegetated shoreline, sparse vegetation rocky outcrop, woodland conifer, woodland mixed, young forest conifer, young forest mixed, as well as broader categories of mature forest and old forest.
+
+Intertidal habitat layers included mudflats, eelgrass beds, and beaches.
+
 ```{r}
 #### Metro Vancouver Sensitive Ecosystems Inventory ####
 # Contents of "data-raw/metrovancouver_sensitive_ecosystem_inventory/" downloaded from MetroVancouver Open Data Catalogue
@@ -357,7 +381,11 @@ sei_rasters_df$weights <- 1.0
 save(sei_rasters_df, file = here("inst/extdata/", "bowen_sei_rasters_info.rda"))
 write.csv(sei_rasters_df, here("inst/extdata/", "bowen_sei_rasters_info.csv"))
 ```
+
 ### Human Disturbance
+
+We followed the methods from Arias-Patino et al. (2024) for the human disturbance layers included in the analyses. Pressures included urban areas, buildings, population density, roads, railways, navigable waterways, transmission lines, seismic lines, pipelines, mining, dams and reservoirs, oil and gas infrastructure, agriculture, pastures, forest harvesting, and recreation features. We reclassified the human disturbance raster into four levels based on intensity of disturbance: intact, low disturbance, medium disturbance, and high disturbance. We then normalized and inverted the values to prepare the disturbance data for input into Zonation, ensuring that areas with less disturbance correspond to higher values on a 0-1 scale.
+
 ```{r}
 #### Human Disturbance #### 
 # Contents of "data-raw/human_disturbance/" received from Miguel Arias Patino (marias@unbc.ca)
@@ -414,8 +442,19 @@ disturb_inv <- disturb_resamp %>%
 writeRaster(disturb_inv, here("inst/extdata/bowen_human_footprint_inv.tif"), overwrite=TRUE)
 
 ```
-## Zonation 
-Running zonation with all inputs
+
+## Zonation
+
+> Zonation 5 is a spatial prioritization software that can be used to identify priority areas to support conservation planning, land use planning, ecological impact avoidance and other similar tasks. The software uses spatial raster data on the distributions of individual biodiversity features (species, habitats, ecosystem services etc.) to identify which locations in a landscape are most important for retaining biodiversity. Zonation can account for local habitat quality and ecological connectivity together with costs, threats and different land tenure, thus providing a quantitative method for spatial planning that enhances the persistence of biodiversity in the long term.
+
+<https://zonationteam.github.io/Zonation5/>
+
+We took all of the rasters prepared earlier and fed these into the Zonation 5 software. This should provide a relative ranking for locations from highest to lowest for the purposes of biodiversity conservation.
+
+**Note:** Zonation 5 is usually a standalone application. Here, I have enabled running of 
+Zonation from R, using command line functions. This way we can adjust and automatically
+run Zonation, reading from data in R. 
+
 ```{r}
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
 # Bowen Island SDM Table
@@ -497,7 +536,9 @@ zonation5_command <- str_glue(
 #### ZONATION RUN ####
 system(command = zonation5_command)
 ```
+
 ## Output
+
 ```{r}
 #### VISUALIZE OUTPUT ####
 rankmap <- here("vignettes/zonation/output/rankmap.tif") %>% rast()
