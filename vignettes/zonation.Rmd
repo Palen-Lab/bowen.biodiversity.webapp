@@ -6,8 +6,10 @@ vignette: >
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
+
 # Bowen Island Biodiversity Prioritization - Zonation5
-https://github.com/zonationteam/Zonation5 
+
+<https://github.com/zonationteam/Zonation5>
 
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
@@ -43,12 +45,15 @@ sdm_crs <- "+proj=aea +lat_0=45 +lon_0=-126 +lat_1=50 +lat_2=58.5 +x_0=1000000 +
 bowen_island_admin <- vect(here("data-raw/bowen_boundary")) %>%
   project(sdm_crs)
 ```
+
 ## Loading Datasets
 
 ### Notes on Data Management
+
 Raw data (temp files) into `data-raw` and added to `data-raw/.gitignore` Save finished outputs (as used by the application) into `inst/extdata` - Convention is to save files that are not `.rda` into this folder (<https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages>)
 
 ### Species Distribution Models
+
 ```{r, eval=FALSE}
 #### SPECIES DISTRIBUTION MODELS ####
 # Contents of "data-raw/species_distribution_models/" downloaded from Cumulative effects - SFU Teams Sharepoint 
@@ -234,11 +239,13 @@ bowen_sdm_focal <- bowen_SDM_iNat_ebird %>%
 species_distribution_models_focal_bowen_info <- bowen_sdm_focal
 save(species_distribution_models_focal_bowen_info, file = here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
 ```
-#### Creating Species Information Spreadsheet 
-This spreadsheet contains all of the information on species name, taxon group, threatened status, weights to use for Zonation. 
 
-Visit this link to see the spreadsheet hosted on Google Drive.
-https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing
+#### Creating Species Information Spreadsheet
+
+This spreadsheet contains all of the information on species name, taxon group, threatened status, weights to use for Zonation.
+
+Visit this link to see the spreadsheet hosted on Google Drive. <https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing>
+
 ```{r}
 load(here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
 #### REVISION ####
@@ -255,7 +262,9 @@ bowen_sdm_focal_sel <- species_distribution_models_focal_bowen_info %>%
 bowen_sdm_status <- merge(bowen_sdm_focal_sel, sdm_googlesheet, by.x = "species", by.y = "sci_name", all.x = T) 
 save(bowen_sdm_status, file = here("inst/extdata/bowen_sdm_status.rda"))
 ```
+
 ### Metro Vancouver Sensitive Ecosystems Inventory
+
 ```{r}
 #### Metro Vancouver Sensitive Ecosystems Inventory ####
 # Contents of "data-raw/metrovancouver_sensitive_ecosystem_inventory/" downloaded from MetroVancouver Open Data Catalogue
@@ -358,7 +367,9 @@ sei_rasters_df$weights <- 1.0
 save(sei_rasters_df, file = here("inst/extdata/", "bowen_sei_rasters_info.rda"))
 write.csv(sei_rasters_df, here("inst/extdata/", "bowen_sei_rasters_info.csv"))
 ```
+
 ### Human Disturbance
+
 ```{r}
 #### Human Disturbance #### 
 # Contents of "data-raw/human_disturbance/" received from Miguel Arias Patino (marias@unbc.ca)
@@ -415,8 +426,11 @@ disturb_inv <- disturb_resamp %>%
 writeRaster(disturb_inv, here("inst/extdata/bowen_human_footprint_inv.tif"), overwrite=TRUE)
 
 ```
-## Zonation 
+
+## Zonation
+
 Running zonation with all inputs
+
 ```{r}
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
 # Bowen Island SDM Table
@@ -498,7 +512,9 @@ zonation5_command <- str_glue(
 #### ZONATION RUN ####
 system(command = zonation5_command)
 ```
+
 ## Output
+
 ```{r}
 #### VISUALIZE OUTPUT ####
 rankmap <- here("vignettes/zonation/output/rankmap.tif") %>% rast()
