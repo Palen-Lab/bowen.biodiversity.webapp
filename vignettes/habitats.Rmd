@@ -1,0 +1,94 @@
+---
+title: "habitats"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{habitats}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(here)
+library(sf)
+library(tidyverse)
+library(terra)
+library(leaflet)
+
+# Load Bowen Island Mask Created Previously
+bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
+  rast() %>%
+  project(project_crs)
+```
+
+# Main Goal
+
+Prepare habitat layers for input into Zonation. Previously, for the Feb 1 2025 workshop, we used the Sensitive Ecosystem Inventory from Metro Vancouver. These habitat types were originally represented as polygon areas, which was converted to raster.
+
+```{r}
+#### Metro Vancouver Sensitive Ecosystems Inventory ####
+# Contents of "data-raw/metrovancouver_sensitive_ecosystem_inventory/" downloaded from MetroVancouver Open Data Catalogue
+# GeoPackage download: https://arcg.is/TnfXL 
+# Reports download: https://metrovancouver.org/services/regional-planning/sensitive-ecosystem-inventory-mapping-app
+mvsei <- st_read(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg")) %>%
+  st_transform(crs = bowen.biodiversity.webapp::project_crs)
+# Bowen Island SEI 
+bowen_sei <- mvsei %>% 
+  st_intersection(st_as_sf(bowen.biodiversity.webapp::bowen_boundary)) 
+```
+
+## Wetlands
+
+There were some areas identified as potentially incorrect during the Feb 1 2025 workshop. We followed up with Alan Whitehead and John Dowler via email for additional details. See issue here: <https://github.com/Palen-Lab/bowen.biodiversity.webapp/issues/23>
+
+Alan Whitehead provided ponds and wetlands shapefiles, that he had created over the years as an environmental consultant on Bowen Island. 
+
+In the first Zonation run, we combined WN for both SECl_1 and SECl_2. This overestimated wetland extent, since this included areas that were more likely to have another habitat quality based off of MV methodology (which was mostly based on aerial surveys). We also pulled out the "Shallow Water" subcategory into its seperate layer. 
+
+To improve wetland extent: 
+- Consider all wetland categories in the SEI 
+- Create ranking system of wetland likelihood, by creating separate rasters and summing 
+   - WN category in SECl_1
+   - WN category in SECl_2
+   - Alan Whitehead's Wetland Layer
+
+The idea would be that where all three of these agree has the highest likelihood for wetland ecosystems. 
+```{r}
+# Alan Whitehead's Wetland Layer
+wetlands_aw <- bowen.biodiversity.webapp::bowen_wetlands_whitehead_consultants
+# Bowen SEI SECl_1 
+bowen_sei_wn_1 <- bowen_sei %>%
+  filter(SECl_1 == "WN")
+# Bowen SEI SECl_2
+bowen_sei_wn_2 <- bowen_sei %>%
+  filter(SECl_2 == "WN")
+
+bowen_rasterize <- function(sf) {
+  output <- sf %>% 
+    terra::vect() %>% # Change to SpatVector for rasterization
+    terra::project(project_crs) %>% # Reproject to the mask CRS
+    terra::rasterize(bowen_island_mask,
+                     touches = T,
+                     background = NA) # Rasterize to match mask, set background values to NA
+}
+wetlands_aw_rast <- bowen_rasterize(wetlands_aw)
+bowen_sei_wn_1_rast <- bowen_rasterize(bowen_sei_wn_1)
+bowen_sei_wn_2_rast <- bowen_rasterize(bowen_sei_wn_2)
+
+wetlands <- sum(c(wetlands_aw_rast, bowen_sei_wn_1_rast, bowen_sei_wn_2_rast), na.rm = T)
+
+leaflet(width = "100%", height = "800px") %>%
+  addTiles() %>%
+  addRasterImage(x = wetlands_aw_rast, group = "A. Whitehead Wetlands", colors = "red") %>%
+  addRasterImage(x = bowen_sei_wn_1_rast, group = "Bowen SEI SECl_1 Wetlands", colors = "yellow") %>%
+  addRasterImage(x = bowen_sei_wn_2_rast, group = "Bowen SEI SECl_2 Wetlands", colors = "blue") %>%
+  addLayersControl(overlayGroups = c("A. Whitehead Wetlands", "Bowen SEI SECl_1 Wetlands", "Bowen SEI SECl_2 Wetlands"),
+                   options = layersControlOptions(collapsed = F))
+```
