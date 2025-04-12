@@ -246,14 +246,11 @@ save(species_distribution_models_focal_bowen_info, file = here("inst/extdata/spe
 
 Conservation statuses for species at the provincial, federal, and global levels were obtained from the BC Species & Ecosystems Explorer and the IUCN Red List. Provincial statuses followed the Red, Blue, and Yellow List classifications, while federal statuses were based on COSEWIC assessments where applicable. In cases of taxonomic discrepancies, species names were updated to reflect current classifications and documented accordingly.
 
-BC Species and Ecosystems Explorer: https://a100.gov.bc.ca/pub/eswp/
-IUCN Red List: https://www.iucnredlist.org/
-
+BC Species and Ecosystems Explorer: <https://a100.gov.bc.ca/pub/eswp/> IUCN Red List: <https://www.iucnredlist.org/>
 
 The spreadsheet below contains all of the information on species name, taxon group, threatened status, weights to use for Zonation.
 
 Visit this link to view the spreadsheet, hosted on Google Drive. <https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing>
-
 
 ```{r}
 load(here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
@@ -448,7 +445,15 @@ writeRaster(disturb_inv, here("inst/extdata/bowen_human_footprint_inv.tif"), ove
 
 ## Zonation
 
-Running zonation with all inputs
+> Zonation 5 is a spatial prioritization software that can be used to identify priority areas to support conservation planning, land use planning, ecological impact avoidance and other similar tasks. The software uses spatial raster data on the distributions of individual biodiversity features (species, habitats, ecosystem services etc.) to identify which locations in a landscape are most important for retaining biodiversity. Zonation can account for local habitat quality and ecological connectivity together with costs, threats and different land tenure, thus providing a quantitative method for spatial planning that enhances the persistence of biodiversity in the long term.
+
+<https://zonationteam.github.io/Zonation5/>
+
+We took all of the rasters prepared earlier and fed these into the Zonation 5 software. This should provide a relative ranking for locations from highest to lowest for the purposes of biodiversity conservation.
+
+**Note:** Zonation 5 is usually a standalone application. Here, I have enabled running of 
+Zonation from R, using command line functions. This way we can adjust and automatically
+run Zonation, reading from data in R. 
 
 ```{r}
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
