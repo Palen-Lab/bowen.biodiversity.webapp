@@ -22,9 +22,9 @@ knitr::opts_chunk$set(
 ```{r setup}
 #### Palen Lab Packages ####
 library(bowen.biodiversity.webapp)
-# remotes::install_github("Palen-Lab/sdmcsr")
+#remotes::install_github("Palen-Lab/sdmcsr")
 library(sdmcsr) # SDM congruence functions with iNaturalist observations
-# remotes::install_github("Palen-Lab/rinat") # Fork by Jay Matsushiba
+#remotes::install_github("Palen-Lab/rinat") # Fork by Jay Matsushiba
 library(rinat) 
 
 #### Other Packages ####
@@ -42,7 +42,7 @@ library(googlesheets4)
 # Defining CRS to make sure all SDMs have the same
 sdm_crs <- "+proj=aea +lat_0=45 +lon_0=-126 +lat_1=50 +lat_2=58.5 +x_0=1000000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
 # Bowen Island Administrative Boundary (from Metro Vancouver)
-bowen_island_admin <- vect(here("data-raw/bowen_boundary")) %>%
+bowen_island_admin <- vect(here("inst/extdata/bowen_boundary")) %>%
   project(sdm_crs)
 ```
 
@@ -53,6 +53,8 @@ bowen_island_admin <- vect(here("data-raw/bowen_boundary")) %>%
 Raw data (temp files) into `data-raw` and added to `data-raw/.gitignore` Save finished outputs (as used by the application) into `inst/extdata` - Convention is to save files that are not `.rda` into this folder (<https://rstudio.github.io/r-manuals/r-exts/Creating-R-packages.html#data-in-packages>)
 
 ### Species Distribution Models
+
+The species distribution models (SDMs) included in the Bowen Island Conservation Plan analyses were originally produced by Viorel Popescu (Popescu et al., 2020). Out of the 341 SDMs available, we included 193 of the SDMs. Occurrence locations of small vertebrate species were gathered from Global Biodiversity Information Facility (data.gbif.org) and Nature Counts (birdscanada.org/birdmon) open-access databases. Inclusion of small mammal species was based on Appendix 2 & 3 from the 2005 Environmental Inventory report, which states species presence on Bowen Island. We used the iNaturalist and eBird databases of observations for the inclusion criteria for reptiles, amphibians, and birds (described in further detail in Methods).
 
 ```{r, eval=FALSE}
 #### SPECIES DISTRIBUTION MODELS ####
@@ -242,9 +244,16 @@ save(species_distribution_models_focal_bowen_info, file = here("inst/extdata/spe
 
 #### Creating Species Information Spreadsheet
 
-This spreadsheet contains all of the information on species name, taxon group, threatened status, weights to use for Zonation.
+Conservation statuses for species at the provincial, federal, and global levels were obtained from the BC Species & Ecosystems Explorer and the IUCN Red List. Provincial statuses followed the Red, Blue, and Yellow List classifications, while federal statuses were based on COSEWIC assessments where applicable. In cases of taxonomic discrepancies, species names were updated to reflect current classifications and documented accordingly.
 
-Visit this link to see the spreadsheet hosted on Google Drive. <https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing>
+BC Species and Ecosystems Explorer: https://a100.gov.bc.ca/pub/eswp/
+IUCN Red List: https://www.iucnredlist.org/
+
+
+The spreadsheet below contains all of the information on species name, taxon group, threatened status, weights to use for Zonation.
+
+Visit this link to view the spreadsheet, hosted on Google Drive. <https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing>
+
 
 ```{r}
 load(here("inst/extdata/species_distribution_models_focal_bowen_info.rda"))
@@ -264,6 +273,14 @@ save(bowen_sdm_status, file = here("inst/extdata/bowen_sdm_status.rda"))
 ```
 
 ### Metro Vancouver Sensitive Ecosystems Inventory
+
+We derived Habitat Type layers from the Metro Vancouver Sensitive Ecosystem Inventory (MVSEI) mapping app. Data was downloaded from the Open Data Catalogue as a GeoPackage. Habitats were grouped into three main categories: water, vegetation, and intertidal.
+
+Water subcategories included riparian fringe, riparian gully, wetland shallow water, freshwater lake, freshwater pond, and wetland, with bog, fen, and swamp habitats grouped under wetland.
+
+For vegetation, we generated habitat layers for herbaceous coastal, herbaceous vegetated shoreline, sparse vegetation rocky outcrop, woodland conifer, woodland mixed, young forest conifer, young forest mixed, as well as broader categories of mature forest and old forest.
+
+Intertidal habitat layers included mudflats, eelgrass beds, and beaches.
 
 ```{r}
 #### Metro Vancouver Sensitive Ecosystems Inventory ####
@@ -369,6 +386,8 @@ write.csv(sei_rasters_df, here("inst/extdata/", "bowen_sei_rasters_info.csv"))
 ```
 
 ### Human Disturbance
+
+We followed the methods from Arias-Patino et al. (2024) for the human disturbance layers included in the analyses. Pressures included urban areas, buildings, population density, roads, railways, navigable waterways, transmission lines, seismic lines, pipelines, mining, dams and reservoirs, oil and gas infrastructure, agriculture, pastures, forest harvesting, and recreation features. We reclassified the human disturbance raster into four levels based on intensity of disturbance: intact, low disturbance, medium disturbance, and high disturbance. We then normalized and inverted the values to prepare the disturbance data for input into Zonation, ensuring that areas with less disturbance correspond to higher values on a 0-1 scale.
 
 ```{r}
 #### Human Disturbance #### 
