@@ -21,6 +21,7 @@ library(sf)
 library(tidyverse)
 library(terra)
 library(leaflet)
+library(googlesheets4)
 
 # Load Bowen Island Mask Created Previously
 bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
@@ -36,6 +37,19 @@ bowen_rasterize <- function(sf) {
                      touches = T,
                      background = NA) # Rasterize to match mask, set background values to NA
 }
+
+# Path for this vignette's outputs
+output_path <- here("inst/extdata/habitats")
+
+# Habitats table 
+habitats_df <- data.frame(
+  path = as.character(),
+  filename = as.character(),
+  weight = as.numeric(),
+  category = as.character(),
+  source = as.character(),
+  notes = as.character()
+)
 ```
 
 # Introduction
@@ -49,6 +63,10 @@ Prepare habitat layers for input into Zonation. Previously, for the Feb 1 2025 w
 # Reports download: https://metrovancouver.org/services/regional-planning/sensitive-ecosystem-inventory-mapping-app
 mvsei <- st_read(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg")) %>%
   st_transform(crs = bowen.biodiversity.webapp::project_crs)
+
+mvsei_secl_codes <- read.csv(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/SEI_SECl_codes.csv"))
+mvsei_sesubcl_codes <- read.csv(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/SEI_SEsubcl_codes.csv"))
+
 # Bowen Island SEI 
 bowen_sei <- mvsei %>% 
   st_intersection(st_as_sf(bowen.biodiversity.webapp::bowen_boundary)) 
@@ -91,10 +109,24 @@ leaflet(width = "100%", height = "800px") %>%
                                      "Bowen SEI SECl_2 Wetlands"
   ),
   options = layersControlOptions(collapsed = F)) 
+
+# Output 
+writeRaster(wetlands_aw_rast, here(output_path, "wetlands.tif"), overwrite = T)
+habitats_df <- data.frame(
+  path = here(output_path, "wetlands.tif"),
+  filename = "wetlands.tif",
+  weight = 1.0,
+  category = "Freshwater",
+  source = "Alan Whitehead",
+  notes = "replaces MVSEI"
+) %>%
+  bind_rows(habitats_df)
 ```
 
 ## Freshwater
 The initial Feb1 Zonation run used the SEI categories to represent freshwater ecosystems. Each subcategory of freshwater was used as a distinct layer in the Zonation run. We have since acquired some new layers, which we can simply convert to raster and include as a conservation value input to start. 
+
+Alan Whitehead's Ponds layer seems much more complete than what is available in SEI, so we will use that instead to create the habitat layer.
 ```{r}
 #### Ponds ####
 # Create Ponds Layer from Alan Whitehead's Map and SEI Freshwaster Ponds
@@ -104,18 +136,45 @@ ponds_aw
 bowen_sei_fw_pd <- bowen_sei %>%
   filter(SEsubcl_1 == "pd" | SEsubcl_2 == "pd") %>%
   st_transform(st_crs(ponds_aw))
-# Merge ponds 
+# Ponds Rasters 
 ponds_aw_rast <- bowen_rasterize(ponds_aw)
 bowen_sei_fw_pd_rast <- bowen_rasterize(bowen_sei_fw_pd)
-ponds_rast <- allNA(c(ponds_aw_rast, bowen_sei_fw_pd_rast)) %>%
-  classify(matrix(c(F, 1, T, NA), ncol = 2, byrow = T))
-
-# TODO: Only use AW ponds
-
+# Compare ponds 
+leaflet(width = "100%", height = "800px") %>%
+  addProviderTiles(provider = providers$Stadia.AlidadeSmooth) %>%
+  addRasterImage(x = ponds_aw_rast, group = "A. Whitehead Ponds", colors = "green") %>%
+  addPolygons(data = st_transform(ponds_aw, 4326), group = "A. Whitehead Ponds", color = "darkgreen") %>%
+  addRasterImage(x = bowen_sei_fw_pd_rast, group = "Bowen SEI Ponds", colors = "blue") %>%
+  addPolygons(data = st_transform(bowen_sei_fw_pd, 4326), group = "Bowen SEI Ponds", color = "darkblue") %>%
+  addLayersControl(overlayGroups = c("A. Whitehead Ponds", 
+                                     "Bowen SEI Ponds"
+  ),
+  options = layersControlOptions(collapsed = F)) 
+# Save AW ponds
+writeRaster(ponds_aw_rast, here(output_path, "ponds.tif"), overwrite = T)
+habitats_df <- data.frame(
+  path = here(output_path, "ponds.tif"),
+  filename = "ponds.tif",
+  weight = 1.0,
+  category = "Freshwater",
+  source = "Alan Whitehead",
+  notes = "replaces MVSEI"
+) %>%
+  bind_rows(habitats_df)
 #### Lakes ####
 bowen_sei_fw_la_rast <- bowen_sei %>%
   filter(SEsubcl_1 == "la" | SEsubcl_2 == "la") %>%
   bowen_rasterize()
+writeRaster(bowen_sei_fw_la_rast, here(output_path, "lakes.tif"), overwrite = T)
+habitats_df <- data.frame(
+  path = here(output_path, "lakes.tif"),
+  filename = "lakes.tif",
+  weight = 1.0,
+  category = "Freshwater",
+  source = "MVSEI",
+  notes = ""
+) %>%
+  bind_rows(habitats_df)
 
 #### Fish Bearing Streams ####
 # Create separate raster for each OCP class
@@ -139,19 +198,38 @@ streams_NA_rast <- bowen.biodiversity.webapp::bowen_fish_whitehead_consultants %
   filter(is.na(OCP_CLASS)) %>%
   bowen_rasterize() %>%
   classify(matrix(c(1, 1), ncol = 2, byrow = T)) # Assign value 1
-
 # Combine stream rasters together, cover in order of importance
 streams_rast <- streams_NA_rast %>%
   cover(streams_drainage_rast) %>%
   cover(streams_nonfishbearing_rast) %>%
   cover(streams_tributary_rast) %>%
   cover(streams_fishbearing_rast)
+writeRaster(streams_rast, here(output_path, "streams.tif"), overwrite = T)
+habitats_df <- data.frame(
+  path = here(output_path, "streams.tif"),
+  filename = "streams.tif",
+  weight = 1.0,
+  category = "Freshwater",
+  source = "Alan Whitehead",
+  notes = "Raster value 3 for fish-bearing streams, 2 for non-fish bearing, 1 for drainage channel and NA"
+) %>%
+  bind_rows(habitats_df)
 
 #### Riparian #### 
 # Combine ff (fringe) and gu (gully) riparian classes into one habitat layer
 bowen_sei_ri_rast <- bowen_sei %>%
   filter(SECl_1 == "RI" | SECl_2 == "RI") %>%
   bowen_rasterize()
+writeRaster(bowen_sei_ri_rast, here(output_path, "riparian.tif"), overwrite = T)
+habitats_df <- data.frame(
+  path = here(output_path, "riparian.tif"),
+  filename = "riparian.tif",
+  weight = 1.0,
+  category = "Freshwater",
+  source = "MVSEI",
+  notes = ""
+) %>%
+  bind_rows(habitats_df)
 ```
 ## Terrestrial Ecosystem Mapping
 
@@ -162,11 +240,7 @@ We got the TEM (Terrestrial Ecosystem Mapping) layers from Jeff Matheson via ema
 From my own digging through the MVSEI layers and comparing to the TEM, I think that the original 2009 version of the TEMs are included in the current MVSEI. Since then TEM has been updated (2011 and 2017), mostly with larger polygons being split into smaller and more specific areas, but these have not been incorporated into MVSEI. The most recent additions to MVSEI from the TEM are in 2016, before the most recent updates. 
 
 ```{r}
-# TODO: TEM layers in forest, nonforest
-# TODO: SEI layers coastal, riparian 
-# TODO: AW freshwater layers 
-
-# Bowen TEM for detailed species identity 
+#### Bowen TEM for detailed terrestrial habitat identity ####
 bowen_TEM <- st_read(here("data-raw/bowen_TEM/BM_TEM.shp")) %>%
   # Remove habitat types that are already represented or not important ecosystems
   filter(!SITE_S1_LA %in% c(
@@ -186,27 +260,67 @@ bowen_TEM <- st_read(here("data-raw/bowen_TEM/BM_TEM.shp")) %>%
     "Wetland fenn"
     )
   )
+# Create rasters and save
+bowen_TEM_categories <- unique(bowen_TEM$SITE_S1_LA)
+for(tem_code in bowen_TEM_categories) {
+  output <- bowen_TEM[bowen_TEM$SITE_S1_LA == tem_code,] %>%
+    bowen_rasterize()
+  output_filename <- tem_code %>% 
+    gsub("-", "_", .) %>%
+    gsub(" ", "", .) %>%
+    gsub("'", "", .) %>%
+    paste0(".tif")
+  writeRaster(output, here(output_path, output_filename), overwrite = T)
+  habitats_df <- data.frame(
+    path = here(output_path, output_filename),
+    filename = output_filename,
+    weight = 1.0,
+    category = "Terrestrial",
+    source = "TEM",
+    notes = "Detailed types, plant community descriptions"
+  ) %>%
+    bind_rows(habitats_df)
+}
+
 #### Metro Vancouver SEI for Young Forest, Mature Forest, Old Forest designation ####
 # OF - Old Forest
 # MF - Mature Forest
 # YF - Young Forest
 # YS - Young Forest (Small)
-
 bowen_SEI_forests <- bowen_sei %>%
   select(SECl_1) %>%
   filter(SECl_1 %in% c("OF", "MF", "YF", "YS")) %>%
   st_transform(st_crs(bowen_TEM))
-
 bowen_TEM_forests <- bowen_sei %>%
   select(SECl_1) %>%
   filter(SECl_1 %in% c("OF", "MF", "YF", "YS")) %>%
   st_transform(st_crs(bowen_TEM)) %>%
   st_join(bowen_TEM, ., largest = T) # Spatial join by largest, so each TEM polygon has forest category
-
 # Compare forest maps to check
 ggplot(bowen_TEM_forests) + geom_sf(aes(fill = SECl_1))
 ggplot(bowen_SEI_forests) + geom_sf(aes(fill = SECl_1))
-
+# Create rasters and save
+bowen_forest_categories <- unique(bowen_TEM_forests$SECl_1) 
+bowen_forest_categories <- bowen_forest_categories[!is.na(bowen_forest_categories)]
+for(category in bowen_forest_categories) {
+  output <- bowen_TEM_forests[bowen_TEM_forests$SECl_1 == category,] %>%
+    bowen_rasterize()
+  output_filename <- category %>% 
+    gsub("-", "_", .) %>%
+    gsub(" ", "", .) %>%
+    gsub("'", "", .) %>%
+    paste0(".tif")
+  writeRaster(output, here(output_path, output_filename), overwrite = T)
+  habitats_df <- data.frame(
+    path = here(output_path, output_filename),
+    filename = output_filename,
+    weight = 1.0,
+    category = "Terrestrial",
+    source = "MVSEI",
+    notes = mvsei_secl_codes[mvsei_secl_codes$code == category, "description"]
+  ) %>%
+    bind_rows(habitats_df)
+}
 
 # Metro Vancouver SEI for coastal areas - intertidal (IT), herbaceous (HB)
 bowen_sei_no_tem <- bowen_sei %>%
@@ -220,6 +334,31 @@ bowen_sei_no_tem <- bowen_sei %>%
   # sw shallow water
   # mx mixed confider broadleaf
   filter(!SEsubcl_1 %in% c("co", "ff", "sp", "sw", "mx")) 
+
+bowen_sei_no_tem_categories <- bowen_sei_no_tem$SEsubcl_1 %>% unique()
+for(category in bowen_sei_no_tem_categories) {
+  output <- bowen_sei_no_tem[bowen_sei_no_tem$SEsubcl_1 == category,] %>%
+    bowen_rasterize()
+  output_filename <- category %>% 
+    gsub("-", "_", .) %>%
+    gsub(" ", "", .) %>%
+    gsub("'", "", .) %>%
+    paste0(".tif")
+  writeRaster(output, here(output_path, output_filename), overwrite = T)
+  habitats_df <- data.frame(
+    path = here(output_path, output_filename),
+    filename = output_filename,
+    weight = 1.0,
+    category = "Terrestrial",
+    source = "MVSEI",
+    notes = mvsei_sesubcl_codes[mvsei_sesubcl_codes$SEsubcl == category, "description"]
+  ) %>%
+    bind_rows(habitats_df)
+}
+```
+## Save Habitats to Google Sheets
+```{r}
+googlesheets4::sheet_write(habitats_df, "https://docs.google.com/spreadsheets/d/18Y018ZRbegKAJz9TqVOPrRtI5cn5VA3bWX-ChcGxI3A/edit?pli=1&gid=0#gid=0")
 ```
 
 
