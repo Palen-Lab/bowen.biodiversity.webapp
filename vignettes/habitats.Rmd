@@ -62,14 +62,7 @@ Alan Whitehead provided ponds and wetlands shapefiles, that he had created over 
 
 In the first Zonation run, we combined WN for both SECl_1 and SECl_2. This overestimated wetland extent, since this included areas that were more likely to have another habitat quality based off of MV methodology (which was mostly based on aerial surveys). We also pulled out the "Shallow Water" subcategory into its seperate layer. 
 
-To improve wetland extent: 
-- Consider all wetland categories in the SEI 
-- Create ranking system of wetland likelihood, by creating separate rasters and summing 
-   - WN category in SECl_1
-   - WN category in SECl_2
-   - Alan Whitehead's Wetland Layer
-
-The idea would be that where all three of these agree has the highest likelihood for wetland ecosystems. 
+For this next Zonation run, we will use the wetlands layer provided by Alan Whitehead. This layer seemed to be more complete with ground-truthing of the location of these wetlands, in comparison to the SEI layers from MetroVancouver that were verified using aerial imagery. "Shallow Water" is no longer a separate habitat type, since Alan Whitehead's layers do not provide this classification. 
 ```{r}
 # Alan Whitehead's Wetland Layer
 wetlands_aw <- bowen.biodiversity.webapp::bowen_wetlands_whitehead_consultants
@@ -84,7 +77,20 @@ wetlands_aw_rast <- bowen_rasterize(wetlands_aw)
 bowen_sei_wn_1_rast <- bowen_rasterize(bowen_sei_wn_1)
 bowen_sei_wn_2_rast <- bowen_rasterize(bowen_sei_wn_2)
 
-wetlands <- sum(c(wetlands_aw_rast, bowen_sei_wn_1_rast, bowen_sei_wn_2_rast), na.rm = T)
+# Compare wetlands 
+leaflet(width = "100%", height = "800px") %>%
+  addProviderTiles(provider = providers$Stadia.AlidadeSmooth) %>%
+  addRasterImage(x = wetlands_aw_rast, group = "A. Whitehead Wetlands", colors = "green") %>%
+  addPolygons(data = st_transform(wetlands_aw, 4326), group = "A. Whitehead Wetlands", color = "darkgreen") %>%
+  addRasterImage(x = bowen_sei_wn_1_rast, group = "Bowen SEI SECl_1 Wetlands", colors = "blue") %>%
+  addPolygons(data = st_transform(bowen_sei_wn_1, 4326), group = "Bowen SEI SECl_1 Wetlands", color = "darkblue") %>%
+  addRasterImage(x = bowen_sei_wn_2_rast, group = "Bowen SEI SECl_2 Wetlands", colors = "orange") %>%
+  addPolygons(data = st_transform(bowen_sei_wn_2, 4326), group = "Bowen SEI SECl_2 Wetlands", color = "darkorange") %>%
+  addLayersControl(overlayGroups = c("A. Whitehead Wetlands", 
+                                     "Bowen SEI SECl_1 Wetlands", 
+                                     "Bowen SEI SECl_2 Wetlands"
+  ),
+  options = layersControlOptions(collapsed = F)) 
 ```
 
 ## Freshwater
@@ -104,42 +110,35 @@ bowen_sei_fw_pd_rast <- bowen_rasterize(bowen_sei_fw_pd)
 ponds_rast <- allNA(c(ponds_aw_rast, bowen_sei_fw_pd_rast)) %>%
   classify(matrix(c(F, 1, T, NA), ncol = 2, byrow = T))
 
+# TODO: Only use AW ponds
+
 #### Lakes ####
 bowen_sei_fw_la_rast <- bowen_sei %>%
   filter(SEsubcl_1 == "la" | SEsubcl_2 == "la") %>%
   bowen_rasterize()
 
 #### Fish Bearing Streams ####
-fishbearing_classes <- c(
-  "fish-bearing", 5,
-  "tributary to fish-bearing", 4,
-  "non-fish bearing", 3,
-  "drainage channel", 2, 
-  NA, 1
-) %>%
-  matrix(ncol = 2, byrow = T)
-
 # Create separate raster for each OCP class
 streams_fishbearing_rast <- bowen.biodiversity.webapp::bowen_fish_whitehead_consultants %>%
   filter(OCP_CLASS == "fish-bearing") %>%
   bowen_rasterize() %>%
-  classify(matrix(c(1, 5), ncol = 2, byrow = T))
+  classify(matrix(c(1, 3), ncol = 2, byrow = T)) # Assign value 3 
 streams_tributary_rast <- bowen.biodiversity.webapp::bowen_fish_whitehead_consultants %>%
   filter(OCP_CLASS == "tributary to fish-bearing") %>%
   bowen_rasterize() %>%
-  classify(matrix(c(1, 4), ncol = 2, byrow = T))
+  classify(matrix(c(1, 2), ncol = 2, byrow = T)) # Assign value 2
 streams_nonfishbearing_rast <- bowen.biodiversity.webapp::bowen_fish_whitehead_consultants %>%
   filter(OCP_CLASS == "non-fish bearing") %>%
   bowen_rasterize() %>%
-  classify(matrix(c(1, 3), ncol = 2, byrow = T))
+  classify(matrix(c(1, 1), ncol = 2, byrow = T)) # Assign value 1
 streams_drainage_rast <- bowen.biodiversity.webapp::bowen_fish_whitehead_consultants %>%
-  filter(OCP_CLASS == "drainage channel") %>%
-  bowen_rasterize() %>%
-  classify(matrix(c(1, 2), ncol = 2, byrow = T))
+  filter(OCP_CLASS == "drainage channel") %>% 
+  bowen_rasterize() %>% 
+  classify(matrix(c(1, 1), ncol = 2, byrow = T)) # Assign value 1
 streams_NA_rast <- bowen.biodiversity.webapp::bowen_fish_whitehead_consultants %>%
   filter(is.na(OCP_CLASS)) %>%
   bowen_rasterize() %>%
-  classify(matrix(c(1, 1), ncol = 2, byrow = T))
+  classify(matrix(c(1, 1), ncol = 2, byrow = T)) # Assign value 1
 
 # Combine stream rasters together, cover in order of importance
 streams_rast <- streams_NA_rast %>%
@@ -154,6 +153,76 @@ bowen_sei_ri_rast <- bowen_sei %>%
   filter(SECl_1 == "RI" | SECl_2 == "RI") %>%
   bowen_rasterize()
 ```
+## Terrestrial Ecosystem Mapping
+
+We originally used the Metro Vancouver SEI for the Feb 1 Zonation run, but many of the habitat types are not very specific. Ex. "Mature Forest" is a habitat category that covers much of Bowen Island, but does not provide detail of what species exist there.
+
+We got the TEM (Terrestrial Ecosystem Mapping) layers from Jeff Matheson via email on April 6 2025. 
+
+From my own digging through the MVSEI layers and comparing to the TEM, I think that the original 2009 version of the TEMs are included in the current MVSEI. Since then TEM has been updated (2011 and 2017), mostly with larger polygons being split into smaller and more specific areas, but these have not been incorporated into MVSEI. The most recent additions to MVSEI from the TEM are in 2016, before the most recent updates. 
+
+```{r}
+# TODO: TEM layers in forest, nonforest
+# TODO: SEI layers coastal, riparian 
+# TODO: AW freshwater layers 
+
+# Bowen TEM for detailed species identity 
+bowen_TEM <- st_read(here("data-raw/bowen_TEM/BM_TEM.shp")) %>%
+  # Remove habitat types that are already represented or not important ecosystems
+  filter(!SITE_S1_LA %in% c(
+    # Freshwater  
+    "Reservoir",
+    "Shallow Open Water",
+    "Lake",
+    # Developed 
+    "Gravel Pit",
+    "Cultivated Field",
+    "Golf Course",
+    "Rural",
+    "Industrial",
+    "Urban/Suburban",
+    # Wetlands - already represented in A.Whitehead's layers
+    "Wetland swamp",
+    "Wetland fenn"
+    )
+  )
+#### Metro Vancouver SEI for Young Forest, Mature Forest, Old Forest designation ####
+# OF - Old Forest
+# MF - Mature Forest
+# YF - Young Forest
+# YS - Young Forest (Small)
+
+bowen_SEI_forests <- bowen_sei %>%
+  select(SECl_1) %>%
+  filter(SECl_1 %in% c("OF", "MF", "YF", "YS")) %>%
+  st_transform(st_crs(bowen_TEM))
+
+bowen_TEM_forests <- bowen_sei %>%
+  select(SECl_1) %>%
+  filter(SECl_1 %in% c("OF", "MF", "YF", "YS")) %>%
+  st_transform(st_crs(bowen_TEM)) %>%
+  st_join(bowen_TEM, ., largest = T) # Spatial join by largest, so each TEM polygon has forest category
+
+# Compare forest maps to check
+ggplot(bowen_TEM_forests) + geom_sf(aes(fill = SECl_1))
+ggplot(bowen_SEI_forests) + geom_sf(aes(fill = SECl_1))
+
+
+# Metro Vancouver SEI for coastal areas - intertidal (IT), herbaceous (HB)
+bowen_sei_no_tem <- bowen_sei %>%
+  filter(!ProjType == "TEM" & !ProjType == "NEM") %>%
+  # Remove polygons with SECl x__, because these are lost ecosystem areas 
+  filter(!SECl_1 %in% c("xRI", "xWD", "xMF")) %>%
+  # Remove polygons with these SEsubcl, since represented elsewhere
+  # co conifer dominated
+  # ff riparian fringe
+  # sp swamp
+  # sw shallow water
+  # mx mixed confider broadleaf
+  filter(!SEsubcl_1 %in% c("co", "ff", "sp", "sw", "mx")) 
+```
+
+
 ## Exploring Habitat Rasters
 
 ```{r}
@@ -165,6 +234,8 @@ leaflet(width = "100%", height = "800px") %>%
   addRasterImage(x = bowen_sei_ri_rast, group = "Bowen SEI Riparian", colors = "lightblue") %>%
   addRasterImage(x = bowen_sei_fw_la_rast, group = "Bowen SEI Freshwater Lakes", colors = "darkblue") %>%
   addRasterImage(x = ponds_rast, group = "Bowen SEI + A. Whitehead Freshwater Ponds", colors = "blue") %>%
+  # addPolygons(data = bowen_sei_fw_pd, label = "Bowen SEI ponds") %>%
+  # addPolygons(data = ponds_aw, label = "A. Whitehead ponds") %>%
   addRasterImage(x = streams_rast, group = "A. Whitehead Streams") %>%
   addLayersControl(overlayGroups = c("A. Whitehead Wetlands", 
                                      "Bowen SEI SECl_1 Wetlands", 
