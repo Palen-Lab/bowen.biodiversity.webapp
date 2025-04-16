@@ -356,9 +356,64 @@ for(category in bowen_sei_no_tem_categories) {
     bind_rows(habitats_df)
 }
 ```
-## Save Habitats to Google Sheets
+## Bowen Heron Watch
+Data on Heron and Raptor nest sites on Bowen Island from Carla Skuce on Feb 4 2025. 
+
+Challenges:
+- No common ID between Excel spreadsheet and shapefile point locations
+
+Addressed by manually looking up location description on Google Maps and matching to points in QGIS. For some points, I created new points that matched the location description. I figured at the 100 m resolution that we are working with, the precise location would not be that necessary. 
 ```{r}
-googlesheets4::sheet_write(habitats_df, "https://docs.google.com/spreadsheets/d/18Y018ZRbegKAJz9TqVOPrRtI5cn5VA3bWX-ChcGxI3A/edit?pli=1&gid=0#gid=0")
+#### Heron Nests ####
+# This geopackage was created in QGIS with manual matching between excel spreadsheet and shapefile provided from Bowen Heron Watch
+bowen_heron_watch <- st_read(here("data-raw/bowen_heron_watch/bowen_heron_watch.gpkg")) 
+# Replace NAs
+bowen_heron_watch[is.na(bowen_heron_watch)] <- 0 
+bowen_heron_watch$bowen_heron_watch_2018 <- as.numeric(bowen_heron_watch$bowen_heron_watch_2018)
+# Summarize - total nests all time
+bowen_heron_watch$total <- bowen_heron_watch[,6:31] %>%
+  st_drop_geometry() %>%
+  rowSums()
+# Rasterize the heron sites 
+bowen_heron_nest_rast <- bowen_heron_watch %>%
+  vect() %>% 
+  project(bowen_island_mask) %>%
+  rasterize(bowen_island_mask, field = "total", fun = sum, cover = T, touches = T) 
+plot(bowen_heron_nest_rast)
+writeRaster(bowen_heron_nest_rast, here(output_path, "bowen_heron_nest.tif"), overwrite = T)
+habitats_df <- data.frame(
+    path = here(output_path, "bowen_heron_nest.tif"),
+    filename = "bowen_heron_nest.tif",
+    weight = 1.0,
+    category = "Bird Nesting Site",
+    source = "Bowen Heron Watch",
+    notes = "Heron Nests"
+  ) %>%
+    bind_rows(habitats_df)
+
+#### Raptor Nests ####
+bowen_raptor_watch_rast <- st_read(here("data-raw/bowen_heron_watch/2025_01_30_bowen_heron_watch/RaptorNest.shp")) %>%
+  vect() %>%
+  project(bowen_island_mask) %>%
+  rasterize(bowen_island_mask, cover = T, touches = T) 
+plot(bowen_raptor_watch_rast)
+writeRaster(bowen_raptor_watch_rast, here(output_path, "bowen_raptor_nest.tif"), overwrite = T)
+habitats_df <- data.frame(
+    path = here(output_path, "bowen_raptor_nest.tif"),
+    filename = "bowen_raptor_nest.tif",
+    weight = 1.0,
+    category = "Bird Nesting Site",
+    source = "Bowen Heron Watch",
+    notes = "Raptor Nests"
+  ) %>%
+    bind_rows(habitats_df)
+```
+
+
+
+## Save Habitat Weights
+```{r}
+write.csv(habitats_df, here(output_path, "habitats.csv"))
 ```
 
 
@@ -372,7 +427,7 @@ leaflet(width = "100%", height = "800px") %>%
   addRasterImage(x = bowen_sei_wn_2_rast, group = "Bowen SEI SECl_2 Wetlands", colors = "darkgreen") %>%
   addRasterImage(x = bowen_sei_ri_rast, group = "Bowen SEI Riparian", colors = "lightblue") %>%
   addRasterImage(x = bowen_sei_fw_la_rast, group = "Bowen SEI Freshwater Lakes", colors = "darkblue") %>%
-  addRasterImage(x = ponds_rast, group = "Bowen SEI + A. Whitehead Freshwater Ponds", colors = "blue") %>%
+  addRasterImage(x = ponds_aw_rast, group = "A. Whitehead Freshwater Ponds", colors = "blue") %>%
   # addPolygons(data = bowen_sei_fw_pd, label = "Bowen SEI ponds") %>%
   # addPolygons(data = ponds_aw, label = "A. Whitehead ponds") %>%
   addRasterImage(x = streams_rast, group = "A. Whitehead Streams") %>%
