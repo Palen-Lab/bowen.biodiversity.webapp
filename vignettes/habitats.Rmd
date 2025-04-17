@@ -413,7 +413,23 @@ habitats_df <- data.frame(
 
 ## Save Habitat Weights
 ```{r}
-write.csv(habitats_df, here(output_path, "habitats.csv"))
+# Save to CSV
+write.csv(habitats_df, here(output_path, paste0(Sys.Date(),"_habitats.csv")))
+# Save to Google Sheets
+habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
+write_sheet(
+  habitats_df,
+  habitats_url,
+  sheet = as.character(Sys.Date())
+)
+```
+
+
+## Run Zonation
+```{r}
+# Read from Google Sheets
+habitats_df <- read_sheet(habitats_url, sheet = "2025-04-17")
+
 ```
 
 
