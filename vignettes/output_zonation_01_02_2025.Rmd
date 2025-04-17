@@ -1,5 +1,5 @@
 ---
-title: "zonation"
+title: "zonation_01_02_2025"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{zonation}
@@ -8,6 +8,7 @@ vignette: >
 ---
 
 # Bowen Island Biodiversity Prioritization - Zonation5
+This Rmarkdown documents the Zonation run used for the initial February 1st, 2025 Bowen Island Workshop on Biodiversity Planning. 
 
 <https://github.com/zonationteam/Zonation5>
 

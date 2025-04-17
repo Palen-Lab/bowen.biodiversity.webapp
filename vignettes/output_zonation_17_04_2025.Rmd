@@ -1,0 +1,33 @@
+---
+title: "zonation_17_04_2025"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{zonation_apr17}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+# Bowen Island Biodiversity Prioritization - Zonation5
+This Rmarkdown documents the Zonation run used for the April 17 2025 iteration for Bowen Island Biodiversity Planning. 
+
+<https://github.com/zonationteam/Zonation5>
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
+habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
+```
+
+## Run Zonation
+```{r}
+# Read from Google Sheets
+habitats_df <- read_sheet(habitats_url, sheet = "2025-04-17")
+
+```
