@@ -16,7 +16,6 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(bowen.biodiversity.webapp)
-library()
 ```
 
 ## Species Distribution Models
@@ -233,13 +232,14 @@ bowen_sdm_focal_sel <- sdm_focal %>%
   select(!c("taxon_group", "prov_status", "fed_status", "IUCN_status", "weights"))
 # Merge
 bowen_sdm_status <- merge(bowen_sdm_focal_sel, sdm_googlesheet, by.x = "species", by.y = "sci_name", all.x = T) %>%
-  rename(weight = weights) %>%
+  rename(weight = weights,
+         name = species) %>%
   mutate(filename = as.character(filepath),
          path = here(sdm_output_dir, filename),
          category = taxon_group,
          source = "Viorel Popescu (2020), modified by Jay Matsushiba (2025)") %>%
   select(!filepath) %>%
-  relocate(path, filename, weight, category, source, notes)
+  relocate(path, filename, name, weight, category, source, notes)
 
 # Save to CSV
 write.csv(bowen_sdm_status, here(sdm_output_dir, paste0(Sys.Date(),"_sdm.csv")))
