@@ -1,0 +1,14 @@
+---
+title: "iNaturalist"
+author: "Jay Matsushiba"
+date: "2025/04/25"
+format:
+  html:
+    code-fold: true
+---
+
+# iNaturalist Observation Data on Bowen Island
+```{r}
+# TODO: iNaturalist observations mapped, used in deciding SDMs to keep (see input_sdm.qmd)
+```
+

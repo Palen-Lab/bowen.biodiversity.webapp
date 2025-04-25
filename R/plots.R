@@ -17,7 +17,7 @@ bowen_map <- function(raster_layer,
                       caption,
                       legend_label,
                       pal = "ag_GrnYl") {
-  bowen_shoreline <- here::here("data-raw/shoreline_dem_smoothed2/shoreline_dem_smoothed2.shp") %>% sf::st_read()
+  # bowen_shoreline <- here::here("data-raw/shoreline_dem_smoothed2/shoreline_dem_smoothed2.shp") %>% sf::st_read()
 
   # basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
   basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer,
@@ -56,10 +56,10 @@ bowen_map <- function(raster_layer,
   }
 
   output_plot <- output_plot +
-    ggplot2::geom_sf(data = bowen_shoreline,
-                     fill = NA,
-                     colour = "#444544",
-                     linewidth = 1) +
+    # ggplot2::geom_sf(data = bowen_shoreline,
+    #                  fill = NA,
+    #                  colour = "#444544",
+    #                  linewidth = 1) +
     ggplot2::scale_x_continuous(expand = c(0,0)) +
     ggplot2::scale_y_continuous(expand = c(0,0)) +
     ggplot2::labs(

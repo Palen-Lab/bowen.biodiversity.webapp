@@ -11,6 +11,9 @@ project:
     - vignettes/threats_fire.qmd
     - vignettes/threats_invasive_species.qmd
     - vignettes/threats_logging.qmd
+    - vignettes/species_richness.qmd
+    - vignettes/tree_density_from_lidar.qmd
+    - vignettes/inaturalist.qmd
 
 website:
   title: "Bowen Island Biodiversity Plan"
@@ -35,6 +38,11 @@ website:
           - vignettes/threats_fire.qmd
           - vignettes/threats_invasive_species.qmd
           - vignettes/threats_logging.qmd
+      - section: "Supplementary"
+        contents:
+          - vignettes/species_richness.qmd
+          - vignettes/tree_density_from_lidar.qmd
+          - vignettes/inaturalist.qmd
 
 format:
   html:

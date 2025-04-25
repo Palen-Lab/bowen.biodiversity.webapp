@@ -1,0 +1,17 @@
+{
+  "hash": "43bbf673178591dac4ff2a57317407f1",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"Species Richness\"\nauthor: \"Jay Matsushiba\"\ndate: \"2025/04/25\"\nformat:\n  html:\n    code-fold: true\n---\n\n::: {.cell}\n\n```{.r .cell-code}\nlibrary(bowen.biodiversity.webapp)\nlibrary(here)\n```\n\n::: {.cell-output .cell-output-stderr}\n\n```\nhere() starts at /home/jay/Programming_Projects/bowen.biodiversity.webapp\n```\n\n\n:::\n\n```{.r .cell-code}\nlibrary(terra)\n```\n\n::: {.cell-output .cell-output-stderr}\n\n```\nterra 1.8.5\n```\n\n\n:::\n\n```{.r .cell-code}\nlibrary(magrittr)\n```\n\n::: {.cell-output .cell-output-stderr}\n\n```\n\nAttaching package: 'magrittr'\n```\n\n\n:::\n\n::: {.cell-output .cell-output-stderr}\n\n```\nThe following objects are masked from 'package:terra':\n\n    extract, inset\n```\n\n\n:::\n\n```{.r .cell-code}\nlibrary(stringr)\n```\n:::\n\n::: {.cell}\n\n```{.r .cell-code}\n# Created using vignettes/zonation.Rmd\n# Contains all SDM layers included in Zonation output \nload(here(\"inst/extdata/bowen_sdm_status.rda\"))\n# Create relative path to read in each SDM\nbowen_sdm_status$relpath <- paste0(\"inst/extdata/sdm/\", bowen_sdm_status$filepath)\n# Create all species raster stack \nsdm_stack <- lapply(bowen_sdm_status$relpath, function(x) {here(x) %>% rast()}) %>% rast()\n# Create species richness SDM \npresence_threshold <- 0.7\ntotal_richness_0.7 <- sdm_to_species_richness(SDM_stack = sdm_stack,\n                                          presence_threshold = presence_threshold)\nwriteRaster(total_richness_0.7, here(\"inst/extdata/bowen_sdm_richness.tif\"), overwrite = T)\n\n# Create species richness plots: \n## Each species is marked present in a cell, if they are above a certain \n## threshold of probability in the input SDMs. \nsubtitle <- paste0(\"Based on >\", \n                   presence_threshold,\n                   \" probability of occurrence in Species Distribution Models.\")\ncaption <- paste0(\"Map created: \", date(), \". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)\")\n\ntitle <- \"Total Species Richness\"\ntotal_richness_0.7_plot <- bowen_map(raster_layer = total_richness_0.7,\n                      title = title,\n                      subtitle = subtitle,\n                      caption = caption,\n                      legend_label = \"Richness\")\n```\n\n::: {.cell-output .cell-output-stderr}\n\n```\nWarning: Transforming 'ext' to Web Mercator (EPSG: 3857), since 'ext' has a\ndifferent CRS. The CRS of the returned basemap will be Web Mercator, which is\nthe default CRS used by the supported tile services.\n```\n\n\n:::\n\n::: {.cell-output .cell-output-stdout}\n\n```\nLoading basemap 'backdrop' from map service 'maptiler'...\n```\n\n\n:::\n\n::: {.cell-output .cell-output-stderr}\n\n```\n<SpatRaster> resampled to 501081 cells.\n```\n\n\n:::\n\n```{.r .cell-code}\n# ggplot2::ggsave(\n#   here(\"vignettes\", \"figures\", paste0(Sys.Date(), \"_total_richness_0.7.png\")),\n#   total_richness_0.7_plot,\n#   device = ragg::agg_png,\n#   width = 9, height = 12, units = \"in\", res = 300\n# )\ntotal_richness_0.7_plot\n```\n\n::: {.cell-output-display}\n![](species_richness_files/figure-html/fig-speciesrichness-1.png){#fig-speciesrichness width=2700}\n:::\n:::\n",
+    "supporting": [
+      "species_richness_files"
+    ],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}

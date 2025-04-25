@@ -314,5 +314,27 @@
       "Zonation",
       "Conservation Prioritization April 17 2025 Update"
     ]
+  },
+  {
+    "objectID": "vignettes/species_richness.html",
+    "href": "vignettes/species_richness.html",
+    "title": "Species Richness",
+    "section": "",
+    "text": "Code\nlibrary(bowen.biodiversity.webapp)\nlibrary(here)\n\n\nhere() starts at /home/jay/Programming_Projects/bowen.biodiversity.webapp\n\n\nCode\nlibrary(terra)\n\n\nterra 1.8.5\n\n\nCode\nlibrary(magrittr)\n\n\n\nAttaching package: 'magrittr'\n\n\nThe following objects are masked from 'package:terra':\n\n    extract, inset\n\n\nCode\nlibrary(stringr)\n\n\n\n\nCode\n# Created using vignettes/zonation.Rmd\n# Contains all SDM layers included in Zonation output \nload(here(\"inst/extdata/bowen_sdm_status.rda\"))\n# Create relative path to read in each SDM\nbowen_sdm_status$relpath &lt;- paste0(\"inst/extdata/sdm/\", bowen_sdm_status$filepath)\n# Create all species raster stack \nsdm_stack &lt;- lapply(bowen_sdm_status$relpath, function(x) {here(x) %&gt;% rast()}) %&gt;% rast()\n# Create species richness SDM \npresence_threshold &lt;- 0.7\ntotal_richness_0.7 &lt;- sdm_to_species_richness(SDM_stack = sdm_stack,\n                                          presence_threshold = presence_threshold)\nwriteRaster(total_richness_0.7, here(\"inst/extdata/bowen_sdm_richness.tif\"), overwrite = T)\n\n# Create species richness plots: \n## Each species is marked present in a cell, if they are above a certain \n## threshold of probability in the input SDMs. \nsubtitle &lt;- paste0(\"Based on &gt;\", \n                   presence_threshold,\n                   \" probability of occurrence in Species Distribution Models.\")\ncaption &lt;- paste0(\"Map created: \", date(), \". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)\")\n\ntitle &lt;- \"Total Species Richness\"\ntotal_richness_0.7_plot &lt;- bowen_map(raster_layer = total_richness_0.7,\n                      title = title,\n                      subtitle = subtitle,\n                      caption = caption,\n                      legend_label = \"Richness\")\n\n\nWarning: Transforming 'ext' to Web Mercator (EPSG: 3857), since 'ext' has a\ndifferent CRS. The CRS of the returned basemap will be Web Mercator, which is\nthe default CRS used by the supported tile services.\n\n\nLoading basemap 'backdrop' from map service 'maptiler'...\n\n\n&lt;SpatRaster&gt; resampled to 501081 cells.\n\n\nCode\n# ggplot2::ggsave(\n#   here(\"vignettes\", \"figures\", paste0(Sys.Date(), \"_total_richness_0.7.png\")),\n#   total_richness_0.7_plot,\n#   device = ragg::agg_png,\n#   width = 9, height = 12, units = \"in\", res = 300\n# )\ntotal_richness_0.7_plot\n\n\n\n\n\n\n\n\nFigure 1",
+    "crumbs": [
+      "Supplementary",
+      "Species Richness"
+    ]
+  },
+  {
+    "objectID": "vignettes/tree_density_from_lidar.html",
+    "href": "vignettes/tree_density_from_lidar.html",
+    "title": "Tree Density from LiDAR",
+    "section": "",
+    "text": "Code\nlibrary(bowen.biodiversity.webapp)\nlibrary(here)\n#&gt; here() starts at /home/jay/Programming_Projects/bowen.biodiversity.webapp\nlibrary(sf)\n#&gt; Linking to GEOS 3.11.1, GDAL 3.6.4, PROJ 9.1.1; sf_use_s2() is TRUE\nlibrary(leaflet)\nlibrary(leaflet.extras)\nlibrary(future)\nlibrary(dplyr)\n#&gt; \n#&gt; Attaching package: 'dplyr'\n#&gt; The following objects are masked from 'package:stats':\n#&gt; \n#&gt;     filter, lag\n#&gt; The following objects are masked from 'package:base':\n#&gt; \n#&gt;     intersect, setdiff, setequal, union\n\n# install.packages('lasR', repos = 'https://r-lidar.r-universe.dev')\nlibrary(lasR)\n#&gt; \n#&gt; Attaching package: 'lasR'\n#&gt; The following object is masked from 'package:dplyr':\n#&gt; \n#&gt;     summarise\n#&gt; The following object is masked from 'package:future':\n#&gt; \n#&gt;     sequential\n\n\n\n\nDownloaded from LidarBC: https://lidar.gov.bc.ca/\n\n\nConvert from .laz to .las\n\n\n\n\n\nCode\nset_parallel_strategy(concurrent_files(4))\n# Read las \nctg &lt;- readLAScatalog(here(\"temp/las\"))\n\ndel = triangulate(filter = keep_ground())\nnorm = transform_with(del, \"-\")\nwrite = write_las(here(\"temp/normalized/*_normalized.las\"))\nchm = rasterize(2, \"max\", ofile = here(\"temp/chm/chm.tif\"))\nlm = local_maximum_raster(chm, 5)\npipeline2 = reader() + del + norm + write + chm + lm\n\nans = exec(pipeline2, on = ctg)\nttops &lt;- ans$local_maximum %&gt;% st_transform(4326)\nst_write(ttops, here(\"data-raw/ttops.gpkg\"))\n\n\n\n\nCode\nttops &lt;- st_read(here(\"data-raw/ttops.gpkg\")) \n#&gt; Reading layer `ttops' from data source \n#&gt;   `/home/jay/Programming_Projects/bowen.biodiversity.webapp/data-raw/ttops.gpkg' \n#&gt;   using driver `GPKG'\n#&gt; Simple feature collection with 660834 features and 0 fields\n#&gt; Geometry type: POINT\n#&gt; Dimension:     XYZ\n#&gt; Bounding box:  xmin: -123.4483 ymin: 49.32728 xmax: -123.3 ymax: 49.42478\n#&gt; z_range:       zmin: 2 zmax: 1383.31\n#&gt; Geodetic CRS:  WGS 84\nttops_coord &lt;- ttops %&gt;% st_coordinates() %&gt;% as.data.frame()\nleaflet(ttops_coord) %&gt;%      \n  addProviderTiles(providers$CartoDB.Positron) %&gt;%\n  addHeatmap(lng=~X, lat=~Y, blur= 15, max = 65, radius = 30)",
+    "crumbs": [
+      "Supplementary",
+      "Tree Density from LiDAR"
+    ]
   }
 ]
