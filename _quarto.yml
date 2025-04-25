@@ -4,6 +4,7 @@ project:
     - index.qmd
     - vignettes/output_zonation_01_02_2025.qmd
     - vignettes/output_zonation_17_04_2025.qmd
+    - vignettes/output_zonation_24_04_2025.qmd
     - vignettes/input_sdm.qmd
     - vignettes/input_habitats.qmd
     - vignettes/threats_development.qmd
