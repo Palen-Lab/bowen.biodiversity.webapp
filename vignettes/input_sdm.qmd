@@ -15,14 +15,26 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+#### Palen Lab Packages ####
 library(bowen.biodiversity.webapp)
+
+#### Other Packages ####
+library(here)
+library(dplyr)
+library(stringr)
+library(foreach)
+library(sf)
+library(terra)
+library(tidyterra)
+library(readxl)
+library(googlesheets4)
 ```
 
 ## Species Distribution Models
 
 The species distribution models (SDMs) included in the Bowen Island Conservation Plan analyses were originally produced by Viorel Popescu (Popescu et al., 2020). Out of the 341 SDMs available, we included 193 of the SDMs. Occurrence locations of small vertebrate species were gathered from Global Biodiversity Information Facility (data.gbif.org) and Nature Counts (birdscanada.org/birdmon) open-access databases. Inclusion of small mammal species was based on Appendix 2 & 3 from the 2005 Environmental Inventory report, which states species presence on Bowen Island. We used the iNaturalist and eBird databases of observations for the inclusion criteria for reptiles, amphibians, and birds (described in further detail in Methods).
 
-```{r, eval=FALSE}
+```{r}
 #### SPECIES DISTRIBUTION MODELS ####
 # Contents of "data-raw/species_distribution_models/" downloaded from Cumulative effects - SFU Teams Sharepoint 
 # https://1sfu.sharepoint.com/:f:/r/teams/Cumulativeeffects-SFUTeams9/Shared%20Documents/BCH_project_backup/SPECIES?csf=1&web=1&e=FpNkgc 
@@ -40,6 +52,9 @@ sdm_output_dir <- here("inst/extdata/sdm")
 if(!dir.exists(sdm_output_dir)) {
   dir.create(sdm_output_dir)
 }
+```
+
+```{r, eval=FALSE}
 # Create Bowen Island mask using DSM
 sample_sdm <- rast(here(sdm_folder, sdm_folder_tif_NAs[1])) %>%
   terra::project(y = sdm_crs) %>%
