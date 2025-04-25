@@ -5,13 +5,13 @@ format: html
 
 # Introduction
 
-## Purpose 
+## Purpose
 
 The purpose of this website is to capture and share the analyses for conducting spatial prioritization of conservation areas on Bowen Island. This is part of a greater effort to inform the decision-making and community planning for the Bowen Island Municipality.
 
 ## Contributors
 
-### Analysis 
+### Analysis
 
 Jay Matsushiba
 

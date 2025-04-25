@@ -1,0 +1,254 @@
+---
+title: "Conservation Layer: Species"
+author: "Jay Matsushiba"
+date: "2025/04/25"
+format:
+  html:
+    code-fold: true
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+```
+
+## Species Distribution Models
+
+The species distribution models (SDMs) included in the Bowen Island Conservation Plan analyses were originally produced by Viorel Popescu (Popescu et al., 2020). Out of the 341 SDMs available, we included 193 of the SDMs. Occurrence locations of small vertebrate species were gathered from Global Biodiversity Information Facility (data.gbif.org) and Nature Counts (birdscanada.org/birdmon) open-access databases. Inclusion of small mammal species was based on Appendix 2 & 3 from the 2005 Environmental Inventory report, which states species presence on Bowen Island. We used the iNaturalist and eBird databases of observations for the inclusion criteria for reptiles, amphibians, and birds (described in further detail in Methods).
+
+```{r, eval=FALSE}
+#### SPECIES DISTRIBUTION MODELS ####
+# Contents of "data-raw/species_distribution_models/" downloaded from Cumulative effects - SFU Teams Sharepoint 
+# https://1sfu.sharepoint.com/:f:/r/teams/Cumulativeeffects-SFUTeams9/Shared%20Documents/BCH_project_backup/SPECIES?csf=1&web=1&e=FpNkgc 
+# Directory Path: BCH_project_backup/SPECIES/
+# Paper: https://www.nature.com/articles/s41598-020-64501-7#MOESM1
+# See Wendy Palen (SFU) for access 
+#### PROCESSING SDM ####
+# Get list of available SDMs
+sdm_folder <- here("data-raw/species_distribution_models")
+sdm_folder_tif <- list.files(sdm_folder, recursive = T, pattern = "*.tif$") # Get only .tif files
+# Correspondence with Viorel Popescu confirms that _NAs_ should be SDMs with rock, ice, large lakes layers masked
+sdm_folder_tif_NAs <- sdm_folder_tif[grepl("_NAs_", sdm_folder_tif)] # Get only .tif with "_NAs_" in filename
+# Directory to save SDMs
+sdm_output_dir <- here("inst/extdata/sdm")
+if(!dir.exists(sdm_output_dir)) {
+  dir.create(sdm_output_dir)
+}
+# Create Bowen Island mask using DSM
+sample_sdm <- rast(here(sdm_folder, sdm_folder_tif_NAs[1])) %>%
+  terra::project(y = sdm_crs) %>%
+  terra::crop(bowen_island_admin, snap = "out") %>%
+  terra::disagg(fact = 4)
+dsm <- rast(here("data-raw/bowen_dsm/chm.tif"))
+dsm_smooth <- dsm %>% 
+  focal(w=9, fun=mean, na.policy="only", na.rm=T) %>% 
+  terra::project(y = sdm_crs) %>%
+  terra::resample(sample_sdm, method = "average")
+m <- c(-1, 35, 1) %>% matrix(ncol = 3, byrow=T)
+bowen_island_mask <- dsm_smooth %>% 
+  classify(m) %>%
+  as.int()
+writeRaster(bowen_island_mask, here("inst/extdata/bowen_mask.tif"), overwrite = T)
+# Weights for terra::focal() function that provides moving window average
+# - Smoothing algorithm 
+# - Use this to fill some empty cells on Bowen Island with weighted mean of the neighbouring cells.
+weights <- matrix(c(0, 0, 1, 1, 1, 0, 0,
+                    0, 1, 1, 2, 1, 1, 0,
+                    1, 1, 3, 3, 3, 1, 1,
+                    1, 2, 3, 5, 3, 2, 1,
+                    1, 1, 3, 3, 3, 1, 1,
+                    0, 1, 1, 2, 1, 1, 0,
+                    0, 0, 1, 1, 1, 0, 0
+), nrow=7)
+#### PREPARE SDMs TO BOWEN ISLAND ####
+# Loop through SDMs
+foreach(sdm_tif = sdm_folder_tif_NAs) %do% {
+  sdm_path <- here(sdm_folder, sdm_tif) 
+  sdm_output_path <- here(sdm_output_dir, basename(sdm_tif))
+  sdm <- rast(sdm_path)
+  # Normalize SDMs that range from 0 to 1000
+  sdm_minmax <- terra::minmax(sdm)
+  if(sdm_minmax[2] > 1) {
+    sdm <- sdm / 1000
+  }
+  sdm_output <- sdm %>%
+    #### Reproject SDM ####
+    terra::project(y = sdm_crs) %>%
+    #### Crop SDM ####
+    # Figured out why the SDMs were cropped incorrectly
+    # The default for cropping a raster by a polygon is to snap = "near"
+    # This means that the polygon extent is snapped to the closest raster
+    # We need snap = "out" to make sure the full extent of the polygon is covered by the output raster
+    terra::crop(bowen_island_admin, snap = "out") %>%
+    #### Extrapolate for Southern Parts of Bowen Island
+    # - fills the NA values missing in south part of Bowen Island
+    terra::focal(w = weights,
+                 fun = "mean",
+                 na.policy = "only") %>%
+    #### Downsamples ####
+    # - from 400 m to 100 m resolution
+    terra::disagg(fact = 4) %>%
+    #### Smooths the raster ####
+    terra::focal(w = weights,
+                 fun = "mean",
+                 na.rm = T,
+                 na.policy = "omit") %>%
+    terra::mask(bowen_island_mask)
+  
+  writeRaster(sdm_output, sdm_output_path, overwrite = T)
+}
+# Create species list from available SDMs
+species_list <- sdm_folder_tif_NAs %>%
+  basename() %>%
+  stringr::str_extract("^\\S+\\.[a-zA-Z]+_") %>%
+  stringr::str_remove("_") %>%
+  stringr::str_replace("\\.", " ")
+# Create taxon list 
+taxon_list <- sdm_folder_tif_NAs %>%
+  dirname() %>%
+  str_remove("_mask")
+# Get iNaturalist and SDM congruence
+sdm_inat <- foreach(i = 1:length(species_list), .combine = "rbind") %do% {
+  # Progress Message 
+  print(paste0("Currently working on species ", i, " out of ", length(species_list),". This is ", species_list[i], "."))
+  # Query iNaturalist by species name and Bowen Island Administrative Boundaries
+  rinat_results_sf <- tryCatch({
+    Sys.sleep(3) # Need to slow down queries to prevent requests being blocked
+    rinat::get_inat_obs_sf(taxon_name = species_list[i],
+                           area = st_as_sf(bowen_island_admin),
+                           maxresults = 10000)
+  }, error = function(cond) {
+    NA
+  })
+  # Get number of iNaturalist observations
+  if(!is.data.frame(rinat_results_sf)) {
+    inat_n_obs <- 0
+  } else {
+    inat_n_obs <- nrow(rinat_results_sf)
+  }
+  # Get Bowen Island SDM
+  sdm <- paste0(str_replace(species_list[i], " ", "."), "_NAs_pu_mask.tif") %>%
+    here(sdm_output_dir, .) %>%
+    rast()
+  # Get highest value in SDM
+  sdm_max <- sdm %>% 
+    minmax() %>% 
+    max()
+  # PREPARE OUTPUT ROW
+  # 1. scientific species name
+  # 2. highest SDM cell value within area 
+  # 3. observation count from iNaturalist
+  result <- data.frame(species = species_list[i],
+                       sdm_max_value = sdm_max,
+                       inat_n_obs = inat_n_obs)
+}
+sdm_inat$taxon_group <- taxon_list
+#### Query eBird for birds ####
+# Number of eBird observations by bird species on Bowen Island
+# - Results from Natasha Beauregard (Summer 2024 USRA)
+bowen_ebird <- read.csv(here("data-raw/bowen_ebird/final_bird.csv")) %>%
+  select(c("scientific_name", "n_ebird"))
+# Combine eBird and iNaturalist counts
+bowen_SDM_iNat_ebird <- merge(sdm_inat, 
+                              bowen_ebird, 
+                              by.x = "species", 
+                              by.y = "scientific_name",
+                              all.x = TRUE) %>%
+  rename(n_obs_inat = inat_n_obs,
+         n_obs_ebird = n_ebird) %>%
+  select(
+    species,
+    sdm_max_value,
+    taxon_group,
+    n_obs_inat,
+    n_obs_ebird
+  )
+# Query Pottinger Report (2005) for small mammals
+bowen_mammals <- read_xlsx(here("data-raw/pottinger_report/Appendix 2 - Expected Occurrence of Wildlife Species In The Cape Roger Curtis Area.xlsx")) %>%
+  filter(`Documented on Bowen` == "y" | `Documented on Bowen` == "?" | `Documented on Bowen` == "One or more spp" )
+# Include Species if they meet any of the following criteria:
+# - eBird observations > 0
+# - iNaturalist observations > 0
+# - included in Pottinger Report 
+include_threshold <- 0.5 # Min SDM cell value somewhere on Bowen Island for including species into focal list
+bowen_SDM_obs_focal_df <- bowen_SDM_iNat_ebird %>%
+  mutate(include = case_when(
+    (n_obs_inat > 0 | n_obs_ebird > 0 ) & sdm_max_value > include_threshold ~ "y",
+    species %in% bowen_mammals$`Scientific name` ~ "y")
+  )
+# Create list of species names to include
+bowen_focal_list <- bowen_SDM_obs_focal_df %>%
+  filter(include == "y") %>%
+  select(species) %>%
+  unlist() %>%
+  unname() 
+# Get filepath for each SDM
+bowen_SDM_iNat_ebird$filepath <- lapply(bowen_SDM_iNat_ebird$species, function(x) {paste0(str_replace(x, " ", "."), "_NAs_pu_mask.tif")})
+# Add columns that can be adjusted manually
+bowen_SDM_iNat_ebird$prov_status <- ""
+bowen_SDM_iNat_ebird$fed_status <- ""
+bowen_SDM_iNat_ebird$IUCN_status <- ""
+bowen_SDM_iNat_ebird$weights <- 1.0
+# Dataframe for focal species on Bowen Island
+bowen_sdm_focal <- bowen_SDM_iNat_ebird %>%
+  filter(species %in% bowen_focal_list)
+#### UPLOAD ####
+# This sheet was uploaded to Google Sheets
+# WARNING: DO NOT RUN OR WILL OVERWRITE MANUAL INPUT TO GOOGLE SHEETS
+# write_sheet(bowen_sdm_focal,
+#             "https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing",
+#             "species")
+species_distribution_models_focal_bowen_info <- bowen_sdm_focal
+saveRDS(species_distribution_models_focal_bowen_info, file = here("inst/extdata/sdm/sdm_focal.rds"))
+```
+
+### Creating Species Information Spreadsheet
+
+Conservation statuses for species at the provincial, federal, and global levels were obtained from the BC Species & Ecosystems Explorer and the IUCN Red List. Provincial statuses followed the Red, Blue, and Yellow List classifications, while federal statuses were based on COSEWIC assessments where applicable. In cases of taxonomic discrepancies, species names were updated to reflect current classifications and documented accordingly.
+
+BC Species and Ecosystems Explorer: <https://a100.gov.bc.ca/pub/eswp/> IUCN Red List: <https://www.iucnredlist.org/>
+
+The spreadsheet below contains all of the information on species name, taxon group, threatened status, weights to use for Zonation.
+
+Visit this link to view the spreadsheet, hosted on Google Drive. <https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing>
+
+```{r}
+sdm_focal <- readRDS(here("inst/extdata/sdm/sdm_focal.rds"))
+#### REVISION ####
+# - This section necessary, since Google Sheet was uploaded at earlier time
+# - Changes since made to the creation of Bowen SDM Focal
+# - Michael Tylo (USRA Spring 2025) did the work in the Google Sheet
+# Manually look up species and correct taxonomy, add conservation status
+sdm_googlesheet <- read_sheet("https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing") %>%
+  select(!c("full_path", "filename"))
+# Drop duplicate columns, keep columns for n eBird and iNaturalist observations, max SDM values
+bowen_sdm_focal_sel <- sdm_focal %>%
+  select(!c("taxon_group", "prov_status", "fed_status", "IUCN_status", "weights"))
+# Merge
+bowen_sdm_status <- merge(bowen_sdm_focal_sel, sdm_googlesheet, by.x = "species", by.y = "sci_name", all.x = T) %>%
+  rename(weight = weights,
+         name = species) %>%
+  mutate(filename = as.character(filepath),
+         path = here(sdm_output_dir, filename),
+         category = taxon_group,
+         source = "Viorel Popescu (2020), modified by Jay Matsushiba (2025)") %>%
+  select(!filepath) %>%
+  relocate(path, filename, name, weight, category, source, notes)
+
+# Save to CSV
+write.csv(bowen_sdm_status, here(sdm_output_dir, paste0(Sys.Date(),"_sdm.csv")))
+# Save to Google Sheets, will be read in for Zonation
+sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
+write_sheet(
+  bowen_sdm_status,
+  sdm_url,
+  sheet = as.character(Sys.Date())
+)
+```
+
