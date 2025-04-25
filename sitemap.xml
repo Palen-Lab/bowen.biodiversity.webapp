@@ -1,43 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/threats_logging.html</loc>
-    <lastmod>2025-04-25T16:08:04.938Z</lastmod>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/inaturalist.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
   </url>
   <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/threats_fire.html</loc>
-    <lastmod>2025-04-25T16:08:04.938Z</lastmod>
-  </url>
-  <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/input_habitats.html</loc>
-    <lastmod>2025-04-25T16:08:04.937Z</lastmod>
-  </url>
-  <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/output_zonation_24_04_2025.html</loc>
-    <lastmod>2025-04-25T16:08:04.937Z</lastmod>
-  </url>
-  <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/output_zonation_01_02_2025.html</loc>
-    <lastmod>2025-04-25T16:08:04.937Z</lastmod>
-  </url>
-  <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/index.html</loc>
-    <lastmod>2025-04-25T16:08:03.378Z</lastmod>
-  </url>
-  <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/output_zonation_17_04_2025.html</loc>
-    <lastmod>2025-04-25T16:08:04.937Z</lastmod>
-  </url>
-  <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/input_sdm.html</loc>
-    <lastmod>2025-04-25T16:08:04.937Z</lastmod>
-  </url>
-  <url>
-    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/threats_development.html</loc>
-    <lastmod>2025-04-25T16:08:04.937Z</lastmod>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/species_richness.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
   </url>
   <url>
     <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/threats_invasive_species.html</loc>
-    <lastmod>2025-04-25T16:08:04.938Z</lastmod>
+    <lastmod>2025-04-25T16:53:07.989Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/threats_development.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/input_sdm.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/output_zonation_17_04_2025.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/index.html</loc>
+    <lastmod>2025-04-25T16:53:06.425Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/output_zonation_01_02_2025.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/output_zonation_24_04_2025.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/input_habitats.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/threats_fire.html</loc>
+    <lastmod>2025-04-25T16:53:07.988Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/threats_logging.html</loc>
+    <lastmod>2025-04-25T16:53:07.989Z</lastmod>
+  </url>
+  <url>
+    <loc>https://Palen-Lab.github.io/bowen.biodiversity.webapp/vignettes/tree_density_from_lidar.html</loc>
+    <lastmod>2025-04-25T16:53:07.989Z</lastmod>
   </url>
 </urlset>
