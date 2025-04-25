@@ -13,48 +13,11 @@ output: github_document
 )
 ```
 
-# `{bowen.biodiversity.webapp}`
+# `bowen.biodiversity.webapp`
 
-<!-- badges: start -->
-[![Lifecycle: experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
-<!-- badges: end -->
+This repository contains the analysis code, some data, and documentation for the Spatial Conservation Prioritization work conducted for the Bowen Island Biodiversity Plan. 
 
-## Installation
+Link to the Shiny Web Map Application: https://palenlab.shinyapps.io/Bowen-Biodiversity-WebApp/ 
+Link to the documentation site: https://palen-lab.github.io/bowen.biodiversity.webapp/
 
-You can install the development version of `{bowen.biodiversity.webapp}` like so:
 
-```{r}
-# FILL THIS IN! HOW CAN PEOPLE INSTALL YOUR DEV PACKAGE?
-```
-
-## Run
-
-You can launch the application by running:
-
-```{r, eval = FALSE}
-bowen.biodiversity.webapp::run_app()
-```
-
-## About
-
-You are reading the doc about version : `r golem::pkg_version()`
-
-This README has been compiled on the
-
-```{r}
-Sys.time()
-```
-
-Here are the tests results and package coverage:
-
-```{r, error = TRUE}
-devtools::check(quiet = TRUE)
-```
-
-```{r echo = FALSE}
-unloadNamespace("bowen.biodiversity.webapp")
-```
-
-```{r, error = TRUE}
-covr::package_coverage()
-```
