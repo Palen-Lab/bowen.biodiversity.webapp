@@ -336,5 +336,16 @@
       "Supplementary",
       "Tree Density from LiDAR"
     ]
+  },
+  {
+    "objectID": "vignettes/inaturalist.html",
+    "href": "vignettes/inaturalist.html",
+    "title": "iNaturalist",
+    "section": "",
+    "text": "iNaturalist Observation Data on Bowen Island\n\n\nCode\n# TODO: iNaturalist observations mapped, used in deciding SDMs to keep (see input_sdm.qmd)",
+    "crumbs": [
+      "Supplementary",
+      "iNaturalist"
+    ]
   }
 ]
