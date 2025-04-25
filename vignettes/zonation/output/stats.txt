@@ -3,21 +3,21 @@ Settings filename: /home/jay/Programming_Projects/bowen.biodiversity.webapp/vign
 Feature list filename: /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/features.txt
 Map dimensions (width * height): 96*108
 Number of grid cells in map (width * height): 10368
-Number of grid cells in map with data: 5351
-Input feature layer count: 19
-Feature layer count: 19
-Positive weight feature count: 19
+Number of grid cells in map with data: 5408
+Input feature layer count: 216
+Feature layer count: 216
+Positive weight feature count: 216
 Negative weight feature count: 0
 Zero weight feature count: 0
-Total number of pixels with data across features: 14402
+Total number of pixels with data across features: 1072729
 Mean feature extent across study area: 100.00%
-Memory usage of feature data: 84.97KB
-Mean quantization error: 4.48202e-05%
+Memory usage of feature data: 1.15MB
+Mean quantization error: 0.00207355%
 Time used to read and preprocess layer data: 0s
 Time used in prioritization: 0s
-Number of iterations: 16
-Final convergence level: 0.00799265%
-Area under curve: 0.825900
+Number of iterations: 28
+Final convergence level: 0.00958867%
+Area under curve: 0.551680
 Total time used: 0s
 Number of errors: 0
 Number of warnings: 0

@@ -1,0 +1,45 @@
+project:
+  type: website
+  render:
+    - index.qmd
+    - vignettes/output_zonation_01_02_2025.qmd
+    - vignettes/output_zonation_17_04_2025.qmd
+    - vignettes/input_sdm.qmd
+    - vignettes/input_habitats.qmd
+    - vignettes/threats_development.qmd
+    - vignettes/threats_fire.qmd
+    - vignettes/threats_invasive_species.qmd
+    - vignettes/threats_logging.qmd
+
+website:
+  title: "Bowen Island Biodiversity Plan"
+  sidebar:
+    style: "docked"
+    search: true
+    contents:
+      - href: index.qmd
+        text: Home
+      - section: "Conservation Layers"
+        contents:
+          - vignettes/input_sdm.qmd
+          - vignettes/input_habitats.qmd
+      - section: "Zonation"
+        contents:
+          - vignettes/output_zonation_01_02_2025.qmd
+          - vignettes/output_zonation_17_04_2025.qmd
+          - vignettes/output_zonation_24_04_2025.qmd
+      - section: "Threats"
+        contents:
+          - vignettes/threats_development.qmd
+          - vignettes/threats_fire.qmd
+          - vignettes/threats_invasive_species.qmd
+          - vignettes/threats_logging.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+execute:
+  freeze: auto

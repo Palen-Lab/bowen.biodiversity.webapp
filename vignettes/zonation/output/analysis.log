@@ -1,63 +1,75 @@
-[2025-03-12 14:41:17.357] [info] Zonation 5 v2.2
-[2025-03-12 14:41:17.358] [info] Arguments given: -a --mode=CAZ2 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/output
-[2025-03-12 14:41:17.358] [info] Using 8-bit quantization
-[2025-03-12 14:41:17.358] [info] Using 8 threads for computation
-[2025-03-12 14:41:17.358] [info] Loading project "/home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5"
-[2025-03-12 14:41:17.358] [info] Using setting: feature list file = features.txt
-[2025-03-12 14:41:17.358] [info] Using setting: analysis area mask layer = /home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/bowen_mask.tif
-[2025-03-12 14:41:17.358] [info] Using default setting: curves output interval = 9.99999975e-05
-[2025-03-12 14:41:17.358] [info] Using default setting: max iterations = 500
-[2025-03-12 14:41:17.358] [info] Using default setting: mean ranking error threshold = 0.00999999978
-[2025-03-12 14:41:17.358] [info] Using default setting: smoothing factor = 0
-[2025-03-12 14:41:17.358] [info] Using default setting: stop on plateau = 0
-[2025-03-12 14:41:17.358] [info] Using default setting: zero mode = all
-[2025-03-12 14:41:17.358] [info] Using default setting: stop after preprocessing = 0
-[2025-03-12 14:41:17.358] [info] Using default setting: quantization error warning threshold = 20
-[2025-03-12 14:41:17.358] [info] Loading feature layer information from "/home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/features.txt"
-[2025-03-12 14:41:17.358] [info] Validating project
-[2025-03-12 14:41:17.443] [info] Analysis area: all
-[2025-03-12 14:41:17.443] [info] Reading layer data
-[2025-03-12 14:41:17.509] [info] Reading analysis area mask
-[2025-03-12 14:41:17.518] [info] Gathering data statistics
-[2025-03-12 14:41:17.523] [info] Map dimensions (width * height): 96*108
-[2025-03-12 14:41:17.523] [info] Number of grid cells in map (width * height): 10368
-[2025-03-12 14:41:17.523] [info] Number of grid cells in map with data: 5351
-[2025-03-12 14:41:17.523] [info] Input feature layer count: 19
-[2025-03-12 14:41:17.523] [info] Feature layer count: 19
-[2025-03-12 14:41:17.523] [info] Positive weight feature count: 19
-[2025-03-12 14:41:17.523] [info] Negative weight feature count: 0
-[2025-03-12 14:41:17.523] [info] Zero weight feature count: 0
-[2025-03-12 14:41:17.523] [info] Total number of pixels with data across features: 14402
-[2025-03-12 14:41:17.523] [info] Reading feature layers
-[2025-03-12 14:41:17.529] [info] Mean feature extent across study area: 100.00%
-[2025-03-12 14:41:17.529] [info] Memory usage of feature data: 84.97KB
-[2025-03-12 14:41:17.529] [info] Mean quantization error: 4.48202e-05%
-[2025-03-12 14:41:17.529] [info] Time used to read and preprocess layer data: 0s
-[2025-03-12 14:41:17.529] [info] Computing priority rank
-[2025-03-12 14:41:17.530] [info] Iteration 0, mean ranking error 1.49318%, mean rank change 1.5372%
-[2025-03-12 14:41:17.531] [info] Iteration 1, mean ranking error 1.52036%, mean rank change 0.208548%
-[2025-03-12 14:41:17.532] [info] Iteration 2, mean ranking error 0.435049%, mean rank change 0.0532040%
-[2025-03-12 14:41:17.533] [info] Iteration 3, mean ranking error 0.208570%, mean rank change 0.0265426%
-[2025-03-12 14:41:17.533] [info] Iteration 4, mean ranking error 0.1465%, mean rank change 0.0177836%
-[2025-03-12 14:41:17.534] [info] Iteration 5, mean ranking error 0.105277%, mean rank change 0.0134529%
-[2025-03-12 14:41:17.535] [info] Iteration 6, mean ranking error 0.0754993%, mean rank change 0.0104634%
-[2025-03-12 14:41:17.536] [info] Iteration 7, mean ranking error 0.0606891%, mean rank change 0.00866127%
-[2025-03-12 14:41:17.536] [info] Iteration 8, mean ranking error 0.042651%, mean rank change 0.00662867%
-[2025-03-12 14:41:17.537] [info] Iteration 9, mean ranking error 0.0373353%, mean rank change 0.00547616%
-[2025-03-12 14:41:17.538] [info] Iteration 10, mean ranking error 0.02884%, mean rank change 0.00470782%
-[2025-03-12 14:41:17.538] [info] Iteration 11, mean ranking error 0.0234404%, mean rank change 0.00391154%
-[2025-03-12 14:41:17.539] [info] Iteration 12, mean ranking error 0.0168646%, mean rank change 0.00313622%
-[2025-03-12 14:41:17.540] [info] Iteration 13, mean ranking error 0.0156241%, mean rank change 0.00270316%
-[2025-03-12 14:41:17.541] [info] Iteration 14, mean ranking error 0.0101996%, mean rank change 0.00208150%
-[2025-03-12 14:41:17.541] [info] Iteration 15, mean ranking error 0.00799265%, mean rank change 0.00148778%
-[2025-03-12 14:41:17.541] [info] Time used in prioritization: 0s
-[2025-03-12 14:41:17.541] [info] Number of iterations: 16
-[2025-03-12 14:41:17.541] [info] Final convergence level: 0.00799265%
-[2025-03-12 14:41:17.541] [info] Area under curve: 0.825900
-[2025-03-12 14:41:17.541] [info] Writing feature info
-[2025-03-12 14:41:17.541] [info] Writing feature curves
-[2025-03-12 14:41:17.583] [info] Writing priority rank map
-[2025-03-12 14:41:17.584] [info] Total time used: 0s
-[2025-03-12 14:41:17.584] [info] Number of errors: 0
-[2025-03-12 14:41:17.584] [info] Number of warnings: 0
-[2025-03-12 14:41:17.584] [info] Done
+[2025-04-24 18:02:59.387] [info] Zonation 5 v2.2
+[2025-04-24 18:02:59.388] [info] Arguments given: -a --mode=CAZ2 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/output
+[2025-04-24 18:02:59.388] [info] Using 8-bit quantization
+[2025-04-24 18:02:59.388] [info] Using 8 threads for computation
+[2025-04-24 18:02:59.388] [info] Loading project "/home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5"
+[2025-04-24 18:02:59.388] [info] Using setting: feature list file = features.txt
+[2025-04-24 18:02:59.388] [info] Using setting: analysis area mask layer = /home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/bowen_mask.tif
+[2025-04-24 18:02:59.388] [info] Using default setting: curves output interval = 9.99999975e-05
+[2025-04-24 18:02:59.388] [info] Using default setting: max iterations = 500
+[2025-04-24 18:02:59.388] [info] Using default setting: mean ranking error threshold = 0.00999999978
+[2025-04-24 18:02:59.388] [info] Using default setting: smoothing factor = 0
+[2025-04-24 18:02:59.388] [info] Using default setting: stop on plateau = 0
+[2025-04-24 18:02:59.388] [info] Using default setting: zero mode = all
+[2025-04-24 18:02:59.388] [info] Using default setting: stop after preprocessing = 0
+[2025-04-24 18:02:59.388] [info] Using default setting: quantization error warning threshold = 20
+[2025-04-24 18:02:59.388] [info] Loading feature layer information from "/home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/features.txt"
+[2025-04-24 18:02:59.393] [info] Validating project
+[2025-04-24 18:02:59.533] [info] Analysis area: all
+[2025-04-24 18:02:59.533] [info] Reading layer data
+[2025-04-24 18:02:59.600] [info] Reading analysis area mask
+[2025-04-24 18:02:59.609] [info] Gathering data statistics
+[2025-04-24 18:02:59.683] [info] Map dimensions (width * height): 96*108
+[2025-04-24 18:02:59.683] [info] Number of grid cells in map (width * height): 10368
+[2025-04-24 18:02:59.683] [info] Number of grid cells in map with data: 5408
+[2025-04-24 18:02:59.683] [info] Input feature layer count: 216
+[2025-04-24 18:02:59.683] [info] Feature layer count: 216
+[2025-04-24 18:02:59.683] [info] Positive weight feature count: 216
+[2025-04-24 18:02:59.683] [info] Negative weight feature count: 0
+[2025-04-24 18:02:59.683] [info] Zero weight feature count: 0
+[2025-04-24 18:02:59.683] [info] Total number of pixels with data across features: 1072729
+[2025-04-24 18:02:59.683] [info] Reading feature layers
+[2025-04-24 18:02:59.770] [info] Mean feature extent across study area: 100.00%
+[2025-04-24 18:02:59.770] [info] Memory usage of feature data: 1.15MB
+[2025-04-24 18:02:59.770] [info] Mean quantization error: 0.00207355%
+[2025-04-24 18:02:59.770] [info] Time used to read and preprocess layer data: 0s
+[2025-04-24 18:02:59.770] [info] Computing priority rank
+[2025-04-24 18:02:59.777] [info] Iteration 0, mean ranking error 6.08716%, mean rank change 4.53974%
+[2025-04-24 18:02:59.779] [info] Iteration 1, mean ranking error 2.89028%, mean rank change 1.25633%
+[2025-04-24 18:02:59.781] [info] Iteration 2, mean ranking error 1.71809%, mean rank change 0.685519%
+[2025-04-24 18:02:59.784] [info] Iteration 3, mean ranking error 1.16328%, mean rank change 0.428209%
+[2025-04-24 18:02:59.786] [info] Iteration 4, mean ranking error 0.819699%, mean rank change 0.287207%
+[2025-04-24 18:02:59.788] [info] Iteration 5, mean ranking error 0.599341%, mean rank change 0.202903%
+[2025-04-24 18:02:59.791] [info] Iteration 6, mean ranking error 0.450032%, mean rank change 0.14888%
+[2025-04-24 18:02:59.793] [info] Iteration 7, mean ranking error 0.343099%, mean rank change 0.112041%
+[2025-04-24 18:02:59.796] [info] Iteration 8, mean ranking error 0.262694%, mean rank change 0.085877%
+[2025-04-24 18:02:59.798] [info] Iteration 9, mean ranking error 0.210354%, mean rank change 0.0670166%
+[2025-04-24 18:02:59.800] [info] Iteration 10, mean ranking error 0.16965%, mean rank change 0.0530594%
+[2025-04-24 18:02:59.803] [info] Iteration 11, mean ranking error 0.142706%, mean rank change 0.0425487%
+[2025-04-24 18:02:59.805] [info] Iteration 12, mean ranking error 0.116814%, mean rank change 0.0346572%
+[2025-04-24 18:02:59.807] [info] Iteration 13, mean ranking error 0.0936067%, mean rank change 0.0285026%
+[2025-04-24 18:02:59.810] [info] Iteration 14, mean ranking error 0.0790136%, mean rank change 0.0239208%
+[2025-04-24 18:02:59.812] [info] Iteration 15, mean ranking error 0.0682352%, mean rank change 0.0203785%
+[2025-04-24 18:02:59.815] [info] Iteration 16, mean ranking error 0.0578226%, mean rank change 0.0171234%
+[2025-04-24 18:02:59.817] [info] Iteration 17, mean ranking error 0.047599%, mean rank change 0.0147231%
+[2025-04-24 18:02:59.820] [info] Iteration 18, mean ranking error 0.0403125%, mean rank change 0.0126306%
+[2025-04-24 18:02:59.822] [info] Iteration 19, mean ranking error 0.0357841%, mean rank change 0.0104560%
+[2025-04-24 18:02:59.824] [info] Iteration 20, mean ranking error 0.0307370%, mean rank change 0.00965587%
+[2025-04-24 18:02:59.827] [info] Iteration 21, mean ranking error 0.0257099%, mean rank change 0.00778898%
+[2025-04-24 18:02:59.829] [info] Iteration 22, mean ranking error 0.0205898%, mean rank change 0.00653070%
+[2025-04-24 18:02:59.831] [info] Iteration 23, mean ranking error 0.0172416%, mean rank change 0.00568958%
+[2025-04-24 18:02:59.833] [info] Iteration 24, mean ranking error 0.0144067%, mean rank change 0.00468433%
+[2025-04-24 18:02:59.836] [info] Iteration 25, mean ranking error 0.0116914%, mean rank change 0.00399365%
+[2025-04-24 18:02:59.838] [info] Iteration 26, mean ranking error 0.0112157%, mean rank change 0.00357650%
+[2025-04-24 18:02:59.840] [info] Iteration 27, mean ranking error 0.00958867%, mean rank change 0.00312516%
+[2025-04-24 18:02:59.840] [info] Time used in prioritization: 0s
+[2025-04-24 18:02:59.840] [info] Number of iterations: 28
+[2025-04-24 18:02:59.840] [info] Final convergence level: 0.00958867%
+[2025-04-24 18:02:59.840] [info] Area under curve: 0.551680
+[2025-04-24 18:02:59.840] [info] Writing feature info
+[2025-04-24 18:02:59.840] [info] Writing feature curves
+[2025-04-24 18:03:00.157] [info] Writing priority rank map
+[2025-04-24 18:03:00.162] [info] Total time used: 0s
+[2025-04-24 18:03:00.162] [info] Number of errors: 0
+[2025-04-24 18:03:00.162] [info] Number of warnings: 0
+[2025-04-24 18:03:00.162] [info] Done

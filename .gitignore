@@ -9,3 +9,5 @@ vignettes/rsconnect/
 .Renviron
 .Rbuildignore
 .rscignore
+
+/.quarto/
