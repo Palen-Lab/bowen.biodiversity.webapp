@@ -1,0 +1,27 @@
+project:
+  type: website
+  render:
+    - index.qmd
+    - vignettes/output_zonation_01_02_2025.qmd
+
+
+website:
+  title: "Bowen Island Biodiversity Plan"
+  sidebar:
+    style: "docked"
+    search: true
+    contents:
+      - href: index.qmd
+        text: Home
+      - section: "Zonation"
+        contents:
+          - vignettes/output_zonation_01_02_2025.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
+
+execute:
+  freeze: auto

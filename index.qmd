@@ -1,0 +1,36 @@
+---
+title: "Bowen Island Biodiversity Plan"
+format: html
+---
+
+# Introduction
+
+## Purpose 
+
+The purpose of this website is to capture and share the analyses for conducting spatial prioritization of conservation areas on Bowen Island. This is part of a greater effort to inform the decision-making and community planning for the Bowen Island Municipality.
+
+## Contributors
+
+### Analysis 
+
+Jay Matsushiba
+
+Michael Tylo
+
+Wendy Palen
+
+Tom Sisk
+
+### Workshop Facilitators
+
+Maya Persam
+
+Kyra Rolfe
+
+Valerie Kwok
+
+### Caring4Nature Group
+
+-   [ ] Add workshop participants
+
+### Data Contributors
