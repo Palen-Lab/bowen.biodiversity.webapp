@@ -85,6 +85,6 @@ ecoreserve$type <-"Ecological Reserve"
 ecoreserve$filepath <- ecoreserve_path
 
 # Combine into one Protected Areas layer
-bowen_protectedareas <- rbind(alr, bowenmuniparks, conservancies, covenants, crown, ecoreserve, mvparks, provparks)
+bowen_protectedareas <- rbind(alr, bowenmuniparks, conservancies, covenants, ecoreserve, mvparks, provparks)
 
 usethis::use_data(bowen_protectedareas, overwrite = TRUE)
