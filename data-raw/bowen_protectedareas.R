@@ -66,14 +66,14 @@ provparks <- provparks[!st_is_empty(provparks$geom),]
 provparks$type <-"Provincial Park"
 provparks$filepath <- provparks_path
 
-# Crown Land
-crown_path <- "data-raw/bowen_protectedareas/Crown-Land-JD.gpkg"
-crown <- here(crown_path) %>%
-  st_read() %>%
-  select(name = parkname)
-crown <- crown[!st_is_empty(crown$geom),]
-crown$type <-"Crown Land"
-crown$filepath <- crown_path
+# # Crown Land
+# crown_path <- "data-raw/bowen_protectedareas/Crown-Land-JD.gpkg"
+# crown <- here(crown_path) %>%
+#   st_read() %>%
+#   select(name = parkname)
+# crown <- crown[!st_is_empty(crown$geom),]
+# crown$type <-"Crown Land"
+# crown$filepath <- crown_path
 
 # Ecological Reserves
 ecoreserve_path <- "data-raw/bowen_protectedareas/Eco-Reserve-JD.gpkg"
