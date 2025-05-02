@@ -1,0 +1,186 @@
+---
+title: "Conservation Prioritization April 24 2025 Update"
+author: "Jay Matsushiba"
+date: "2025/04/24"
+format:
+  html:
+    code-fold: true
+---
+
+# Bowen Island Biodiversity Prioritization - Zonation5
+This Rmarkdown documents the Zonation run used for the May 5 2025 iteration for Bowen Island Biodiversity Planning. 
+
+<https://github.com/zonationteam/Zonation5>
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+#### Palen Lab Packages ####
+library(bowen.biodiversity.webapp)
+
+#### Other Packages ####
+library(here)
+library(dplyr)
+library(stringr)
+library(foreach)
+library(sf)
+library(terra)
+library(tidyterra)
+library(readxl)
+library(googlesheets4)
+
+sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
+habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
+output_date <- "2025-05-02"
+```
+
+## Zonation
+
+> Zonation 5 is a spatial prioritization software that can be used to identify priority areas to support conservation planning, land use planning, ecological impact avoidance and other similar tasks. The software uses spatial raster data on the distributions of individual biodiversity features (species, habitats, ecosystem services etc.) to identify which locations in a landscape are most important for retaining biodiversity. Zonation can account for local habitat quality and ecological connectivity together with costs, threats and different land tenure, thus providing a quantitative method for spatial planning that enhances the persistence of biodiversity in the long term.
+
+<https://zonationteam.github.io/Zonation5/>
+
+We took all of the rasters prepared earlier and fed these into the Zonation 5 software. This should provide a relative ranking for locations from highest to lowest for the purposes of biodiversity conservation.
+
+**Note:** Zonation 5 is usually a standalone application. Here, I have enabled running of 
+Zonation from R, using command line functions. This way we can adjust and automatically
+run Zonation, reading from data in R. 
+
+```{r}
+#### CREATE DATAFRAME FOR INPUT LAYERS ####
+# Read from Google Sheets
+habitats_df <- read_sheet(habitats_url, sheet = output_date)
+habitats_df$weight <- habitats_df$weight / nrow(habitats_df)
+sdm_df <- read_sheet(sdm_url, sheet = output_date) %>%
+  select(colnames(habitats_df)) # Select common columns
+sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
+# Bind all input layers together
+layers_df <- bind_rows(habitats_df, sdm_df) %>%
+  filter(weight > 0)
+
+#### UPDATE features.txt FOR ZONATION RUN ####
+# UPDATE features.txt from files available in data
+features_path <- here("vignettes/zonation/features.txt")
+cat('"weight" "filename"', 
+    file = features_path,
+    sep = "\n")
+for(i in 1:nrow(layers_df)) {
+  next_row <- paste0(layers_df[i, "weight"], " ", layers_df[i, "path"])
+  cat(next_row,
+      file = features_path,
+      append = TRUE,
+      sep = "\n")
+}
+#### SET PARAMS FOR ZONATION RUN ####
+zonation5_location <- here("vignettes/zonation/zonation5") 
+zonation5_mode <- "CAZ2"
+# Zonation5 Setting Text File
+zonation5_settings <-  here("vignettes/zonation/settings.z5")
+zonation5_settings_txt <- c("feature list file = features.txt", 
+                            paste0("analysis area mask layer = ", here("inst/extdata/bowen_mask.tif"))) # Add Bowen Island Mask
+writeLines(zonation5_settings_txt, zonation5_settings)
+zonation5_output <- here("vignettes/zonation/output") 
+zonation5_command <- str_glue(
+  '{zonation5_location} -a -w --mode={zonation5_mode} {zonation5_settings} {zonation5_output}',
+  zonation5_location = zonation5_location,
+  zonation5_mode = zonation5_mode,
+  zonation5_settings = zonation5_settings,
+  zonation5_output = zonation5_output
+) %>%
+  str_c()
+#### ZONATION RUN ####
+system(command = zonation5_command)
+
+#### Save Zonation Run #### 
+output_dir <- here("inst/extdata/output_zonation", output_date)
+dir.create(output_dir)
+file.copy(list.files(here("vignettes/zonation/output"), full.names = T, recursive = T),
+          output_dir,
+          recursive = T)
+```
+
+## Output
+
+```{r}
+#### VISUALIZE OUTPUT ####
+rankmap <- here(output_dir , "rankmap.tif") %>% rast()
+plot(rankmap)
+```
+
+## Overlap Statistics
+
+Here we calculate the overlap of the top XX% of conservation values with these other layers: 
+- Protected areas
+- Private land
+- Human Footprint (HFP)
+- Freshwater habitats 
+  - Lakes
+  - Ponds
+  - Streams
+  - Wetlands
+  - Riparian
+
+```{r}
+# Function for converting Zonation output to boolean based on percentage (in top XX%)
+rankmap <- here(output_dir , "rankmap.tif") %>% rast()
+
+#' Only keep top or bottom cell values by quantile 
+#'
+#' @param x SpatRaster 
+#' @param prob Quantile between 0 and 1
+#' @param direction "top" or "bottom", for direction of keep / discard cell values
+#'
+#' @returns SpatRaster
+#' @export
+remove_by_quantile <- function(x, prob, direction = "top") {
+  val <- x %>%
+    values() %>%
+    quantile(probs = prob, na.rm = T)
+  min_val <- x %>%
+    values() %>%
+    min(na.rm = T)
+  max_val <- x %>%
+    values() %>%
+    max(na.rm = T)
+  if(direction == "top") {
+    m <- matrix(c(
+      min_val, val, NA,
+      val, max_val, 1
+    ), ncol = 3, byrow = T)
+  } else if (direction == "bottom") {
+    m <- matrix(c(
+      min_val, val, 1,
+      val, max_val, NA
+    ), ncol = 3, byrow = T)
+  }
+  mask_quantile <- x %>%
+    classify(m,, include.lowest = T) 
+  mask_quantile * x
+}
+# Top 0.1 or 10% of conservation values
+remove_by_quantile(rankmap, 0.9)
+# Top 0.2 or 20% of conservation values
+remove_by_quantile(rankmap, 0.8)
+# Top 0.3 or 30% of conservation values
+remove_by_quantile(rankmap, 0.7)
+# Top 0.4 or 40% of conservation values
+remove_by_quantile(rankmap, 0.6)
+# Top 0.5 or 50% of conservation values
+remove_by_quantile(rankmap, 0.5)
+
+# Overlap calculation with protected areas 
+here("data-raw/bowen_protectedareas_")
+
+## create mask
+# Overlap calculation with private land
+# Overlap calculation with human footprint
+# Overlap calculation with freshwater habitats 
+
+# Visualize output as maps and as table for overlap % 
+```
+
