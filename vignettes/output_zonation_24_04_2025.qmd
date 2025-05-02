@@ -96,7 +96,8 @@ zonation5_command <- str_glue(
 system(command = zonation5_command)
 
 #### Save Zonation Run #### 
-output_dir <- here("inst/extdata/output_zonation", Sys.Date())
+output_date <- "2024-04-24"
+output_dir <- here("inst/extdata/output_zonation", output_date)
 dir.create(output_dir)
 file.copy(list.files(here("vignettes/zonation/output"), full.names = T, recursive = T),
           output_dir,
@@ -110,3 +111,4 @@ file.copy(list.files(here("vignettes/zonation/output"), full.names = T, recursiv
 rankmap <- here(output_dir , "rankmap.tif") %>% rast()
 plot(rankmap)
 ```
+
