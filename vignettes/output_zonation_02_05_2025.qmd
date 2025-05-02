@@ -174,7 +174,12 @@ remove_by_quantile(rankmap, 0.6)
 remove_by_quantile(rankmap, 0.5)
 
 # Overlap calculation with protected areas 
-here("data-raw/bowen_protectedareas_")
+## JD Protected Areas
+bowen_protectedareas_rast <- bowen.biodiversity.webapp::bowen_protectedareas %>%
+  bowen.biodiversity.webapp::bowen_rasterize()
+here("inst/extdata/bowen_mask.tif") # Bowen Island Mask
+
+
 
 ## create mask
 # Overlap calculation with private land

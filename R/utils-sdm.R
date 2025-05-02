@@ -117,3 +117,20 @@ invert <- function(input_rast) {
   max <- mm[2]
   inverted <- max - input_rast
 }
+
+
+#' Rasterize to Bowen Island Mask
+#' @param sf input sf object to rasterize
+#' @export
+bowen_rasterize <- function(sf) {
+  bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
+    rast() %>%
+    project(bowen.biodiversity.webapp::project_crs)
+
+  output <- sf %>%
+    terra::vect() %>% # Change to SpatVector for rasterization
+    terra::project(bowen.biodiversity.webapp::project_crs) %>% # Reproject to the mask CRS
+    terra::rasterize(bowen_island_mask,
+                     touches = T,
+                     background = NA) # Rasterize to match mask, set background values to NA
+}
