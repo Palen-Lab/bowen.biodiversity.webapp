@@ -12,12 +12,6 @@ This Rmarkdown documents the Zonation run used for the April 17 2025 iteration f
 
 <https://github.com/zonationteam/Zonation5>
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
 
 ```{r setup}
 #### Palen Lab Packages ####
