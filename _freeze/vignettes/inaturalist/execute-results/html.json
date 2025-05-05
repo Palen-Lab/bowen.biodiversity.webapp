@@ -1,0 +1,15 @@
+{
+  "hash": "facb68d3c7b2ade52268724aaa018198",
+  "result": {
+    "engine": "knitr",
+    "markdown": "---\ntitle: \"iNaturalist\"\nauthor: \"Jay Matsushiba\"\ndate: \"2025/04/25\"\nformat:\n  html:\n    code-fold: true\n---\n\n\n\n# iNaturalist Observation Data on Bowen Island\n\n\n::: {.cell}\n\n```{.r .cell-code}\n# TODO: iNaturalist observations mapped, used in deciding SDMs to keep (see input_sdm.qmd)\n```\n:::\n",
+    "supporting": [],
+    "filters": [
+      "rmarkdown/pagebreak.lua"
+    ],
+    "includes": {},
+    "engineDependencies": {},
+    "preserve": {},
+    "postProcess": true
+  }
+}
