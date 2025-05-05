@@ -5,6 +5,7 @@ project:
     - vignettes/output_zonation_01_02_2025.qmd
     - vignettes/output_zonation_17_04_2025.qmd
     - vignettes/output_zonation_24_04_2025.qmd
+    - vignettes/output_zonation_02_05_2025.qmd
     - vignettes/input_sdm.qmd
     - vignettes/input_habitats.qmd
     - vignettes/threats_development.qmd
@@ -32,6 +33,7 @@ website:
           - vignettes/output_zonation_01_02_2025.qmd
           - vignettes/output_zonation_17_04_2025.qmd
           - vignettes/output_zonation_24_04_2025.qmd
+          - vignettes/output_zonation_02_05_2025.qmd
       - section: "Threats"
         contents:
           - vignettes/threats_development.qmd
