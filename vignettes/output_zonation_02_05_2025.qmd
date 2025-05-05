@@ -37,6 +37,7 @@ library(googlesheets4)
 sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
 habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
 output_date <- "2025-05-02"
+output_dir <- here("inst/extdata/output_zonation", output_date)
 ```
 
 ## Zonation
@@ -97,7 +98,6 @@ zonation5_command <- str_glue(
 system(command = zonation5_command)
 
 #### Save Zonation Run #### 
-output_dir <- here("inst/extdata/output_zonation", output_date)
 dir.create(output_dir)
 file.copy(list.files(here("vignettes/zonation/output"), full.names = T, recursive = T),
           output_dir,
@@ -127,7 +127,7 @@ Here we calculate the overlap of the top XX% of conservation values with these o
 
 ```{r}
 # Function for converting Zonation output to boolean based on percentage (in top XX%)
-rankmap <- here(output_dir , "rankmap.tif") %>% rast()
+rankmap <- here(output_dir , "rankmap.tif") %>% rast() %>% project(project_crs)
 
 #' Only keep top or bottom cell values by quantile 
 #'
@@ -162,8 +162,19 @@ remove_by_quantile <- function(x, prob, direction = "top") {
     classify(m,, include.lowest = T) 
   mask_quantile * x
 }
+
+#' Provide ratio of overlap between two rasters (in terms of NA vs nonNA)
+#'  
+raster_overlap_ratio <- function(top_rast, area_rast) {
+  overlap_res <- (top_rast * area_rast)
+  top_cell_count <- top_rast %>% terra::global(fun="notNA")
+  overlap_cell_count <- overlap_res %>% terra::global(fun="notNA")
+  overlap_ratio <- (overlap_cell_count / top_cell_count) %>% as.numeric()
+  return(overlap_ratio)
+}
+
 # Top 0.1 or 10% of conservation values
-remove_by_quantile(rankmap, 0.9)
+top_10 <- remove_by_quantile(rankmap, 0.9)
 # Top 0.2 or 20% of conservation values
 remove_by_quantile(rankmap, 0.8)
 # Top 0.3 or 30% of conservation values
@@ -173,17 +184,18 @@ remove_by_quantile(rankmap, 0.6)
 # Top 0.5 or 50% of conservation values
 remove_by_quantile(rankmap, 0.5)
 
-# Overlap calculation with protected areas 
-## JD Protected Areas
+
+
+# Rasterize Protected Areas from JD
 bowen_protectedareas_rast <- bowen.biodiversity.webapp::bowen_protectedareas %>%
   bowen.biodiversity.webapp::bowen_rasterize()
-here("inst/extdata/bowen_mask.tif") # Bowen Island Mask
+raster_overlap_ratio(top_10, bowen_protectedareas_rast)
 
+# Rasterize Private Land
 
+# Rasterize Freshwater Habitats 
 
-## create mask
-# Overlap calculation with private land
-# Overlap calculation with human footprint
+# Overlap calculation with human footprint (classified)
 # Overlap calculation with freshwater habitats 
 
 # Visualize output as maps and as table for overlap % 
