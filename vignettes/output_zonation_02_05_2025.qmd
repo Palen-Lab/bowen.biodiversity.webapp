@@ -1,7 +1,7 @@
 ---
-title: "Conservation Prioritization April 24 2025 Update"
+title: "Conservation Prioritization May 5 2025 Update"
 author: "Jay Matsushiba"
-date: "2025/04/24"
+date: "2025/05/02"
 format:
   html:
     code-fold: true
@@ -12,13 +12,6 @@ format:
 This Rmarkdown documents the Zonation run used for the May 5 2025 iteration for Bowen Island Biodiversity Planning.
 
 <https://github.com/zonationteam/Zonation5>
-
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
 
 ```{r setup}
 #### Palen Lab Packages ####
@@ -113,7 +106,7 @@ plot(rankmap)
 
 ## Overlap Statistics
 
-Here we calculate the overlap of the top XX% of conservation values with these other layers:
+Here we calculate the overlap of the top % of conservation values with these other layers:
 
 -   Protected areas
 -   Private land
@@ -229,8 +222,7 @@ overlap_results <- foreach(quant = quants, .combine = "rbind") %do% {
     mutate("removed_bottom_quantile" = quant) %>%
     relocate("removed_bottom_quantile")
 }
+# Visualize output as table for overlap % 
 knitr::kable(overlap_results)
-# write.csv(overlap_results, here("vignettes/outputs/overlap_results.csv"))
 
-# Visualize output as maps and as table for overlap % 
 ```
