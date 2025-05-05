@@ -16,6 +16,9 @@ project:
     - vignettes/tree_density_from_lidar.qmd
     - vignettes/inaturalist.qmd
 
+execute:
+  freeze: auto
+
 website:
   title: "Bowen Island Biodiversity Plan"
   sidebar:
@@ -51,6 +54,3 @@ format:
     theme: cosmo
     css: styles.css
     toc: true
-
-execute:
-  freeze: auto
