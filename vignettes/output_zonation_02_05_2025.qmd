@@ -8,7 +8,8 @@ format:
 ---
 
 # Bowen Island Biodiversity Prioritization - Zonation5
-This Rmarkdown documents the Zonation run used for the May 5 2025 iteration for Bowen Island Biodiversity Planning. 
+
+This Rmarkdown documents the Zonation run used for the May 5 2025 iteration for Bowen Island Biodiversity Planning.
 
 <https://github.com/zonationteam/Zonation5>
 
@@ -48,9 +49,7 @@ output_dir <- here("inst/extdata/output_zonation", output_date)
 
 We took all of the rasters prepared earlier and fed these into the Zonation 5 software. This should provide a relative ranking for locations from highest to lowest for the purposes of biodiversity conservation.
 
-**Note:** Zonation 5 is usually a standalone application. Here, I have enabled running of 
-Zonation from R, using command line functions. This way we can adjust and automatically
-run Zonation, reading from data in R. 
+**Note:** Zonation 5 is usually a standalone application. Here, I have enabled running of Zonation from R, using command line functions. This way we can adjust and automatically run Zonation, reading from data in R.
 
 ```{r}
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
@@ -114,16 +113,17 @@ plot(rankmap)
 
 ## Overlap Statistics
 
-Here we calculate the overlap of the top XX% of conservation values with these other layers: 
-- Protected areas
-- Private land
-- Human Footprint (HFP)
-- Freshwater habitats 
-  - Lakes
-  - Ponds
-  - Streams
-  - Wetlands
-  - Riparian
+Here we calculate the overlap of the top XX% of conservation values with these other layers:
+
+-   Protected areas
+-   Private land
+-   Human Footprint (HFP)
+-   Freshwater habitats
+    -   Lakes
+    -   Ponds
+    -   Streams
+    -   Wetlands
+    -   Riparian
 
 ```{r}
 # Function for converting Zonation output to boolean based on percentage (in top XX%)
@@ -173,31 +173,64 @@ raster_overlap_ratio <- function(top_rast, area_rast) {
   return(overlap_ratio)
 }
 
-# Top 0.1 or 10% of conservation values
-top_10 <- remove_by_quantile(rankmap, 0.9)
-# Top 0.2 or 20% of conservation values
-remove_by_quantile(rankmap, 0.8)
-# Top 0.3 or 30% of conservation values
-remove_by_quantile(rankmap, 0.7)
-# Top 0.4 or 40% of conservation values
-remove_by_quantile(rankmap, 0.6)
-# Top 0.5 or 50% of conservation values
-remove_by_quantile(rankmap, 0.5)
-
-
-
-# Rasterize Protected Areas from JD
+# Protected Areas from JD
 bowen_protectedareas_rast <- bowen.biodiversity.webapp::bowen_protectedareas %>%
   bowen.biodiversity.webapp::bowen_rasterize()
-raster_overlap_ratio(top_10, bowen_protectedareas_rast)
 
-# Rasterize Private Land
+# Private Land
+bowen_mask <- rast(here("inst/extdata/bowen_mask.tif"))
+bowen_parcelmap_rast <- bowen.biodiversity.webapp::bowen_parcelmap %>%
+  st_cast("MULTIPOLYGON") %>% # Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12 
+  filter(OwnerType == "Private") %>%
+  bowen.biodiversity.webapp::bowen_rasterize()
 
-# Rasterize Freshwater Habitats 
+# Freshwater Habitats 
+fw_rast_paths <- c(
+  here("inst/extdata/habitats/lakes.tif"),
+  here("inst/extdata/habitats/ponds.tif"),
+  here("inst/extdata/habitats/riparian.tif"),
+  here("inst/extdata/habitats/wetlands.tif"),
+  here("inst/extdata/habitats/streams.tif")
+)
+fw_rast_stack <- lapply(fw_rast_paths, rast) %>%
+  rast()
+fw_rast_dissolve <- fw_rast_stack %>% 
+  sum(na.rm = T) 
 
-# Overlap calculation with human footprint (classified)
-# Overlap calculation with freshwater habitats 
+# Human Footprint (classified)
+bowen_hfp <- here("inst/extdata/habitats/bowen_human_footprint_recl.tif") %>%
+  rast()
+bowen_hfp_low <- bowen_hfp %>%
+  classify(cbind(3, NA)) %>%
+  classify(cbind(2, NA))
+bowen_hfp_med <- bowen_hfp %>%
+  classify(cbind(3, NA)) %>%
+  classify(cbind(1, NA))
+bowen_hfp_high <- bowen_hfp %>%
+  classify(cbind(2, NA)) %>%
+  classify(cbind(1, NA))
+
+# Overlap calculation 
+overlap_stats <- function(top_rast) {
+  data.frame(
+    protectedareas_overlap = raster_overlap_ratio(top_rast, bowen_protectedareas_rast),
+    privatelands_overlap = raster_overlap_ratio(top_rast, bowen_parcelmap_rast),
+    freshwater_overlap = raster_overlap_ratio(top_rast, fw_rast_dissolve),
+    hfp_low_overlap = raster_overlap_ratio(top_rast, bowen_hfp_low),
+    hfp_med_overlap = raster_overlap_ratio(top_rast, bowen_hfp_med),
+    hfp_high_overlap = raster_overlap_ratio(top_rast, bowen_hfp_high)
+  )
+}
+quants <- seq(from = 0, to = 1, by = 0.1)
+overlap_results <- foreach(quant = quants, .combine = "rbind") %do% {
+  rankmap %>%
+    remove_by_quantile(quant) %>%
+    overlap_stats() %>%
+    mutate("removed_bottom_quantile" = quant) %>%
+    relocate("removed_bottom_quantile")
+}
+knitr::kable(overlap_results)
+# write.csv(overlap_results, here("vignettes/outputs/overlap_results.csv"))
 
 # Visualize output as maps and as table for overlap % 
 ```
-
