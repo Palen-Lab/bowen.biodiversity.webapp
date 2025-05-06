@@ -13,7 +13,7 @@ This Rmarkdown documents the Zonation run used for the May 5 2025 iteration for 
 
 <https://github.com/zonationteam/Zonation5>
 
-```{r setup}
+```{r setup, output=F}
 #### Palen Lab Packages ####
 library(bowen.biodiversity.webapp)
 
@@ -27,6 +27,9 @@ library(terra)
 library(tidyterra)
 library(readxl)
 library(googlesheets4)
+library(ggplot2)
+library(ggnewscale)
+library(RColorBrewer)
 
 sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
 habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
@@ -44,7 +47,7 @@ We took all of the rasters prepared earlier and fed these into the Zonation 5 so
 
 **Note:** Zonation 5 is usually a standalone application. Here, I have enabled running of Zonation from R, using command line functions. This way we can adjust and automatically run Zonation, reading from data in R.
 
-```{r}
+```{r, output=F}
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
 # Read from Google Sheets
 habitats_df <- read_sheet(habitats_url, sheet = output_date)
@@ -56,6 +59,35 @@ sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
 layers_df <- bind_rows(habitats_df, sdm_df) %>%
   filter(weight > 0)
 
+# Check input layers with figure output
+foreach(i=1:nrow(layers_df[1:10,])) %do% {
+  input_raster <- layers_df[[i, "path"]] %>% rast()
+  bowen_plot <- bowen_map(
+    raster_layer = input_raster,
+    title = layers_df[[i, "name"]],
+    subtitle = paste0(
+      "Category: ", layers_df[[i, "category"]], " ", 
+      "Filepath: ", layers_df[[i, "filename"]], " ", 
+      "Weight: ", layers_df[[i, "weight"]], " ",
+      "Notes: ", layers_df[[i, "notes"]]
+    ),
+    caption = paste0("Source: ", layers_df[[i, "source"]]),
+    legend_label = "value"
+  )
+  figure_output_path <- here("vignettes/figures/output_zonation_02_05_2025/")
+  if(!dir.exists(figure_output_path)) {
+    dir.create(figure_output_path)
+  }
+  ggplot2::ggsave(
+    here(figure_output_path, paste0(tools::file_path_sans_ext(layers_df[[i, "filename"]]), ".png")),
+    bowen_plot,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+}
+```
+
+```{r, output=F}
 #### UPDATE features.txt FOR ZONATION RUN ####
 # UPDATE features.txt from files available in data
 features_path <- here("vignettes/zonation/features.txt")
@@ -118,7 +150,7 @@ Here we calculate the overlap of the top % of conservation values with these oth
     -   Wetlands
     -   Riparian
 
-```{r}
+```{r, warning=F}
 # Function for converting Zonation output to boolean based on percentage (in top XX%)
 rankmap <- here(output_dir , "rankmap.tif") %>% rast() %>% project(project_crs)
 
@@ -214,15 +246,28 @@ overlap_stats <- function(top_rast) {
     hfp_high_overlap = raster_overlap_ratio(top_rast, bowen_hfp_high)
   )
 }
+
 quants <- seq(from = 0, to = 1, by = 0.1)
 overlap_results <- foreach(quant = quants, .combine = "rbind") %do% {
   rankmap %>%
     remove_by_quantile(quant) %>%
-    overlap_stats() %>%
+    overlap_stats() %>% 
     mutate("removed_bottom_quantile" = quant) %>%
     relocate("removed_bottom_quantile")
 }
 # Visualize output as table for overlap % 
 knitr::kable(overlap_results)
-
 ```
+
+```{r}
+# Sanity check on the overlap calculations 
+# top <- rankmap %>%
+#   remove_by_quantile(0.9)
+# ggplot() +
+#   geom_spatraster(data = bowen_protectedareas_rast) +
+#   scale_fill_gradient(low = "red", high = "red") +
+#   new_scale_fill() +
+#   geom_spatraster(data = top) +
+#   scale_fill_gradientn(colors = alpha(c("white", "white"), alpha = .5), na.value = NA) 
+```
+
