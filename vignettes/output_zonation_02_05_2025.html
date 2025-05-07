@@ -362,6 +362,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <p><a href="https://zonationteam.github.io/Zonation5/" class="uri">https://zonationteam.github.io/Zonation5/</a></p>
 <p>We took all of the rasters prepared earlier and fed these into the Zonation 5 software. This should provide a relative ranking for locations from highest to lowest for the purposes of biodiversity conservation.</p>
 <p><strong>Note:</strong> Zonation 5 is usually a standalone application. Here, I have enabled running of Zonation from R, using command line functions. This way we can adjust and automatically run Zonation, reading from data in R.</p>
+<p>Check input layers hosted at this link: https://github.com/Palen-Lab/bowen.biodiversity.webapp/tree/main/vignettes/figures/output_zonation_02_05_2025</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
@@ -377,7 +378,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(weight <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Check input layers with figure output</span></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">foreach</span>(<span class="at">i=</span><span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(layers_df[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,])) <span class="sc">%do%</span> {</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">foreach</span>(<span class="at">i=</span><span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(layers_df)) <span class="sc">%do%</span> {</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  input_raster <span class="ot">&lt;-</span> layers_df[[i, <span class="st">"path"</span>]] <span class="sc">%&gt;%</span> <span class="fu">rast</span>()</span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  bowen_plot <span class="ot">&lt;-</span> <span class="fu">bowen_map</span>(</span>
 <span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">raster_layer =</span> input_raster,</span>
