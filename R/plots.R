@@ -18,6 +18,9 @@ bowen_map <- function(raster_layer,
                       legend_label,
                       pal = "ag_GrnYl") {
   # bowen_shoreline <- here::here("data-raw/shoreline_dem_smoothed2/shoreline_dem_smoothed2.shp") %>% sf::st_read()
+  bowen_mask_ext <- raster_layer %>%
+    project("EPSG: 3857") %>%
+    ext()
 
   # basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
   basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer,
@@ -60,8 +63,8 @@ bowen_map <- function(raster_layer,
     #                  fill = NA,
     #                  colour = "#444544",
     #                  linewidth = 1) +
-    ggplot2::scale_x_continuous(expand = c(0,0)) +
-    ggplot2::scale_y_continuous(expand = c(0,0)) +
+    ggplot2::scale_x_continuous(expand = c(0,0), limits = c(bowen_mask_ext[1], bowen_mask_ext[2])) +
+    ggplot2::scale_y_continuous(expand = c(0,0), limits = c(bowen_mask_ext[3], bowen_mask_ext[4])) +
     ggplot2::labs(
       title = title,
       subtitle = subtitle,
@@ -88,18 +91,18 @@ bowen_map <- function(raster_layer,
       legend.box.margin = margin(1, 1, 1, 1),
       plot.margin = unit(c(1.3,0.3,0.8,0), "cm")
     ) +
-    ggspatial::annotation_scale(
-      location = "br",
-      bar_cols = c("grey60", "white")
-    ) +
-    ggspatial::annotation_north_arrow(
-      location = "br", which_north = "true",
-      pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
-      style = ggspatial::north_arrow_nautical(
-        fill = c("grey40", "white"),
-        line_col = "grey20"
-      )
-    ) +
+    # ggspatial::annotation_scale(
+    #   location = "br",
+    #   bar_cols = c("grey60", "white")
+    # ) +
+    # ggspatial::annotation_north_arrow(
+    #   location = "br", which_north = "true",
+    #   pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+    #   style = ggspatial::north_arrow_nautical(
+    #     fill = c("grey40", "white"),
+    #     line_col = "grey20"
+    #   )
+    # ) +
     ggnewscale::new_scale_fill() +
     ggnewscale::new_scale_colour()
 
