@@ -47,6 +47,8 @@ We took all of the rasters prepared earlier and fed these into the Zonation 5 so
 
 **Note:** Zonation 5 is usually a standalone application. Here, I have enabled running of Zonation from R, using command line functions. This way we can adjust and automatically run Zonation, reading from data in R.
 
+Check input layers hosted at this link: https://github.com/Palen-Lab/bowen.biodiversity.webapp/tree/main/vignettes/figures/output_zonation_02_05_2025 
+
 ```{r, output=F}
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
 # Read from Google Sheets
@@ -59,32 +61,32 @@ sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
 layers_df <- bind_rows(habitats_df, sdm_df) %>%
   filter(weight > 0)
 
-# Check input layers with figure output
-foreach(i=1:nrow(layers_df[1:10,])) %do% {
-  input_raster <- layers_df[[i, "path"]] %>% rast()
-  bowen_plot <- bowen_map(
-    raster_layer = input_raster,
-    title = layers_df[[i, "name"]],
-    subtitle = paste0(
-      "Category: ", layers_df[[i, "category"]], " ", 
-      "Filepath: ", layers_df[[i, "filename"]], " ", 
-      "Weight: ", layers_df[[i, "weight"]], " ",
-      "Notes: ", layers_df[[i, "notes"]]
-    ),
-    caption = paste0("Source: ", layers_df[[i, "source"]]),
-    legend_label = "value"
-  )
-  figure_output_path <- here("vignettes/figures/output_zonation_02_05_2025/")
-  if(!dir.exists(figure_output_path)) {
-    dir.create(figure_output_path)
-  }
-  ggplot2::ggsave(
-    here(figure_output_path, paste0(tools::file_path_sans_ext(layers_df[[i, "filename"]]), ".png")),
-    bowen_plot,
-    device = ragg::agg_png,
-    width = 9, height = 12, units = "in", res = 300
-  )
-}
+# # Check input layers with figure output
+# foreach(i=1:nrow(layers_df)) %do% {
+#   input_raster <- layers_df[[i, "path"]] %>% rast()
+#   bowen_plot <- bowen_map(
+#     raster_layer = input_raster,
+#     title = layers_df[[i, "name"]],
+#     subtitle = paste0(
+#       "Category: ", layers_df[[i, "category"]], " ", 
+#       "Filepath: ", layers_df[[i, "filename"]], " ", 
+#       "Weight: ", layers_df[[i, "weight"]], " ",
+#       "Notes: ", layers_df[[i, "notes"]]
+#     ),
+#     caption = paste0("Source: ", layers_df[[i, "source"]]),
+#     legend_label = "value"
+#   )
+#   figure_output_path <- here("vignettes/figures/output_zonation_02_05_2025/")
+#   if(!dir.exists(figure_output_path)) {
+#     dir.create(figure_output_path)
+#   }
+#   ggplot2::ggsave(
+#     here(figure_output_path, paste0(tools::file_path_sans_ext(layers_df[[i, "filename"]]), ".png")),
+#     bowen_plot,
+#     device = ragg::agg_png,
+#     width = 9, height = 12, units = "in", res = 300
+#   )
+# }
 ```
 
 ```{r, output=F}
@@ -259,15 +261,183 @@ overlap_results <- foreach(quant = quants, .combine = "rbind") %do% {
 knitr::kable(overlap_results)
 ```
 
-```{r}
-# Sanity check on the overlap calculations 
-# top <- rankmap %>%
-#   remove_by_quantile(0.9)
-# ggplot() +
-#   geom_spatraster(data = bowen_protectedareas_rast) +
-#   scale_fill_gradient(low = "red", high = "red") +
-#   new_scale_fill() +
-#   geom_spatraster(data = top) +
-#   scale_fill_gradientn(colors = alpha(c("white", "white"), alpha = .5), na.value = NA) 
+
+## Overlap Statistics - Polygon on Raster
+
+Here we calculate the overlap of the top % of conservation values with these other layers:
+
+-   Protected areas
+    - From John Dowler's Protected Areas, vs Bowen Island Municipality Protected Areas polygons used for February 1 ver.
+    - Contains main municipal parks, provincial parks, federal parks (both JD and BIM ver.)
+    - Addition of covenants, park land exchanges, small municipal parks in JD ver.
+    - Slightly higher than original February 1 ver. (~18% vs ~21%)
+-   Private land
+    - Defined as "Private" in BC ParcelMap polygons 
+    - Defined as anything other than "Private" in BC ParcelMap polygons
+    - Does not add up to 100%, since there are large areas that are not included in BC ParcelMap 
+-   Human Footprint (HFP)
+    - Proportion of each HFP category (low, medium, high) in the top XX% of biodiversity values
+    - Should add up to 100% 
+-   Freshwater habitats
+    -   Lakes
+    -   Ponds
+    -   Streams
+    -   Wetlands
+    -   Riparian
+
+```{r, warning=F}
+# Function for converting Zonation output to boolean based on percentage (in top XX%)
+rankmap <- here(output_dir , "rankmap.tif") %>% rast() %>% project(project_crs)
+
+#' Only keep top or bottom cell values by quantile 
+#'
+#' @param x SpatRaster 
+#' @param prob Quantile between 0 and 1
+#' @param direction "top" or "bottom", for direction of keep / discard cell values
+#'
+#' @returns SpatRaster
+#' @export
+remove_by_quantile <- function(x, prob, direction = "top") {
+  val <- x %>%
+    values() %>%
+    quantile(probs = prob, na.rm = T)
+  min_val <- x %>%
+    values() %>%
+    min(na.rm = T)
+  max_val <- x %>%
+    values() %>%
+    max(na.rm = T)
+  if(direction == "top") {
+    m <- matrix(c(
+      min_val, val, NA,
+      val, max_val, 1
+    ), ncol = 3, byrow = T)
+  } else if (direction == "bottom") {
+    m <- matrix(c(
+      min_val, val, 1,
+      val, max_val, NA
+    ), ncol = 3, byrow = T)
+  }
+  mask_quantile <- x %>%
+    classify(m,, include.lowest = T) 
+  mask_quantile * x
+}
+
+#' Rasterize to Bowen Island Mask
+bowen_rasterize_cover <- function(sf) {
+  bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
+    rast() %>%
+    project(bowen.biodiversity.webapp::project_crs)
+
+  output <- sf %>%
+    terra::vect() %>% # Change to SpatVector for rasterization
+    terra::project(bowen.biodiversity.webapp::project_crs) %>% # Reproject to the mask CRS
+    terra::rasterize(bowen_island_mask,
+                     cover = T, # Return proportion of cell covered by polygon 
+                     background = NA) # Rasterize to match mask, set background values to NA
+}
+
+#' Provide ratio of overlap between two rasters (in terms of NA vs nonNA)
+raster_overlap_ratio <- function(top_rast, area_rast) {
+  overlap_res <- (top_rast * area_rast)
+  top_cell_count <- top_rast %>% 
+    global("sum", na.rm = T)
+  overlap_cell_values <- overlap_res %>% 
+    values(na.rm = T) 
+  overlap_cell_area <-overlap_cell_values %>% sum()
+  overlap_ratio <- (overlap_cell_area / top_cell_count) %>% as.numeric()
+  return(overlap_ratio)
+}
+
+# Bowen entire area
+bowen_island <- st_read(here("data-raw/bowen_island_shoreline_w_hutt.gpkg"), layer = "bowen_island_shoreline_w_hutt__bowen_islands")
+# Protected Areas from JD
+bowen_protectedareas_include <- bowen.biodiversity.webapp::bowen_protectedareas %>%
+  filter(type != "Agricultural Land Reserve") # Remove ALR
+# Protected Areas from Bowen Island Municipality 
+bowen_protectedareas_2 <- st_read(here("data-raw/archive/bowen_island_protectedareas/BM_PROTECTED_AREAS.shp")) %>%
+  filter(NAME != "Old Growth Management Area") 
+# JD protected areas is more complete, with smaller municipal parks, covenants, and park land exchanges
+
+bowen_protectedareas_rast <- bowen_protectedareas_include %>%
+  bowen_rasterize_cover()
+
+# Check with polygon / polygon area calculations for full Bowen Island
+sum(st_area(bowen_protectedareas_include)) / sum(st_area(bowen_island)) # 0.2149664
+sum(st_area(bowen_protectedareas_2)) / sum(st_area(bowen_island)) # 0.17935
+
+
+# Private Land
+bowen_mask <- rast(here("inst/extdata/bowen_mask.tif"))
+bowen_parcelmap_rast <- bowen.biodiversity.webapp::bowen_parcelmap %>%
+  st_cast("MULTIPOLYGON") %>% # Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12 
+  filter(OwnerType == "Private") %>%
+  bowen_rasterize_cover()
+
+# Other Land
+bowen_mask <- rast(here("inst/extdata/bowen_mask.tif"))
+bowen_parcelmap_other_rast <- bowen.biodiversity.webapp::bowen_parcelmap %>%
+  st_cast("MULTIPOLYGON") %>%# Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12 
+  filter(OwnerType != "Private") %>%
+  bowen_rasterize_cover()
+
+# Freshwater Habitats 
+fw_rast_paths <- c(
+  here("inst/extdata/habitats/lakes.tif"),
+  here("inst/extdata/habitats/ponds.tif"),
+  here("inst/extdata/habitats/riparian.tif"),
+  here("inst/extdata/habitats/wetlands.tif"),
+  here("inst/extdata/habitats/streams.tif")
+)
+fw_rast_stack <- lapply(fw_rast_paths, rast) %>%
+  rast()
+fw_rast_dissolve <- fw_rast_stack %>% 
+  sum(na.rm = T) %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA)) 
+
+# Human Footprint (classified)
+bowen_hfp <- here("inst/extdata/habitats/bowen_human_footprint_recl.tif") %>%
+  rast()
+bowen_hfp_low <- bowen_hfp %>%
+  classify(cbind(3, NA)) %>%
+  classify(cbind(2, NA)) %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA)) 
+bowen_hfp_med <- bowen_hfp %>%
+  classify(cbind(3, NA)) %>%
+  classify(cbind(1, NA)) %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA)) 
+bowen_hfp_high <- bowen_hfp %>%
+  classify(cbind(2, NA)) %>%
+  classify(cbind(1, NA)) %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA)) 
+
+# Overlap calculation 
+overlap_stats <- function(top_rast) {
+  data.frame(
+    protectedareas_overlap = raster_overlap_ratio(top_rast, bowen_protectedareas_rast),
+    privatelands_overlap = raster_overlap_ratio(top_rast, bowen_parcelmap_rast),
+    otherlands_overlap = raster_overlap_ratio(top_rast, bowen_parcelmap_other_rast),
+    freshwater_overlap = raster_overlap_ratio(top_rast, fw_rast_dissolve),
+    hfp_low_overlap = raster_overlap_ratio(top_rast, bowen_hfp_low),
+    hfp_med_overlap = raster_overlap_ratio(top_rast, bowen_hfp_med),
+    hfp_high_overlap = raster_overlap_ratio(top_rast, bowen_hfp_high)
+  )
+}
+
+quants <- seq(from = 0.9, to = 0, by = -0.1)
+overlap_results <- foreach(quant = quants, .combine = "rbind") %do% {
+  rankmap %>%
+    remove_by_quantile(quant) %>%
+    overlap_stats() %>% 
+    mutate("top_bioval_prop" = 1-quant) %>%
+    relocate("top_bioval_prop") 
+}
+# Visualize output as table for overlap % 
+knitr::kable(overlap_results)
 ```
+
 
