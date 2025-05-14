@@ -7,7 +7,6 @@ format:
     code-fold: true
 ---
 
-
 ```{r setup}
 library(bowen.biodiversity.webapp)
 library(here)
@@ -19,11 +18,15 @@ library(terra)
 ```
 
 # Bowen Wildland Urban Interfaces (WUI)
-Sources: 
-https://www2.gov.bc.ca/gov/content/safety/wildfire-status/prevention/fire-fuel-management/wui-risk-class-maps/wui-downloads 
-https://www.for.gov.bc.ca/ftp/HPR/external/!publish/WUI_RiskClass/Maps/Coast/WUI_RiskClass_36x48L_92G_SW.pdf 
-![Bowen WUI](images/bowen_wui.png)
-Previous to this step, the KMZ files were loaded into QGIS and clipped to `data-raw/bowen_boundary/Bowen_boundary.shp`. This clipped KMZ was saved as `data-raw/bowen_wui.gpkg`. 
+
+Sources:
+https://www2.gov.bc.ca/gov/content/safety/wildfire-status/prevention/fire-fuel-management/wui-risk-class-maps/wui-downloads
+https://www.for.gov.bc.ca/ftp/HPR/external/!publish/WUI_RiskClass/Maps/Coast/WUI_RiskClass_36x48L_92G_SW.pdf
+![Bowen WUI](images/bowen_wui.png) Previous to this step, the KMZ files
+were loaded into QGIS and clipped to
+`data-raw/bowen_boundary/Bowen_boundary.shp`. This clipped KMZ was saved
+as `data-raw/bowen_wui.gpkg`.
+
 ```{r plots}
 bowen_wui <- here("data-raw/bowen_wui.gpkg") %>% 
   st_read() %>%
@@ -40,12 +43,129 @@ ggplot(bowen_wui) +
 ggplot(bowen_wui) + 
   geom_sf(aes(fill = WUI_PSTA))
 ```
+
 ## Convert to raster matching the resolution and extent of Zonation inputs
+
 ```{r}
 bowen_mask <- here("inst/extdata/bowen_mask.tif") %>% rast()
 bowen_wui_vect <- bowen_wui %>% vect() %>% project(bowen_mask)
 
 bowen_wui_rast <- bowen_wui_vect %>%
   rasterize(bowen_mask, "WUI_PSTA", touches = T)
+```
+
+## Notes on threat due to fire from Tom Sisk
+
+Objective: Index of Vulnerability to Fire. We are not trying to assess
+the probability of fire nor how hot it might burn or its behavior.
+Instead, we want to know the relative vulnerability to biodiversity loss
+due to fire, if habitats were to burn.
+
+Three major components of vulnerability:
+
+1.  Slope. Fires spread more quickly when they move uphill. Relative
+    ranking might look like this:
+
+    1 0-10 degree slopes: lower vulnerability
+    2 10-30 degrees: moderate vulnerability
+    3 Above 30 degrees: higher vulnerability
+
+2.  Aspect. Southerly exposures burn hotter, fire spreads more quickly,
+    effects more uniform and destructive than on northern exposures, all
+    else being equal. Might consider this as a first approximation: 
+    1 0-45: Low vulnerability because fires unlikely to spread as fast or burn as hot 
+    2 45-90: moderately low 
+    4 90-135: moderately high 
+    6 135-225: southerly exposures burn hotter, spread quickly and more
+    uniformly 
+    4 225-270: Moderately high 
+    2 270-315 Moderately low 
+    1 315-360: Low vulnerability
+
+3.  Fuels. On Bowen, the main differences in fuel loads have to do with
+    whether a location is forested or not forested. Forested areas burn
+    hotter and longer and long, hot burns have a more detrimental effect
+    that shorter less intense fires. So the main distinctions should be
+    made between forested and unforested. Forest stands comprised of
+    larger trees are, of course, of higher value to biodiversity than
+    denser stands with smaller trees, so we would like to be able to
+    distinguish between forest structures to some degree. At the same
+    time, when more mesic habitats burn the biodiversity effects tend to
+    be high, because species are not adapted to fire. So we will need to
+    rank habitats based on the differential effects of forest fuels
+    present, as well as the difference in flora and fauna that make
+    those locations more or less vulnerable in terms of biodiversity
+    loss. 
+    First Cut Ranking Scheme: 
+    14 Forest, large/old trees 
+    10 Forest, mature second growth 
+    6 Forest, young regrowth 
+    6 Shrublands 
+    2 Grasslands: often burn and effects are modest, even positive in some
+    cases 
+    4 Riparian: seldom burns, but if it burns biodiversity effects
+    may be very negative 
+    2 Wetlands: seldom burn, more often they create fire breaks 
+    0 Water: does not burn, but is vulnerable to ash deposition NA Built environment: NA (default to WUI map when talking about the built environment
+
+I suggest that we think about these basic ideas:
+
+1. We pursue an index of vulnerability, rather than a more
+sophisticated approach to modeling fire or adapting an index that was
+developed for other purposes (i.e. WUI).
+
+2. We create a simple index that allows us to compare the relative
+vulnerability of all locations on Bowen (with the exception of the built
+environment).
+
+3. We consider slope, aspect, and fuels by habitat as the three
+components of an index.
+
+4. We determine the relative ranks within each of the three components
+
+5. Integrate the scores into an index that produces an aggregate
+vulnerability index score for each pixel. As a first approximation, this
+should be the additive (sum) of the three components – and then let’s
+see how that performs.
+
+
+- Rationale for score scaling from Tom 
+- Calculating rasters from the LiDAR data directly 
+- Add together the three components raster
+
+```{r}
+# Slope Score
+## Create slope raster from LiDAR data
+## Create matrix of scores
+    # 1 0-10 degree slopes: lower vulnerability
+    # 2 10-30 degrees: moderate vulnerability
+    # 3 Above 30 degrees: higher vulnerability
+## Classify original slope raster to slope score 
+# Aspect Score
+## Create aspect raster from LiDAR data
+## Create matrix of scores
+    # 1 0-45: Low vulnerability because fires unlikely to spread as fast or burn as hot 
+    # 2 45-90: moderately low 
+    # 4 90-135: moderately high 
+    # 6 135-225: southerly exposures burn hotter, spread quickly and more
+    # uniformly 
+    # 4 225-270: Moderately high 
+    # 2 270-315 Moderately low 
+    # 1 315-360: Low vulnerability
+## Classify original aspect raster to aspect score 
+# Fuel Score
+## Get habitat classes from combination of WUI, MVSEI, TEM, AW layers 
+## Create matrix of scores 
+    # 14 Forest, large/old trees 
+    # 10 Forest, mature second growth 
+    # 6 Forest, young regrowth 
+    # 6 Shrublands 
+    # 2 Grasslands: often burn and effects are modest, even positive in some
+    # cases 
+    # 4 Riparian: seldom burns, but if it burns biodiversity effects
+    # may be very negative 
+    # 2 Wetlands: seldom burn, more often they create fire breaks 
+    # 0 Water: does not burn, but is vulnerable to ash deposition NA Built environment: NA (default to WUI map when talking about the built environment
+## Generate fuel score raster based on habitat type 
 ```
 
