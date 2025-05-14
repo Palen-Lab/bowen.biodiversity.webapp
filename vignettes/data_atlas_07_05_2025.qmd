@@ -1151,6 +1151,8 @@ remove_by_quantile <- function(x, prob, direction = "top") {
   mask_quantile * x
 }
 
+# TODO: go back to polygons for input polygons (protected areas, private lands)
+# TODO: or go back to raster generation 
 #' Provide ratio of overlap between two rasters (in terms of NA vs nonNA)
 #'  
 raster_overlap_ratio <- function(top_rast, area_rast) {
@@ -1538,8 +1540,5 @@ foreach(quant = quants[1]) %do% {
     width = 9, height = 12, units = "in", res = 300
   )
 }
-```
-```{r}
-
 ```
 

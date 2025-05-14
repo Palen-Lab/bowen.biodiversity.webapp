@@ -430,7 +430,12 @@ disturb <- terra::rast(disturb_path)
 bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
   rast()
 #### Resample Raster to Bowen Island ####
-disturb_resamp <- terra::resample(disturb, bowen_island_mask)
+disturb_resamp <- terra::resample(disturb, bowen_island_mask) %>%
+  terra::focal(w = 9,
+               fun = "mean",
+               na.policy = "only") %>%
+  terra::crop(bowen_island_mask, mask = T)
+
 writeRaster(disturb_resamp, 
             here::here(output_path, "bowen_human_footprint.tif"), 
             overwrite=TRUE)
