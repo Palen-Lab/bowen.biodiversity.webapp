@@ -21,6 +21,8 @@ bowen_map <- function(raster_layer,
   bowen_mask_ext <- raster_layer %>%
     project("EPSG: 3857") %>%
     ext()
+  raster_layer <- raster_layer %>%
+    project("EPSG: 3857")
 
   # basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
   basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer,
