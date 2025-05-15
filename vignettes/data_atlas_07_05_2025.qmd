@@ -9,7 +9,8 @@ format:
 
 # Data Atlas May 2 2025
 
-This document contains the code for generating the figures contained in the Data Atlas, using the May 2nd 2025 version of inputs and outputs. 
+This document contains the code for generating the figures contained in
+the Data Atlas, using the May 2nd 2025 version of inputs and outputs.
 
 These include the following figures:
 
@@ -35,7 +36,8 @@ These include the following figures:
     6.  Top 30% overlap with Private land (% private)
     7.  Human disturbance (categorical)
     8.  Human disturbance (continuous)
-    9.  Top 30% overlap with Human disturbance (% in each of 3 categories)
+    9.  Top 30% overlap with Human disturbance (% in each of 3
+        categories)
     10. Combined Biodiversity Values (0-1) overlap with FWater habitats
     11. Top 30% overlap with FWater habitats (% overlap with FW)
 
@@ -57,6 +59,8 @@ library(ggplot2)
 library(ggnewscale)
 library(RColorBrewer)
 library(randomcoloR)
+
+sf_use_s2(FALSE)
 
 sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
 habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
@@ -159,7 +163,6 @@ ggplot2::ggsave(
 ```{r}
 presence_threshold <- 0.7
 ```
-
 
 ## 2.1 Bird Species Richness
 
@@ -531,7 +534,7 @@ ggplot2::ggsave(
 ```{r water}
 # Plots
 title <- "Freshwater Habitats: streams, wetlands, riparian corridors"
-subtitle <- "Freshwater features on Bowen Island, derived from Metro Vancouver Sensitive Ecosystem Inventory (2021). "
+subtitle <- "Freshwater features on Bowen Island, derived from layers provided by Alan Whitehead (2025)."
 
 fw_df <- layers_df[layers_df$category == "Freshwater",]
 # Color ramp
@@ -624,6 +627,49 @@ fw_plot <- bowen_map(raster_layer = empty_rast,
 ggplot2::ggsave(
   here(output_dir, "/", paste0(Sys.Date(), "_", "3_1_bowen_water_map", ".png")),
   fw_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+
+
+
+# Plots
+title <- "Freshwater Habitat Richness"
+subtitle <- "Freshwater features on Bowen Island, derived from layers provided by Alan Whitehead (2025)."
+
+fw_rast_stack <- layers_df[layers_df$category == "Freshwater", "path"] %>%
+  unlist() %>%
+  lapply(rast) %>%
+  rast() 
+fw_richness <- fw_rast_stack %>%
+  lapply(not.na) %>%
+  lapply(function(x) {classify(x, cbind(FALSE, NA))}) %>%
+  rast() %>%
+  sum(na.rm = T)
+
+fw_richness_plot <- bowen_map(raster_layer = fw_richness,
+                     title = title,
+                     subtitle = subtitle,
+                     caption = caption,
+                     pal = "Mako",
+                     legend_label = "Freshwater Habitat Richness") +
+  ggspatial::annotation_scale(
+    location = "br",
+    bar_cols = c("grey60", "white")
+  ) +
+  ggspatial::annotation_north_arrow(
+    location = "br", which_north = "true",
+    pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+    style = ggspatial::north_arrow_nautical(
+      fill = c("grey40", "white"),
+      line_col = "grey20"
+    )
+  ) 
+
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_", "3_1_bowen_water_richness_map", ".png")),
+  fw_richness_plot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
@@ -973,16 +1019,17 @@ ggplot2::ggsave(
 ## 4.2 Human Disturbance (Continuous)
 
 ```{r}
-# Protected Areas polygons
+# Disturbance raster
 disturbed <- here::here("inst", "extdata", "bowen_human_footprint.tif") %>%
-  terra::rast()
+  terra::rast() %>%
+  project(project_crs)
 
 zonation_plot <- bowen_map(disturbed,
                            title = "Current Human Disturbance",
                            subtitle = "Continuous map of human disturbance on Bowen Island.",
                            caption = caption,
                            legend_label = "Disturbance",
-                           pal = "Heat") + 
+                           pal = "Inferno") + 
   geom_sf(data = bowen_ocean_sf,
           linewidth = bowen_ocean_linewidth,
           fill = bowen_ocean_colour
@@ -1104,7 +1151,8 @@ ggplot2::ggsave(
 
 # 5 Overlap Statistics
 
-Here we calculate the overlap of the top % of conservation values with these other layers:
+Here we calculate the overlap of the top % of conservation values with
+these other layers:
 
 -   Protected areas
 -   Private land
@@ -1520,13 +1568,13 @@ foreach(quant = quants) %do% {
                                aes(fill = rankmap)) +
     scale_fill_gradientn(name = "",
                          labels = paste0("Top ", top_pct, "% Only"),
-                         colours = "grey80",
+                         colours = "wheat3",
                          guide = "legend",
                          na.value = "transparent") +
     ggnewscale::new_scale_fill() +
     tidyterra::geom_spatraster(data = fw_top) +
     scale_fill_viridis_c(
-      name = paste0("Freshwater / Top ", top_pct, "% Overlap"),
+      name = paste0("Priority"),
       na.value = "transparent"
     ) +
     geom_sf(data = bowen_ocean_sf,
@@ -1552,20 +1600,9 @@ foreach(quant = quants) %do% {
     width = 9, height = 12, units = "in", res = 300
   )
 }
-# 
-# ggplot() +
-#   tidyterra::geom_spatraster(data = rankmap_mask,
-#                                aes(fill = rankmap)) +
-#     scale_fill_gradientn(name = "",
-#                          labels = paste0("Top ", top_pct, "% Only"),
-#                          colours = "grey80",
-#                          guide = "legend",
-#                          na.value = "transparent") +
-#   ggnewscale::new_scale_fill() +
-#   tidyterra::geom_spatraster(data = fw_top) +
-#   scale_fill_viridis_c(
-#     name = paste0("Freshwater / Top ", top_pct, "% Overlap"),
-#     na.value = "transparent"
-#   )
+```
+
+```{r}
+
 ```
 
