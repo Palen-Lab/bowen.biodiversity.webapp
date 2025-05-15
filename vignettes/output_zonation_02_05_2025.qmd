@@ -271,10 +271,16 @@ Here we calculate the overlap of the top % of conservation values with these oth
     - Contains main municipal parks, provincial parks, federal parks (both JD and BIM ver.)
     - Addition of covenants, park land exchanges, small municipal parks in JD ver.
     - Slightly higher than original February 1 ver. (~18% vs ~21%)
+    - Protected areas polygons / Bowen Island full polygon (inc. Hutt Island) = 0.2149664
+    - Protected area extent proportion of Bowen Island using raster method = 0.2189496
 -   Private land
-    - Defined as "Private" in BC ParcelMap polygons 
-    - Defined as anything other than "Private" in BC ParcelMap polygons
+    - "Private" - Defined as "Private" in BC ParcelMap polygons 
+    - "Other" - Defined as anything other than "Private" in BC ParcelMap polygons
+        - Used to see how much of BC ParcelMap polygons are not Private lands 
     - Does not add up to 100%, since there are large areas that are not included in BC ParcelMap 
+    - Private lands polygons / Bowen Island full polygon (inc. Hutt Island) = 0.4398566 
+    - Private lands extent proportion of Bowen Island using raster method = 0.4398923
+    
 -   Human Footprint (HFP)
     - Proportion of each HFP category (low, medium, high) in the top XX% of biodiversity values
     - Should add up to 100% 
@@ -369,10 +375,14 @@ sum(st_area(bowen_protectedareas_2)) / sum(st_area(bowen_island)) # 0.17935
 
 # Private Land
 bowen_mask <- rast(here("inst/extdata/bowen_mask.tif"))
-bowen_parcelmap_rast <- bowen.biodiversity.webapp::bowen_parcelmap %>%
+bowen_parcelmap_priv <- bowen.biodiversity.webapp::bowen_parcelmap %>%
   st_cast("MULTIPOLYGON") %>% # Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12 
-  filter(OwnerType == "Private") %>%
+  filter(OwnerType == "Private")
+bowen_parcelmap_rast <- bowen_parcelmap_priv %>%
   bowen_rasterize_cover()
+
+# Check with polygon / polygon area calculations for full Bowen Island 
+sum(st_area(bowen_parcelmap_priv)) / sum(st_area(bowen_island)) # 0.4398566
 
 # Other Land
 bowen_mask <- rast(here("inst/extdata/bowen_mask.tif"))

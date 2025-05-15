@@ -729,12 +729,19 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <li>Contains main municipal parks, provincial parks, federal parks (both JD and BIM ver.)</li>
 <li>Addition of covenants, park land exchanges, small municipal parks in JD ver.</li>
 <li>Slightly higher than original February 1 ver. (~18% vs ~21%)</li>
+<li>Protected areas polygons / Bowen Island full polygon (inc. Hutt Island) = 0.2149664</li>
+<li>Protected area extent proportion of Bowen Island using raster method = 0.2189496</li>
 </ul></li>
 <li>Private land
 <ul>
-<li>Defined as “Private” in BC ParcelMap polygons</li>
-<li>Defined as anything other than “Private” in BC ParcelMap polygons</li>
+<li>“Private” - Defined as “Private” in BC ParcelMap polygons</li>
+<li>“Other” - Defined as anything other than “Private” in BC ParcelMap polygons
+<ul>
+<li>Used to see how much of BC ParcelMap polygons are not Private lands</li>
+</ul></li>
 <li>Does not add up to 100%, since there are large areas that are not included in BC ParcelMap</li>
+<li>Private lands polygons / Bowen Island full polygon (inc. Hutt Island) = 0.4398566</li>
+<li>Private lands extent proportion of Bowen Island using raster method = 0.4398923</li>
 </ul></li>
 <li>Human Footprint (HFP)
 <ul>
@@ -872,75 +879,84 @@ Projected CRS: NAD83 / UTM zone 10N</code></pre>
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Private Land</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>bowen_mask <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">here</span>(<span class="st">"inst/extdata/bowen_mask.tif"</span>))</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>bowen_parcelmap_rast <span class="ot">&lt;-</span> bowen.biodiversity.webapp<span class="sc">::</span>bowen_parcelmap <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>bowen_parcelmap_priv <span class="ot">&lt;-</span> bowen.biodiversity.webapp<span class="sc">::</span>bowen_parcelmap <span class="sc">%&gt;%</span></span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_cast</span>(<span class="st">"MULTIPOLYGON"</span>) <span class="sc">%&gt;%</span> <span class="co"># Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12 </span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(OwnerType <span class="sc">==</span> <span class="st">"Private"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bowen_rasterize_cover</span>()</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Other Land</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>bowen_mask <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">here</span>(<span class="st">"inst/extdata/bowen_mask.tif"</span>))</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>bowen_parcelmap_other_rast <span class="ot">&lt;-</span> bowen.biodiversity.webapp<span class="sc">::</span>bowen_parcelmap <span class="sc">%&gt;%</span></span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_cast</span>(<span class="st">"MULTIPOLYGON"</span>) <span class="sc">%&gt;%</span><span class="co"># Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12 </span></span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(OwnerType <span class="sc">!=</span> <span class="st">"Private"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bowen_rasterize_cover</span>()</span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Freshwater Habitats </span></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>fw_rast_paths <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/lakes.tif"</span>),</span>
-<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/ponds.tif"</span>),</span>
-<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/riparian.tif"</span>),</span>
-<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/wetlands.tif"</span>),</span>
-<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/streams.tif"</span>)</span>
-<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>fw_rast_stack <span class="ot">&lt;-</span> <span class="fu">lapply</span>(fw_rast_paths, rast) <span class="sc">%&gt;%</span></span>
-<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rast</span>()</span>
-<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>fw_rast_dissolve <span class="ot">&lt;-</span> fw_rast_stack <span class="sc">%&gt;%</span> </span>
-<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="at">na.rm =</span> T) <span class="sc">%&gt;%</span></span>
-<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">not.na</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="cn">FALSE</span>, <span class="cn">NA</span>)) </span>
-<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Human Footprint (classified)</span></span>
-<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>bowen_hfp <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/bowen_human_footprint_recl.tif"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rast</span>()</span>
-<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>bowen_hfp_low <span class="ot">&lt;-</span> bowen_hfp <span class="sc">%&gt;%</span></span>
-<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">3</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">2</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">not.na</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="cn">FALSE</span>, <span class="cn">NA</span>)) </span>
-<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>bowen_hfp_med <span class="ot">&lt;-</span> bowen_hfp <span class="sc">%&gt;%</span></span>
-<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">3</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">1</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">not.na</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="cn">FALSE</span>, <span class="cn">NA</span>)) </span>
-<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>bowen_hfp_high <span class="ot">&lt;-</span> bowen_hfp <span class="sc">%&gt;%</span></span>
-<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">2</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">1</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">not.na</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="cn">FALSE</span>, <span class="cn">NA</span>)) </span>
-<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Overlap calculation </span></span>
-<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>overlap_stats <span class="ot">&lt;-</span> <span class="cf">function</span>(top_rast) {</span>
-<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">protectedareas_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_protectedareas_rast),</span>
-<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">privatelands_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_parcelmap_rast),</span>
-<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">otherlands_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_parcelmap_other_rast),</span>
-<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">freshwater_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, fw_rast_dissolve),</span>
-<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">hfp_low_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_hfp_low),</span>
-<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">hfp_med_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_hfp_med),</span>
-<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">hfp_high_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_hfp_high)</span>
-<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>quants <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fl">0.9</span>, <span class="at">to =</span> <span class="dv">0</span>, <span class="at">by =</span> <span class="sc">-</span><span class="fl">0.1</span>)</span>
-<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>overlap_results <span class="ot">&lt;-</span> <span class="fu">foreach</span>(<span class="at">quant =</span> quants, <span class="at">.combine =</span> <span class="st">"rbind"</span>) <span class="sc">%do%</span> {</span>
-<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>  rankmap <span class="sc">%&gt;%</span></span>
-<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>    <span class="fu">remove_by_quantile</span>(quant) <span class="sc">%&gt;%</span></span>
-<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>    <span class="fu">overlap_stats</span>() <span class="sc">%&gt;%</span> </span>
-<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="st">"top_bioval_prop"</span> <span class="ot">=</span> <span class="dv">1</span><span class="sc">-</span>quant) <span class="sc">%&gt;%</span></span>
-<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>    <span class="fu">relocate</span>(<span class="st">"top_bioval_prop"</span>) </span>
-<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize output as table for overlap % </span></span>
-<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(overlap_results)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(OwnerType <span class="sc">==</span> <span class="st">"Private"</span>)</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>bowen_parcelmap_rast <span class="ot">&lt;-</span> bowen_parcelmap_priv <span class="sc">%&gt;%</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bowen_rasterize_cover</span>()</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Check with polygon / polygon area calculations for full Bowen Island </span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="fu">sum</span>(<span class="fu">st_area</span>(bowen_parcelmap_priv)) <span class="sc">/</span> <span class="fu">sum</span>(<span class="fu">st_area</span>(bowen_island)) <span class="co"># 0.4398566</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>0.4398566 [1]</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Other Land</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>bowen_mask <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">here</span>(<span class="st">"inst/extdata/bowen_mask.tif"</span>))</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>bowen_parcelmap_other_rast <span class="ot">&lt;-</span> bowen.biodiversity.webapp<span class="sc">::</span>bowen_parcelmap <span class="sc">%&gt;%</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_cast</span>(<span class="st">"MULTIPOLYGON"</span>) <span class="sc">%&gt;%</span><span class="co"># Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12 </span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(OwnerType <span class="sc">!=</span> <span class="st">"Private"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bowen_rasterize_cover</span>()</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Freshwater Habitats </span></span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>fw_rast_paths <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/lakes.tif"</span>),</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/ponds.tif"</span>),</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/riparian.tif"</span>),</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/wetlands.tif"</span>),</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/streams.tif"</span>)</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>fw_rast_stack <span class="ot">&lt;-</span> <span class="fu">lapply</span>(fw_rast_paths, rast) <span class="sc">%&gt;%</span></span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rast</span>()</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>fw_rast_dissolve <span class="ot">&lt;-</span> fw_rast_stack <span class="sc">%&gt;%</span> </span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">sum</span>(<span class="at">na.rm =</span> T) <span class="sc">%&gt;%</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">not.na</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="cn">FALSE</span>, <span class="cn">NA</span>)) </span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Human Footprint (classified)</span></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a>bowen_hfp <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"inst/extdata/habitats/bowen_human_footprint_recl.tif"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rast</span>()</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>bowen_hfp_low <span class="ot">&lt;-</span> bowen_hfp <span class="sc">%&gt;%</span></span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">3</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">2</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">not.na</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="cn">FALSE</span>, <span class="cn">NA</span>)) </span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>bowen_hfp_med <span class="ot">&lt;-</span> bowen_hfp <span class="sc">%&gt;%</span></span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">3</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">1</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">not.na</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="cn">FALSE</span>, <span class="cn">NA</span>)) </span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a>bowen_hfp_high <span class="ot">&lt;-</span> bowen_hfp <span class="sc">%&gt;%</span></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">2</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="dv">1</span>, <span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">not.na</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(<span class="fu">cbind</span>(<span class="cn">FALSE</span>, <span class="cn">NA</span>)) </span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a><span class="co"># Overlap calculation </span></span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>overlap_stats <span class="ot">&lt;-</span> <span class="cf">function</span>(top_rast) {</span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">protectedareas_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_protectedareas_rast),</span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">privatelands_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_parcelmap_rast),</span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>    <span class="at">otherlands_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_parcelmap_other_rast),</span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">freshwater_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, fw_rast_dissolve),</span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">hfp_low_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_hfp_low),</span>
+<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">hfp_med_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_hfp_med),</span>
+<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">hfp_high_overlap =</span> <span class="fu">raster_overlap_ratio</span>(top_rast, bowen_hfp_high)</span>
+<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-55"><a href="#cb16-55" aria-hidden="true" tabindex="-1"></a>quants <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="at">from =</span> <span class="fl">0.9</span>, <span class="at">to =</span> <span class="dv">0</span>, <span class="at">by =</span> <span class="sc">-</span><span class="fl">0.1</span>)</span>
+<span id="cb16-56"><a href="#cb16-56" aria-hidden="true" tabindex="-1"></a>overlap_results <span class="ot">&lt;-</span> <span class="fu">foreach</span>(<span class="at">quant =</span> quants, <span class="at">.combine =</span> <span class="st">"rbind"</span>) <span class="sc">%do%</span> {</span>
+<span id="cb16-57"><a href="#cb16-57" aria-hidden="true" tabindex="-1"></a>  rankmap <span class="sc">%&gt;%</span></span>
+<span id="cb16-58"><a href="#cb16-58" aria-hidden="true" tabindex="-1"></a>    <span class="fu">remove_by_quantile</span>(quant) <span class="sc">%&gt;%</span></span>
+<span id="cb16-59"><a href="#cb16-59" aria-hidden="true" tabindex="-1"></a>    <span class="fu">overlap_stats</span>() <span class="sc">%&gt;%</span> </span>
+<span id="cb16-60"><a href="#cb16-60" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="st">"top_bioval_prop"</span> <span class="ot">=</span> <span class="dv">1</span><span class="sc">-</span>quant) <span class="sc">%&gt;%</span></span>
+<span id="cb16-61"><a href="#cb16-61" aria-hidden="true" tabindex="-1"></a>    <span class="fu">relocate</span>(<span class="st">"top_bioval_prop"</span>) </span>
+<span id="cb16-62"><a href="#cb16-62" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualize output as table for overlap % </span></span>
+<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(overlap_results)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
