@@ -2,6 +2,7 @@
 
 export("%>%")
 export(bowen_map)
+export(bowen_map_toppct)
 export(bowen_rasterize)
 export(bowen_sf_to_rast)
 export(raster_prep_bowen)

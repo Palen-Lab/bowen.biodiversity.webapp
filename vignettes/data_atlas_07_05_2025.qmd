@@ -476,7 +476,7 @@ ggplot2::ggsave(
 
 ```{r sdm_stack}
 # List SDMs filepaths
-SDM_filepaths <- sdm_df[sdm_df$category %in% c("Bird", "MammalSmall", "Amphibian", "Reptile"), "path"] 
+SDM_filepaths <- sdm_df[, "path"] 
 # Prepare SDM stack
 SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create summed SDM
@@ -982,7 +982,7 @@ ggplot2::ggsave(
 ```{r}
 rankmap <- here("inst/extdata/output_zonation/2025-05-02/rankmap.tif") %>% 
   rast() %>% 
-  project(project_crs)
+  project("EPSG: 3857")
 
 # Plot
 combined_biodiversity_plot <- bowen_map(raster_layer = rankmap,
@@ -993,6 +993,19 @@ combined_biodiversity_plot <- bowen_map(raster_layer = rankmap,
   geom_sf(data = bowen_ocean_sf,
           linewidth = bowen_ocean_linewidth,
           fill = bowen_ocean_colour
+  ) +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend"
   ) +
   ggspatial::annotation_scale(
     location = "br",
@@ -1317,7 +1330,7 @@ foreach(quant = quants) %do% {
   top_pct <- (1 - quant) * 100
   
   # 5.1 Top XX% Biodiversity Values (0-1)
-  top_plot <- bowen_map(rankmap_bt_rm,
+  top_plot <- bowen_map_toppct(rankmap_bt_rm,
                         title = paste0("Top ", top_pct, "% Biodiversity Values"),
                         subtitle = paste0("Top ", top_pct, "% of biodiversity locations on Bowen Island. Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33)  with species layers (n = 195)."),
                         caption = caption,
@@ -1363,7 +1376,7 @@ foreach(quant = quants) %do% {
   protectedareas_colour <- "purple"
   protectedareas_overlap <- raster_overlap_ratio(rankmap_bt_rm, bowen_protectedareas_rast) %>%
     round(2)
-  protectedareas_plot <- bowen_map(rankmap_bt_rm,
+  protectedareas_plot <- bowen_map_toppct(rankmap_bt_rm,
                                    title = paste0("Top ", top_pct, "% Biodiversity Values with Protected Areas" ),
                                    subtitle = paste0("Top ", top_pct, "% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on top of the Zonation priotization output. The percentage of these biodiversity locations covered by Protected Areas is ", protectedareas_overlap*100, "%."),
                                    caption = caption,
@@ -1409,7 +1422,7 @@ foreach(quant = quants) %do% {
   properties_colour <- "brown"
   privatelands_overlap <- raster_overlap_ratio(rankmap_bt_rm, bowen_parcelmap_rast) %>%
     round(2)
-  privateland_plot <- bowen_map(rankmap_bt_rm,
+  privateland_plot <- bowen_map_toppct(rankmap_bt_rm,
                              title = paste0("Top ", top_pct, "% Biodiversity Value with Private Land"),
                              subtitle = paste0("Top ", top_pct, "% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Private Lands are visualized as an overlay on top of the Zonation priotization output. The percentage of these biodiversity locations covered by Private Lands is ", privatelands_overlap*100, "%."),
                              caption = caption,
@@ -1558,7 +1571,7 @@ foreach(quant = quants) %do% {
   freshwater_overlap = raster_overlap_ratio(rankmap_bt_rm, fw_rast_dissolve) %>%
     round(2)
 
-  fw_plot <- bowen_map(empty_rast,
+  fw_plot <- bowen_map_toppct(empty_rast,
                        title = paste0("Top ", top_pct, "% Biodiversity Value with Freshwater Habitats"),
                        subtitle = paste0("Top ", top_pct, "% of biodiversity locations on Bowen Island, overlapping with Freshwater Ecosystems. There is a ", freshwater_overlap*100, "% overlap between top biodiversity locations and freshwater ecosystems."),
                        caption = caption,
@@ -1575,7 +1588,9 @@ foreach(quant = quants) %do% {
     tidyterra::geom_spatraster(data = fw_top) +
     scale_fill_viridis_c(
       name = paste0("Priority"),
-      na.value = "transparent"
+      na.value = "transparent",
+      limits = c(0.5, 1.0),
+      direction = -1
     ) +
     geom_sf(data = bowen_ocean_sf,
             linewidth = bowen_ocean_linewidth,
