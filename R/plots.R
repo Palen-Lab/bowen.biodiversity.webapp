@@ -156,7 +156,7 @@ bowen_map_toppct <- function(raster_layer,
       colorspace::scale_fill_continuous_sequential(
         na.value = NA,
         palette = pal,
-        limits = c(0.5,1),
+        limits = c(0,1),
         # breaks = c(0, 0.5, 1),
         guide = ggplot2::guide_colourbar(nbin = 100,
                                          draw.ulim = FALSE,
