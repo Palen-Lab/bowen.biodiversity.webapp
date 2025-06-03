@@ -9,7 +9,7 @@ format:
 
 # Bowen Island Biodiversity Prioritization - Zonation5
 
-This Rmarkdown documents the Zonation run used for the May 5 2025 iteration for Bowen Island Biodiversity Planning.
+This Rmarkdown documents the Zonation run used for the May 2 2025 iteration for Bowen Island Biodiversity Planning.
 
 <https://github.com/zonationteam/Zonation5>
 
@@ -47,7 +47,11 @@ We took all of the rasters prepared earlier and fed these into the Zonation 5 so
 
 **Note:** Zonation 5 is usually a standalone application. Here, I have enabled running of Zonation from R, using command line functions. This way we can adjust and automatically run Zonation, reading from data in R.
 
-Check input layers hosted at this link: https://github.com/Palen-Lab/bowen.biodiversity.webapp/tree/main/vignettes/figures/output_zonation_02_05_2025 
+Check input layers hosted at this link: <https://github.com/Palen-Lab/bowen.biodiversity.webapp/tree/main/vignettes/figures/output_zonation_02_05_2025> 
+
+Information about input layers to the Zonation run here: 
+Habitats - <https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?gid=1153014884#gid=1153014884>
+SDMs - <https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?gid=702573996#gid=702573996>
 
 ```{r, output=F}
 #### CREATE DATAFRAME FOR INPUT LAYERS ####

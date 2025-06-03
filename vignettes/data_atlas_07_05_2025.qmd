@@ -59,6 +59,8 @@ library(ggplot2)
 library(ggnewscale)
 library(RColorBrewer)
 library(randomcoloR)
+library(doParallel)
+library(magrittr)
 
 sf_use_s2(FALSE)
 
@@ -1320,8 +1322,9 @@ bowen_hfp_high <- bowen_hfp %>%
 
 sf_use_s2(FALSE)
 
-
+conservation_val_pal <- "ag_GrnYl"
 quants <- seq(from = 0.5, to = 0.9, by = 0.1)
+# Top XX%
 foreach(quant = quants) %do% {
   rankmap_bt_rm <- rankmap %>%
     remove_by_quantile(quant)
@@ -1337,7 +1340,7 @@ foreach(quant = quants) %do% {
                         subtitle = paste0("Top ", top_pct, "% of biodiversity locations on Bowen Island. Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33)  with species layers (n = 195)."),
                         caption = caption,
                         legend_label = "Relative Biodiversity",
-                        pal = "Viridis") +
+                        pal = conservation_val_pal) +
     ggplot2::geom_sf(data = bowen_trails,
                      linewidth = 0.3,
                      aes(color = trails_colour)
@@ -1384,7 +1387,7 @@ foreach(quant = quants) %do% {
                                    subtitle = paste0("Top ", top_pct, "% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on top of the Zonation priotization output. The percentage of these biodiversity locations covered by Protected Areas is ", protectedareas_overlap*100, "%."),
                                    caption = caption,
                                    legend_label = "Priority",
-                                   pal = "Viridis") +
+                                   pal = conservation_val_pal) +
     geom_sf(data = union_protectedareas,
             aes(fill = protectedareas_colour,
                 color = protectedareas_colour),
@@ -1431,7 +1434,7 @@ foreach(quant = quants) %do% {
                              subtitle = paste0("Top ", top_pct, "% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Private Lands are visualized as an overlay on top of the Zonation priotization output. The percentage of these biodiversity locations covered by Private Lands is ", privatelands_overlap*100, "%."),
                              caption = caption,
                              legend_label = "Priority",
-                             pal = "Viridis") +
+                             pal = conservation_val_pal) +
     geom_sf(data = bowen_parcelmap_union,
             aes(fill = properties_colour,
                 color = properties_colour),
@@ -1604,6 +1607,19 @@ foreach(quant = quants) %do% {
         ),
         name = "Freshwater Habitat Richness"
     ) +
+    ggplot2::geom_sf(data = bowen_trails,
+                     linewidth = 0.3,
+                     aes(color = trails_colour)
+    ) +
+    ggplot2::geom_sf(data = bowen_roads,
+                     linewidth = 0.5,
+                     aes(color = roads_colour)
+    ) +
+    scale_colour_identity(name = "",
+                          breaks = c(trails_colour, roads_colour),
+                          labels = c("Trails", "Roads"),
+                          guide = "legend"
+    ) +
     geom_sf(data = bowen_ocean_sf,
             linewidth = bowen_ocean_linewidth,
             fill = bowen_ocean_colour
@@ -1628,6 +1644,330 @@ foreach(quant = quants) %do% {
   )
 }
 ```
+
+```{r}
+# Bottom XX%
+quants <- seq(from = 0.1, to = 0.5, by = 0.1)
+foreach(quant = quants) %do% {
+  rankmap_bt_rm <- rankmap %>%
+    remove_by_quantile(quant, direction = "bottom")
+  rankmap_mask <- rankmap_bt_rm %>%
+    not.na() %>%
+    classify(cbind(FALSE, NA))
+  
+  bottom_pct <- quant * 100
+
+  # 5.1 bottom XX% Biodiversity Values (0-1)
+  bottom_plot <- bowen_map_toppct(rankmap_bt_rm,
+                        title = paste0("Bottom ", bottom_pct, "% Biodiversity Values"),
+                        subtitle = paste0("Bottom ", bottom_pct, "% of biodiversity locations on Bowen Island. Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33)  with species layers (n = 195)."),
+                        caption = caption,
+                        legend_label = "Relative Biodiversity",
+                        pal = conservation_val_pal) +
+    ggplot2::geom_sf(data = bowen_trails,
+                     linewidth = 0.3,
+                     aes(color = trails_colour)
+    ) +
+    ggplot2::geom_sf(data = bowen_roads,
+                     linewidth = 0.5,
+                     aes(color = roads_colour)
+    ) +
+    scale_colour_identity(name = "",
+                          breaks = c(trails_colour, roads_colour),
+                          labels = c("Trails", "Roads"),
+                          guide = "legend"
+    ) +
+    geom_sf(data = bowen_ocean_sf,
+            linewidth = bowen_ocean_linewidth,
+            fill = bowen_ocean_colour
+    ) +
+    ggspatial::annotation_scale(
+      location = "br",
+      bar_cols = c("grey60", "white")
+    ) +
+    ggspatial::annotation_north_arrow(
+      location = "br", which_north = "true",
+      pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+      style = ggspatial::north_arrow_nautical(
+        fill = c("grey40", "white"),
+        line_col = "grey20"
+      )
+    )
+
+  ggplot2::ggsave(
+    paste0(output_dir, "/", Sys.Date(), "_","5_1_bottom_", bottom_pct,"_biodiversity_values", ".png"),
+    bottom_plot,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+
+  # 5.2 Biodiversity Values (0-1) overlap with Protected Areas
+  protectedareas_colour <- "purple"
+  protectedareas_overlap <- raster_overlap_ratio(rankmap_bt_rm, bowen_protectedareas_rast) %>%
+    round(2)
+  protectedareas_plot <- bowen_map_toppct(rankmap_bt_rm,
+                                   title = paste0("Bottom ", bottom_pct, "% Biodiversity Values with Protected Areas" ),
+                                   subtitle = paste0("Bottom ", bottom_pct, "% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on the Zonation priotization output. The percentage of these biodiversity locations covered by Protected Areas is ", protectedareas_overlap*100, "%."),
+                                   caption = caption,
+                                   legend_label = "Priority",
+                                   pal = conservation_val_pal) +
+    geom_sf(data = union_protectedareas,
+            aes(fill = protectedareas_colour,
+                color = protectedareas_colour),
+            alpha = 0.1,
+            linewidth = 0.5) +
+    scale_fill_identity(name = "",
+                        breaks = c(protectedareas_colour),
+                        labels = c("Protected Areas"),
+                        guide = "legend") +
+    scale_colour_identity(name = "",
+                          breaks = c(protectedareas_colour),
+                          labels = c("Protected Areas"),
+                          guide = "legend"
+    ) +
+    geom_sf(data = bowen_ocean_sf,
+            linewidth = bowen_ocean_linewidth,
+            fill = bowen_ocean_colour
+    ) +
+    ggspatial::annotation_scale(
+      location = "br",
+      bar_cols = c("grey60", "white")
+    ) +
+    ggspatial::annotation_north_arrow(
+      location = "br", which_north = "true",
+      pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+      style = ggspatial::north_arrow_nautical(
+        fill = c("grey40", "white"),
+        line_col = "grey20"
+      )
+    )
+  ggplot2::ggsave(
+    paste0(output_dir, "/", Sys.Date(), "_","5_2_bottom_", bottom_pct, "_protectedareas", ".png"),
+    protectedareas_plot,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+
+  # 5.3 Biodiversity Values (0-1) overlap with Private Land
+  properties_colour <- "brown"
+  privatelands_overlap <- raster_overlap_ratio(rankmap_bt_rm, bowen_parcelmap_rast) %>%
+    round(2)
+  privateland_plot <- bowen_map_toppct(rankmap_bt_rm,
+                             title = paste0("Bottom ", bottom_pct, "% Biodiversity Value with Private Land"),
+                             subtitle = paste0("Bottom ", bottom_pct, "% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Private Lands are visualized as an overlay on the Zonation priotization output. The percentage of these biodiversity locations covered by Private Lands is ", privatelands_overlap*100, "%."),
+                             caption = caption,
+                             legend_label = "Priority",
+                             pal = conservation_val_pal) +
+    geom_sf(data = bowen_parcelmap_union,
+            aes(fill = properties_colour,
+                color = properties_colour),
+            alpha = 0.2,
+            linewidth = 0.5) +
+    scale_fill_identity(name = "",
+                        breaks = c(properties_colour),
+                        labels = c("Private Land"),
+                        guide = "legend") +
+    scale_colour_identity(name = "",
+                          breaks = c(properties_colour),
+                          labels = c("Private Land"),
+                          guide = "legend"
+    ) +
+    geom_sf(data = bowen_ocean_sf,
+            linewidth = bowen_ocean_linewidth,
+            fill = bowen_ocean_colour
+    ) +
+    ggspatial::annotation_scale(
+      location = "br",
+      bar_cols = c("grey60", "white")
+    ) +
+    ggspatial::annotation_north_arrow(
+      location = "br", which_north = "true",
+      pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+      style = ggspatial::north_arrow_nautical(
+        fill = c("grey40", "white"),
+        line_col = "grey20"
+      )
+    )
+
+  ggplot2::ggsave(
+    paste0(output_dir, "/", Sys.Date(), "_","5_3_bottom_", bottom_pct, "_privateland", ".png"),
+    privateland_plot,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+  
+  # 5.4 Biodiversity Values overlap with Human Disturbance (categorical) 
+  bowen_hfp_bottom <- max(c(bowen_hfp, rankmap_mask)) %>% 
+    as.factor()
+  # overlap with each category (low, medium, high)
+  hfp_low_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_low) %>%
+    round(2)
+  hfp_med_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_med) %>%
+    round(2)
+  hfp_high_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_high) %>%
+    round(2)
+
+  bowen_hfp_plot <- bowen_map_2(bowen_hfp_bottom,
+                             title = paste0("Bottom ", bottom_pct, "% Biodiversity Value with Human Footprint (Categorical)"),
+                             subtitle = paste0("Bottom ", bottom_pct, "% of biodiversity locations on Bowen Island, with scale corresponding to relative human disturbance. 0% of bottom biodiversity locations are considered intact. ", hfp_low_overlap*100,"% of bottom biodiversity locations considered to be less disturbed. ", hfp_med_overlap*100,"% of bottom biodiversity cells are considered moderately disturbed. ", hfp_high_overlap*100, "% of bottom biodiversity locations are highly disturbed. Citation: Kristen Hirsh-Pearson, Chris J. Johnson, Richard Schuster, Roger D. Wheate, and Oscar Venter. 2022. Canada’s human footprint reveals large intact areas juxtaposed against areas under immense anthropogenic pressure. FACETS. 7: 398-419."),
+                             caption = caption,
+                             legend_label = "Disturbance") +
+    ggplot2::geom_sf(data = bowen_trails,
+                     linewidth = 0.3,
+                     aes(color = trails_colour)
+    ) +
+    ggplot2::geom_sf(data = bowen_roads,
+                     linewidth = 0.5,
+                     aes(color = roads_colour)
+    ) +
+    scale_colour_identity(name = "",
+                          breaks = c(trails_colour, roads_colour),
+                          labels = c("Trails", "Roads"),
+                          guide = "legend"
+    ) + 
+    geom_sf(data = bowen_ocean_sf,
+            linewidth = bowen_ocean_linewidth,
+            fill = bowen_ocean_colour
+    ) +
+    ggspatial::annotation_scale(
+      location = "br",
+      bar_cols = c("grey60", "white")
+    ) +
+    ggspatial::annotation_north_arrow(
+      location = "br", which_north = "true",
+      pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+      style = ggspatial::north_arrow_nautical(
+        fill = c("grey40", "white"),
+        line_col = "grey20"
+      )
+    ) 
+  
+  ggplot2::ggsave(
+    paste0(output_dir, "/", Sys.Date(), "_","5_4_bottom_", bottom_pct, "_hfp_categorical", ".png"),
+    bowen_hfp_plot,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+
+  # 5.5 Biodiversity Values overlap with Human Disturbance (continuous)
+  bowen_hfp_continuous_bottom <- rankmap_mask * rast(here("inst/extdata/bowen_human_footprint.tif"))
+
+  bowen_hfp_continuous_plot <- bowen_map(bowen_hfp_continuous_bottom,
+                             title = paste0("Bottom ", bottom_pct, "% Biodiversity Value with Human Footprint (Continuous)"),
+                             subtitle = paste0("Bottom ", bottom_pct, "% of biodiversity locations on Bowen Island, with scale corresponding to relative human disturbance. 0% of bottom biodiversity locations are considered intact. ", hfp_low_overlap*100,"% of bottom biodiversity locations considered to be less disturbed. ", hfp_med_overlap*100,"% of bottom biodiversity cells are considered moderately disturbed. ", hfp_high_overlap*100, "% of bottom biodiversity locations are highly disturbed. Citation: Kristen Hirsh-Pearson, Chris J. Johnson, Richard Schuster, Roger D. Wheate, and Oscar Venter. 2022. Canada’s human footprint reveals large intact areas juxtaposed against areas under immense anthropogenic pressure. FACETS. 7: 398-419."),
+                             caption = caption,
+                             legend_label = "Disturbance",
+                             pal = "Inferno") +
+    ggplot2::geom_sf(data = bowen_trails,
+                     linewidth = 0.3,
+                     aes(color = trails_colour)
+    ) +
+    ggplot2::geom_sf(data = bowen_roads,
+                     linewidth = 0.5,
+                     aes(color = roads_colour)
+    ) +
+    scale_colour_identity(name = "",
+                          breaks = c(trails_colour, roads_colour),
+                          labels = c("Trails", "Roads"),
+                          guide = "legend"
+    ) +
+    geom_sf(data = bowen_ocean_sf,
+            linewidth = bowen_ocean_linewidth,
+            fill = bowen_ocean_colour
+    ) +
+    ggspatial::annotation_scale(
+      location = "br",
+      bar_cols = c("grey60", "white")
+    ) +
+    ggspatial::annotation_north_arrow(
+      location = "br", which_north = "true",
+      pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+      style = ggspatial::north_arrow_nautical(
+        fill = c("grey40", "white"),
+        line_col = "grey20"
+      )
+    )
+
+  ggplot2::ggsave(
+    paste0(output_dir, "/", Sys.Date(), "_","5_5_bottom_", bottom_pct, "_hfp_continuous", ".png"),
+    bowen_hfp_continuous_plot,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+
+  # 5.6 Biodiversity Values overlap with Freshwater
+  fw_mask <- fw_rast_dissolve %>%
+    not.na() %>%
+    classify(cbind(FALSE, NA))
+  fw_bottom <- fw_richness * rankmap_mask
+
+  freshwater_overlap = raster_overlap_ratio(rankmap_bt_rm, fw_rast_dissolve) %>%
+    round(2)
+
+  fw_plot <- bowen_map_toppct(empty_rast,
+                       title = paste0("Bottom ", bottom_pct, "% Biodiversity Value with Freshwater Habitats"),
+                       subtitle = paste0("Bottom ", bottom_pct, "% of biodiversity locations on Bowen Island, overlapping with Freshwater Ecosystems. There is a ", freshwater_overlap*100, "% overlap between bottom biodiversity locations and freshwater ecosystems."),
+                       caption = caption,
+                       legend_label = "Freshwater Habitat Richness") +
+    ggnewscale::new_scale_fill() +
+    tidyterra::geom_spatraster(data = rankmap_mask,
+                               aes(fill = rankmap)) +
+    scale_fill_gradientn(name = "",
+                         labels = paste0("bottom ", bottom_pct, "% Only"),
+                         colours = "wheat3",
+                         guide = "legend",
+                         na.value = "transparent") +
+    ggnewscale::new_scale_fill() +
+    tidyterra::geom_spatraster(data = fw_bottom) +
+    colorspace::scale_fill_continuous_sequential(
+        na.value = NA,
+        palette = "Mako",
+        guide = ggplot2::guide_colourbar(nbin = 100,
+                                         draw.ulim = FALSE,
+                                         draw.llim = FALSE,
+                                         title.position = "bottom"
+                                         # title.hjust = 0.5
+        ),
+        name = "Freshwater Habitat Richness"
+    ) +
+    ggplot2::geom_sf(data = bowen_trails,
+                     linewidth = 0.3,
+                     aes(color = trails_colour)
+    ) +
+    ggplot2::geom_sf(data = bowen_roads,
+                     linewidth = 0.5,
+                     aes(color = roads_colour)
+    ) +
+    scale_colour_identity(name = "",
+                          breaks = c(trails_colour, roads_colour),
+                          labels = c("Trails", "Roads"),
+                          guide = "legend"
+    ) +
+    geom_sf(data = bowen_ocean_sf,
+            linewidth = bowen_ocean_linewidth,
+            fill = bowen_ocean_colour
+    ) +
+    ggspatial::annotation_scale(
+      location = "br",
+      bar_cols = c("grey60", "white")
+    ) +
+    ggspatial::annotation_north_arrow(
+      location = "br", which_north = "true",
+      pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+      style = ggspatial::north_arrow_nautical(
+        fill = c("grey40", "white"),
+        line_col = "grey20"
+      )
+    )
+  ggplot2::ggsave(
+    paste0(output_dir, "/", Sys.Date(), "_","5_6_bottom_", bottom_pct, "_fw", ".png"),
+    fw_plot,
+    device = ragg::agg_png,
+    width = 9, height = 12, units = "in", res = 300
+  )
+}
+```
+
 
 ```{r}
 
