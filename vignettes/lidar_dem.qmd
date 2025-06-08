@@ -1,0 +1,65 @@
+---
+title: "Creating DTM, Slope, Aspect Raster Layers"
+author: "Jay Matsushiba"
+date: "2025/06/07"
+format: html
+---
+
+```{r setup, results='hide', echo=T, message=F}
+library(bowen.biodiversity.webapp)
+library(here)
+library(sf)
+library(terra)
+library(leaflet)
+library(leaflet.extras)
+library(future)
+library(dplyr)
+
+# install.packages('lasR', repos = 'https://r-lidar.r-universe.dev')
+library(lasR)
+library(lidR)
+```
+
+# Bowen Island DTM
+
+Downloaded from LidarBC: https://lidar.gov.bc.ca/
+
+## Create 2 metre resolution Digital Terrain Model
+
+```{r dtm, eval=F}
+set_parallel_strategy(concurrent_files(4))
+# Read las catalog
+ctg <- readLAScatalog(here("data-raw/bowen_lidar"))
+# lasR pipeline
+del = triangulate(filter = keep_ground())
+dtm = rasterize(2, del)
+pipeline = del + dtm
+ans = exec(pipeline, on = ctg)S
+# Clean up raster to remove negative elevation
+m <- matrix(c(
+  -2000, 0, NA
+), ncol = 3, byrow = T)
+clean_ans <- ans %>% 
+  classify(m) 
+# Save DTM
+writeRaster(clean_ans, 
+            here("data/bowen_dtm.tif"),
+            overwrite=T)
+```
+
+## Create 2 metre resolution slope and aspect raster
+
+```{r aspect}
+clean_ans <- rast(here("data/bowen_dtm.tif"))
+
+# Slope raster
+slope <- terrain(clean_ans, v="slope")
+writeRaster(slope, 
+            here("data/bowen_slope.tif"),
+            overwrite=T)
+# Aspect raster
+aspect <- terrain(clean_ans, v="aspect")
+writeRaster(aspect, 
+            here("data/bowen_aspect.tif"),
+            overwrite=T)
+```

@@ -200,7 +200,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
           <li class="sidebar-item">
   <div class="sidebar-item-container"> 
   <a href="../vignettes/output_zonation_02_05_2025.html" class="sidebar-item-text sidebar-link">
- <span class="menu-text">Conservation Prioritization May 5 2025 Update</span></a>
+ <span class="menu-text">Conservation Prioritization May 2 2025 Update</span></a>
   </div>
 </li>
       </ul>
@@ -282,6 +282,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#bowen-wildland-urban-interfaces-wui" id="toc-bowen-wildland-urban-interfaces-wui" class="nav-link active" data-scroll-target="#bowen-wildland-urban-interfaces-wui">Bowen Wildland Urban Interfaces (WUI)</a>
   <ul class="collapse">
   <li><a href="#convert-to-raster-matching-the-resolution-and-extent-of-zonation-inputs" id="toc-convert-to-raster-matching-the-resolution-and-extent-of-zonation-inputs" class="nav-link" data-scroll-target="#convert-to-raster-matching-the-resolution-and-extent-of-zonation-inputs">Convert to raster matching the resolution and extent of Zonation inputs</a></li>
+  <li><a href="#notes-on-threat-due-to-fire-from-tom-sisk" id="toc-notes-on-threat-due-to-fire-from-tom-sisk" class="nav-link" data-scroll-target="#notes-on-threat-due-to-fire-from-tom-sisk">Notes on threat due to fire from Tom Sisk</a></li>
   </ul></li>
   </ul>
 </nav>
@@ -324,50 +325,13 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <details class="code-fold">
 <summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(bowen.biodiversity.webapp)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(here)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(leaflet)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
-<div class="cell-output cell-output-stderr">
-<pre><code>here() starts at /home/jay/Programming_Projects/bowen.biodiversity.webapp</code></pre>
-</div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(sf)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>Linking to GEOS 3.11.1, GDAL 3.6.4, PROJ 9.1.1; sf_use_s2() is TRUE</code></pre>
-</div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(leaflet)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-✔ dplyr     1.1.4     ✔ readr     2.1.5
-✔ forcats   1.0.0     ✔ stringr   1.5.1
-✔ lubridate 1.9.4     ✔ tibble    3.2.1
-✔ purrr     1.0.2     ✔ tidyr     1.3.1</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::filter() masks stats::filter()
-✖ dplyr::lag()    masks stats::lag()
-ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-</div>
-<details class="code-fold">
-<summary>Code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(terra)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stderr">
-<pre><code>terra 1.8.5
-
-Attaching package: 'terra'
-
-The following object is masked from 'package:tidyr':
-
-    extract</code></pre>
-</div>
 </div>
 <section id="bowen-wildland-urban-interfaces-wui" class="level1">
 <h1>Bowen Wildland Urban Interfaces (WUI)</h1>
@@ -375,11 +339,11 @@ The following object is masked from 'package:tidyr':
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>bowen_wui <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data-raw/bowen_wui.gpkg"</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_read</span>() <span class="sc">%&gt;%</span></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Name, PSTA) <span class="sc">%&gt;%</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">WUI =</span> Name) <span class="sc">%&gt;%</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">WUI_PSTA =</span> <span class="fu">paste0</span>(WUI, <span class="st">"_"</span>, PSTA))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>bowen_wui <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"data-raw/bowen_wui.gpkg"</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_read</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Name, PSTA) <span class="sc">%&gt;%</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">WUI =</span> Name) <span class="sc">%&gt;%</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">WUI_PSTA =</span> <span class="fu">paste0</span>(WUI, <span class="st">"_"</span>, PSTA))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>Reading layer `bowen_wui' from data source 
@@ -394,8 +358,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(bowen_wui) <span class="sc">+</span> </span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> PSTA))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(bowen_wui) <span class="sc">+</span> </span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> PSTA))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -406,8 +370,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(bowen_wui) <span class="sc">+</span> </span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> WUI))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(bowen_wui) <span class="sc">+</span> </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> WUI))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -418,8 +382,8 @@ Geodetic CRS:  WGS 84</code></pre>
 </div>
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(bowen_wui) <span class="sc">+</span> </span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> WUI_PSTA))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(bowen_wui) <span class="sc">+</span> </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_sf</span>(<span class="fu">aes</span>(<span class="at">fill =</span> WUI_PSTA))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -434,12 +398,175 @@ Geodetic CRS:  WGS 84</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Code</summary>
-<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>bowen_mask <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"inst/extdata/bowen_mask.tif"</span>) <span class="sc">%&gt;%</span> <span class="fu">rast</span>()</span>
-<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>bowen_wui_vect <span class="ot">&lt;-</span> bowen_wui <span class="sc">%&gt;%</span> <span class="fu">vect</span>() <span class="sc">%&gt;%</span> <span class="fu">project</span>(bowen_mask)</span>
-<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>bowen_wui_rast <span class="ot">&lt;-</span> bowen_wui_vect <span class="sc">%&gt;%</span></span>
-<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rasterize</span>(bowen_mask, <span class="st">"WUI_PSTA"</span>, <span class="at">touches =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>bowen_mask <span class="ot">&lt;-</span> <span class="fu">here</span>(<span class="st">"inst/extdata/bowen_mask.tif"</span>) <span class="sc">%&gt;%</span> <span class="fu">rast</span>()</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>bowen_wui_vect <span class="ot">&lt;-</span> bowen_wui <span class="sc">%&gt;%</span> <span class="fu">vect</span>() <span class="sc">%&gt;%</span> <span class="fu">project</span>(bowen_mask)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>bowen_wui_rast <span class="ot">&lt;-</span> bowen_wui_vect <span class="sc">%&gt;%</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rasterize</span>(bowen_mask, <span class="st">"WUI_PSTA"</span>, <span class="at">touches =</span> T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+</div>
+</section>
+<section id="notes-on-threat-due-to-fire-from-tom-sisk" class="level2">
+<h2 class="anchored" data-anchor-id="notes-on-threat-due-to-fire-from-tom-sisk">Notes on threat due to fire from Tom Sisk</h2>
+<p>Objective: Index of Vulnerability to Fire. We are not trying to assess the probability of fire nor how hot it might burn or its behavior. Instead, we want to know the relative vulnerability to biodiversity loss due to fire, if habitats were to burn.</p>
+<p>Three major components of vulnerability:</p>
+<ol type="1">
+<li><p>Slope. Fires spread more quickly when they move uphill. Relative ranking might look like this:</p>
+<p>1 0-10 degree slopes: lower vulnerability 2 10-30 degrees: moderate vulnerability 3 Above 30 degrees: higher vulnerability</p></li>
+<li><p>Aspect. Southerly exposures burn hotter, fire spreads more quickly, effects more uniform and destructive than on northern exposures, all else being equal. Might consider this as a first approximation: 1 0-45: Low vulnerability because fires unlikely to spread as fast or burn as hot 2 45-90: moderately low 4 90-135: moderately high 6 135-225: southerly exposures burn hotter, spread quickly and more uniformly 4 225-270: Moderately high 2 270-315 Moderately low 1 315-360: Low vulnerability</p></li>
+<li><p>Fuels. On Bowen, the main differences in fuel loads have to do with whether a location is forested or not forested. Forested areas burn hotter and longer and long, hot burns have a more detrimental effect that shorter less intense fires. So the main distinctions should be made between forested and unforested. Forest stands comprised of larger trees are, of course, of higher value to biodiversity than denser stands with smaller trees, so we would like to be able to distinguish between forest structures to some degree. At the same time, when more mesic habitats burn the biodiversity effects tend to be high, because species are not adapted to fire. So we will need to rank habitats based on the differential effects of forest fuels present, as well as the difference in flora and fauna that make those locations more or less vulnerable in terms of biodiversity loss. First Cut Ranking Scheme: 14 Forest, large/old trees 10 Forest, mature second growth 6 Forest, young regrowth 6 Shrublands 2 Grasslands: often burn and effects are modest, even positive in some cases 4 Riparian: seldom burns, but if it burns biodiversity effects may be very negative 2 Wetlands: seldom burn, more often they create fire breaks 0 Water: does not burn, but is vulnerable to ash deposition NA Built environment: NA (default to WUI map when talking about the built environment</p></li>
+</ol>
+<p>I suggest that we think about these basic ideas:</p>
+<ol type="1">
+<li><p>We pursue an index of vulnerability, rather than a more sophisticated approach to modeling fire or adapting an index that was developed for other purposes (i.e.&nbsp;WUI).</p></li>
+<li><p>We create a simple index that allows us to compare the relative vulnerability of all locations on Bowen (with the exception of the built environment).</p></li>
+<li><p>We consider slope, aspect, and fuels by habitat as the three components of an index.</p></li>
+<li><p>We determine the relative ranks within each of the three components</p></li>
+<li><p>Integrate the scores into an index that produces an aggregate vulnerability index score for each pixel. As a first approximation, this should be the additive (sum) of the three components – and then let’s see how that performs.</p></li>
+</ol>
+<ul>
+<li>Rationale for score scaling from Tom</li>
+<li>Calculating rasters from the LiDAR data directly</li>
+<li>Add together the three components raster</li>
+</ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Slope Score</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="do">## Create slope raster from LiDAR data</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>slope <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">here</span>(<span class="st">"data/bowen_slope.tif"</span>))</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a><span class="do">## Create matrix of scores</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="do">### 1 0-10 degree slopes: lower vulnerability</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="do">### 2 10-30 degrees: moderate vulnerability</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="do">### 3 Above 30 degrees: higher vulnerability</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>slope_m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="dv">0</span>, <span class="dv">10</span>, <span class="dv">1</span>,</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="dv">10</span>, <span class="dv">30</span>, <span class="dv">2</span>,</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="dv">30</span>, <span class="dv">91</span>, <span class="dv">3</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>), <span class="at">ncol =</span> <span class="dv">3</span>, <span class="at">byrow =</span> T)</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a><span class="do">## Classify original slope raster to slope score </span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>slope_score <span class="ot">&lt;-</span> slope <span class="sc">%&gt;%</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(slope_m)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="co"># Aspect Score</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a><span class="do">## Create aspect raster from LiDAR data</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>aspect <span class="ot">&lt;-</span> <span class="fu">rast</span>(<span class="fu">here</span>(<span class="st">"data/bowen_aspect.tif"</span>))</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a><span class="do">## Create matrix of scores</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a><span class="do">### 1 0-45: Low vulnerability because fires unlikely to spread as fast or burn as hot </span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="do">### 2 45-90: moderately low </span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="do">### 4 90-135: moderately high </span></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a><span class="do">### 6 135-225: southerly exposures burn hotter, spread quickly and more uniformly </span></span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a><span class="do">### 4 225-270: Moderately high </span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a><span class="do">### 2 270-315 Moderately low </span></span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a><span class="do">### 1 315-360: Low vulnerability</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>aspect_m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">c</span>(</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>  <span class="dv">0</span>, <span class="dv">45</span>, <span class="dv">1</span>,</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>  <span class="dv">45</span>, <span class="dv">90</span>, <span class="dv">2</span>,</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a>  <span class="dv">90</span>, <span class="dv">135</span>, <span class="dv">4</span>,</span>
+<span id="cb8-32"><a href="#cb8-32" aria-hidden="true" tabindex="-1"></a>  <span class="dv">135</span>, <span class="dv">225</span>, <span class="dv">6</span>,</span>
+<span id="cb8-33"><a href="#cb8-33" aria-hidden="true" tabindex="-1"></a>  <span class="dv">225</span>, <span class="dv">270</span>, <span class="dv">4</span>,</span>
+<span id="cb8-34"><a href="#cb8-34" aria-hidden="true" tabindex="-1"></a>  <span class="dv">270</span>, <span class="dv">315</span>, <span class="dv">2</span>,</span>
+<span id="cb8-35"><a href="#cb8-35" aria-hidden="true" tabindex="-1"></a>  <span class="dv">315</span>, <span class="dv">360</span>, <span class="dv">1</span></span>
+<span id="cb8-36"><a href="#cb8-36" aria-hidden="true" tabindex="-1"></a>), <span class="at">ncol =</span> <span class="dv">3</span>, <span class="at">byrow =</span> T)</span>
+<span id="cb8-37"><a href="#cb8-37" aria-hidden="true" tabindex="-1"></a><span class="do">## Classify original aspect raster to aspect score </span></span>
+<span id="cb8-38"><a href="#cb8-38" aria-hidden="true" tabindex="-1"></a>aspect_score <span class="ot">&lt;-</span> aspect <span class="sc">%&gt;%</span></span>
+<span id="cb8-39"><a href="#cb8-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">classify</span>(aspect_m)</span>
+<span id="cb8-40"><a href="#cb8-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-41"><a href="#cb8-41" aria-hidden="true" tabindex="-1"></a><span class="co"># Fuel Score</span></span>
+<span id="cb8-42"><a href="#cb8-42" aria-hidden="true" tabindex="-1"></a><span class="do">## Get habitat classes from combination of WUI, MVSEI, TEM, AW layers </span></span>
+<span id="cb8-43"><a href="#cb8-43" aria-hidden="true" tabindex="-1"></a>mv_sei <span class="ot">&lt;-</span> <span class="fu">st_read</span>(<span class="fu">here</span>(<span class="st">"data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb8-44"><a href="#cb8-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_transform</span>(project_crs) <span class="sc">%&gt;%</span></span>
+<span id="cb8-45"><a href="#cb8-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">st_crop</span>(bowen_boundary) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in CPL_read_ogr(dsn, layer, query, as.character(options), quiet, : GDAL
+Message 1: This version of GeoPackage user_version=0x000028A0 (10400, v1.4.0)
+on
+'/home/jay/Programming_Projects/bowen.biodiversity.webapp/data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg'
+may only be partially supported</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Reading layer `Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020_' from data source `/home/jay/Programming_Projects/bowen.biodiversity.webapp/data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg' 
+  using driver `GPKG'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning in CPL_read_ogr(dsn, layer, query, as.character(options), quiet, : GDAL
+Message 1: Non-conformant content for record 1 in column SourceDate,
+2011-04-29T00:00:00.0Z, successfully parsed</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Simple feature collection with 25637 features and 99 fields
+Geometry type: MULTIPOLYGON
+Dimension:     XYZ
+Bounding box:  xmin: 468516.6 ymin: 5427679 xmax: 547072.5 ymax: 5495732
+z_range:       zmin: 0 zmax: 0
+Projected CRS: NAD83 / UTM zone 10N</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: attribute variables are assumed to be spatially constant throughout
+all geometries</code></pre>
+</div>
+<details class="code-fold">
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>mv_sei_secl_codes <span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="fu">here</span>(<span class="st">"data-raw/metrovancouver_sensitive_ecosystem_inventory/SEI_SECl_codes.csv"</span>))</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a><span class="do">## Generate fuel score raster based on habitat type </span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="do">### 14 Forest, large/old trees </span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="do">### 10 Forest, mature second growth </span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="do">### 6 Forest, young regrowth </span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="do">### 6 Shrublands </span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="do">### 2 Grasslands: often burn and effects are modest, even positive in some cases </span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a><span class="do">### 4 Riparian: seldom burns, but if it burns biodiversity effects may be very negative </span></span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a><span class="do">### 2 Wetlands: seldom burn, more often they create fire breaks </span></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a><span class="do">### 0 Water: does not burn, but is vulnerable to ash deposition </span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a><span class="do">### NA Built environment: NA (default to WUI map when talking about the built environment</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="do">### Using SEI </span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a><span class="do">### </span><span class="al">TODO</span><span class="do">: use A. Whitehead wetland and freshwater layers </span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>mv_sei_mod <span class="ot">&lt;-</span> mv_sei <span class="sc">%&gt;%</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">"SECl_1"</span>, <span class="st">"SEsubcl_1"</span>, <span class="st">"SECl_2"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">str_detect</span>(SECl_1, <span class="st">"x"</span>)) <span class="sc">%&gt;%</span> <span class="co"># remove lost habitats</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">fuel_score =</span> </span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>      <span class="fu">case_when</span>(</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"OF"</span> <span class="sc">~</span> <span class="dv">14</span>,</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"MF"</span> <span class="sc">~</span> <span class="dv">10</span>,</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"YF"</span> <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"YS"</span> <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"WD"</span> <span class="sc">~</span> <span class="dv">6</span>, <span class="co"># </span><span class="al">TODO</span><span class="co">: what score for "Woodland" category? </span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"HB"</span> <span class="sc">&amp;</span> SEsubcl_1 <span class="sc">==</span> <span class="st">"sh"</span> <span class="sc">~</span> <span class="dv">6</span>, <span class="co"># Herbaceous, shrub</span></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"HB"</span> <span class="sc">&amp;</span> SEsubcl_1 <span class="sc">!=</span> <span class="st">"sh"</span> <span class="sc">~</span> <span class="dv">2</span>, <span class="co"># Herbaceous, non-shrub</span></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"RI"</span> <span class="sc">~</span> <span class="dv">4</span>, <span class="co"># "Riparian"</span></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"WN"</span> <span class="sc">~</span> <span class="dv">2</span>, <span class="co"># "Wetland"</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"OD"</span> <span class="sc">~</span> <span class="dv">2</span>, <span class="co"># "Old Field"</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"SV"</span> <span class="sc">~</span> <span class="dv">0</span>, <span class="co"># </span><span class="al">TODO</span><span class="co">: what score for "Sparsely Vegetated" category?</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"IT"</span> <span class="sc">~</span> <span class="dv">0</span>, <span class="co"># </span><span class="al">TODO</span><span class="co">: what score for "Intertidal" category? </span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"FW"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Deal with XX Non-SE</span></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"XX"</span> <span class="sc">&amp;</span> SECl_2 <span class="sc">==</span> <span class="st">"MF"</span> <span class="sc">~</span> <span class="dv">10</span>,</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"XX"</span> <span class="sc">&amp;</span> SECl_2 <span class="sc">==</span> <span class="st">"YS"</span> <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"XX"</span> <span class="sc">&amp;</span> SECl_2 <span class="sc">==</span> <span class="st">"WD"</span> <span class="sc">~</span> <span class="dv">6</span>,</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"XX"</span> <span class="sc">&amp;</span> SECl_2 <span class="sc">==</span> <span class="st">"RI"</span> <span class="sc">~</span> <span class="dv">4</span>,</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>        SECl_1 <span class="sc">==</span> <span class="st">"XX"</span> <span class="sc">&amp;</span> SECl_2 <span class="sc">==</span> <span class="st">"SV"</span> <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Rasterize habitat polygons fuel score</span></span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>fuel_score <span class="ot">&lt;-</span> mv_sei_mod <span class="sc">%&gt;%</span></span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">vect</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">project</span>(aspect_score) <span class="sc">%&gt;%</span></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rasterize</span>(aspect_score, <span class="at">field =</span> <span class="st">"fuel_score"</span>) </span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a><span class="co"># Cumulative Fire Vulnerability Index</span></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>fire_index <span class="ot">&lt;-</span> slope_score <span class="sc">+</span> aspect_score <span class="sc">+</span> fuel_score</span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(fire_index)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="threats_fire_files/figure-html/unnamed-chunk-2-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
 </div>
 
 

@@ -7,7 +7,7 @@ format:
     code-fold: true
 ---
 
-```{r setup}
+```{r setup, message=F}
 library(bowen.biodiversity.webapp)
 library(here)
 library(sf)
@@ -136,36 +136,100 @@ see how that performs.
 ```{r}
 # Slope Score
 ## Create slope raster from LiDAR data
+slope <- rast(here("data/bowen_slope.tif"))
 ## Create matrix of scores
-    # 1 0-10 degree slopes: lower vulnerability
-    # 2 10-30 degrees: moderate vulnerability
-    # 3 Above 30 degrees: higher vulnerability
+### 1 0-10 degree slopes: lower vulnerability
+### 2 10-30 degrees: moderate vulnerability
+### 3 Above 30 degrees: higher vulnerability
+slope_m <- matrix(c(
+  0, 10, 1,
+  10, 30, 2,
+  30, 91, 3
+), ncol = 3, byrow = T)
 ## Classify original slope raster to slope score 
+slope_score <- slope %>%
+  classify(slope_m)
+
 # Aspect Score
 ## Create aspect raster from LiDAR data
+aspect <- rast(here("data/bowen_aspect.tif"))
 ## Create matrix of scores
-    # 1 0-45: Low vulnerability because fires unlikely to spread as fast or burn as hot 
-    # 2 45-90: moderately low 
-    # 4 90-135: moderately high 
-    # 6 135-225: southerly exposures burn hotter, spread quickly and more
-    # uniformly 
-    # 4 225-270: Moderately high 
-    # 2 270-315 Moderately low 
-    # 1 315-360: Low vulnerability
+### 1 0-45: Low vulnerability because fires unlikely to spread as fast or burn as hot 
+### 2 45-90: moderately low 
+### 4 90-135: moderately high 
+### 6 135-225: southerly exposures burn hotter, spread quickly and more uniformly 
+### 4 225-270: Moderately high 
+### 2 270-315 Moderately low 
+### 1 315-360: Low vulnerability
+aspect_m <- matrix(c(
+  0, 45, 1,
+  45, 90, 2,
+  90, 135, 4,
+  135, 225, 6,
+  225, 270, 4,
+  270, 315, 2,
+  315, 360, 1
+), ncol = 3, byrow = T)
 ## Classify original aspect raster to aspect score 
+aspect_score <- aspect %>%
+  classify(aspect_m)
+
 # Fuel Score
 ## Get habitat classes from combination of WUI, MVSEI, TEM, AW layers 
-## Create matrix of scores 
-    # 14 Forest, large/old trees 
-    # 10 Forest, mature second growth 
-    # 6 Forest, young regrowth 
-    # 6 Shrublands 
-    # 2 Grasslands: often burn and effects are modest, even positive in some
-    # cases 
-    # 4 Riparian: seldom burns, but if it burns biodiversity effects
-    # may be very negative 
-    # 2 Wetlands: seldom burn, more often they create fire breaks 
-    # 0 Water: does not burn, but is vulnerable to ash deposition NA Built environment: NA (default to WUI map when talking about the built environment
+mv_sei <- st_read(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg")) %>%
+  st_transform(project_crs) %>%
+  st_crop(bowen_boundary) 
+
+mv_sei_secl_codes <- read.csv(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/SEI_SECl_codes.csv"))
+
 ## Generate fuel score raster based on habitat type 
+### 14 Forest, large/old trees 
+### 10 Forest, mature second growth 
+### 6 Forest, young regrowth 
+### 6 Shrublands 
+### 2 Grasslands: often burn and effects are modest, even positive in some cases 
+### 4 Riparian: seldom burns, but if it burns biodiversity effects may be very negative 
+### 2 Wetlands: seldom burn, more often they create fire breaks 
+### 0 Water: does not burn, but is vulnerable to ash deposition 
+### NA Built environment: NA (default to WUI map when talking about the built environment
+
+### Using SEI 
+### TODO: use A. Whitehead wetland and freshwater layers 
+mv_sei_mod <- mv_sei %>%
+  select("SECl_1", "SEsubcl_1", "SECl_2") %>%
+  filter(!str_detect(SECl_1, "x")) %>% # remove lost habitats
+  mutate(
+    fuel_score = 
+      case_when(
+        SECl_1 == "OF" ~ 14,
+        SECl_1 == "MF" ~ 10,
+        SECl_1 == "YF" ~ 6,
+        SECl_1 == "YS" ~ 6,
+        SECl_1 == "WD" ~ 6, # TODO: what score for "Woodland" category? 
+        SECl_1 == "HB" & SEsubcl_1 == "sh" ~ 6, # Herbaceous, shrub
+        SECl_1 == "HB" & SEsubcl_1 != "sh" ~ 2, # Herbaceous, non-shrub
+        SECl_1 == "RI" ~ 4, # "Riparian"
+        SECl_1 == "WN" ~ 2, # "Wetland"
+        SECl_1 == "OD" ~ 2, # "Old Field"
+        SECl_1 == "SV" ~ 0, # TODO: what score for "Sparsely Vegetated" category?
+        SECl_1 == "IT" ~ 0, # TODO: what score for "Intertidal" category? 
+        SECl_1 == "FW" ~ 0,
+        # Deal with XX Non-SE
+        SECl_1 == "XX" & SECl_2 == "MF" ~ 10,
+        SECl_1 == "XX" & SECl_2 == "YS" ~ 6,
+        SECl_1 == "XX" & SECl_2 == "WD" ~ 6,
+        SECl_1 == "XX" & SECl_2 == "RI" ~ 4,
+        SECl_1 == "XX" & SECl_2 == "SV" ~ 0,
+      )
+  )
+# Rasterize habitat polygons fuel score
+fuel_score <- mv_sei_mod %>%
+  vect() %>%
+  project(aspect_score) %>%
+  rasterize(aspect_score, field = "fuel_score") 
+
+# Cumulative Fire Vulnerability Index
+fire_index <- slope_score + aspect_score + fuel_score
+plot(fire_index)
 ```
 
