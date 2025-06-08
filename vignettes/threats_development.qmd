@@ -27,6 +27,7 @@ library(terra)
 library(here)
 library(tidyverse)
 library(leaflet)
+library(scales)
 ```
 
 ## BC Assessment Sales Data
@@ -94,3 +95,39 @@ leaflet(bowen_sales_summary_sf) %>%
               ) %>%
   addLegend(pal = pal, values = ~price_days_slope)
 ```
+
+## Development Subdivision Potential - Information from Daniel Martin (Bowen Island Municipality Manager of Planning & Development)
+This section is on quantifying the development potential on Bowen Island, via subdivisions of land to enable increased development / density. Subdivisions refer to taking larger properties of land and splitting them into smaller properties, which enables increased development and density as it allows more buildings to be built. The current zoning restricts the number of buildings per lot and the minimum area per lot. Therefore, splitting properties that could be made into multiple smaller but above minimum properties increases the number of buildings that can be built. 
+
+Daniel Martin, Manager of Planning and Development at Bowen Island Municipality, provided these spreadsheets with information on the potential for individual lots to be subdivided. Additionally, Martin provided the number of potential further developments possible in Comprehensive Development Zones on Bowen Island. 
+```{r}
+# RR1 and RR2 (Rural Residential 1 and 2 Zoning)
+rr1_rr2 <- here("data-raw/bowen_development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
+  readxl::read_xlsx(sheet = "RR1,RR2")
+# RR3 (Rural Residential 3 Zoning)
+rr3 <- here("data-raw/bowen_development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
+  readxl::read_xlsx(sheet = "RR3 properties")
+# SR (Settlement Residential zoning)
+sr <- here("data-raw/bowen_development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
+  readxl::read_xlsx(sheet = "SR properties")
+# CD (Comprehensive Development Zones)
+## Deal with these separately, need to do some wrangling 
+
+ocp_subdivision <- rbind(rr1_rr2, rr3, sr) %>%
+  filter(!is.na(pid))
+
+ocp_subdivision_parcelmap <- merge(ocp_subdivision, bowen_parcelmap, by.x = "pid", by.y = "Name") %>%
+  mutate(subdividable = case_when(
+    `Can Subdivide?` == 0 ~ FALSE,
+    `Can Subdivide?` > 0 ~ TRUE
+  ))
+
+ggplot(ocp_subdivision_parcelmap) +
+  geom_sf(aes(fill = `subdividable`, geometry = geom), color = NA) 
+ggplot(ocp_subdivision_parcelmap) +
+  geom_sf(aes(fill = `Can Subdivide?`, geometry = geom), color = NA) +
+  scale_fill_viridis_c(direction = -1,
+                       breaks = c(0, 10, 20, 40),
+                       trans = scales::pseudo_log_trans(sigma = 1))
+```
+
