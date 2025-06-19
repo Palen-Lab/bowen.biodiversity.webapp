@@ -7,27 +7,68 @@ format:
     code-fold: true
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>",
-  fig.width = 7,
-  fig.height = 7
-)
-```
-
 This vignette describes the first-look exploration and analysis with the BC Assessment data, providing sales history and values of real estate properties throughout British Columbia. The purpose for utilizing this data is to create some spatial layer for modelling development pressures on Bowen Island.
 
 Data citation: BC Assessment, 2020, "BC Assessment Data Advice and Inventory Extracts, 2016-2022", <https://hdl.handle.net/11272.1/AB2/LAPUAB>, Abacus Data Network, V6
 
 ```{r setup}
+#### Palen Lab Packages ####
 library(bowen.biodiversity.webapp)
-library(sf)
-library(terra)
+
+#### Other Packages ####
 library(here)
 library(tidyverse)
 library(leaflet)
 library(scales)
+library(stringr)
+library(foreach)
+library(sf)
+library(units)
+library(terra)
+library(tidyterra)
+library(readxl)
+library(googlesheets4)
+library(ggplot2)
+library(ggnewscale)
+library(RColorBrewer)
+library(randomcoloR)
+library(doParallel)
+library(magrittr)
+
+sf_use_s2(FALSE)
+
+# Output Directory
+output_dir <- here("vignettes/figures/threats_development")
+if(!dir.exists(output_dir)) {
+  dir.create(output_dir)
+}
+
+# Plots parameters
+trails_colour <- "brown"
+roads_colour <- "darkgrey"
+caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+
+# Template raster
+bowen_mask <- terra::rast(here("inst/extdata/bowen_mask.tif"))
+empty_rast <- terra::rast(
+  ext(bowen_mask),
+  resolution = res(bowen_mask),
+  crs = crs(bowen_mask)
+)
+
+# Shoreline 
+bowen_shoreline <- st_read(here("data-raw/bowen_island_shoreline_w_hutt.gpkg"), layer = "bowen_island_shoreline_w_hutt__bowen_islands") %>%
+  st_transform(project_crs)
+
+bowen_mask_sf <- as.polygons(bowen_mask, extent=T) %>%
+  st_as_sf() %>%
+  st_transform(project_crs) %>%
+  st_buffer(1000)
+
+# Create Ocean Polygon
+bowen_ocean_sf <- st_difference(st_union(bowen_mask_sf), st_union(bowen_shoreline))
+bowen_ocean_linewidth <- 0.5
+bowen_ocean_colour <- "#dbdbdc"
 ```
 
 ## BC Assessment Sales Data
@@ -120,7 +161,9 @@ ocp_subdivision_parcelmap <- merge(ocp_subdivision, bowen_parcelmap, by.x = "pid
   mutate(subdividable = case_when(
     `Can Subdivide?` == 0 ~ FALSE,
     `Can Subdivide?` > 0 ~ TRUE
-  ))
+  )) %>%
+  st_as_sf() %>%
+  st_transform(project_crs)
 
 ggplot(ocp_subdivision_parcelmap) +
   geom_sf(aes(fill = `subdividable`, geometry = geom), color = NA) 
@@ -129,5 +172,173 @@ ggplot(ocp_subdivision_parcelmap) +
   scale_fill_viridis_c(direction = -1,
                        breaks = c(0, 10, 20, 40),
                        trans = scales::pseudo_log_trans(sigma = 1))
+
+# Subdividable Map (Binary)
+title <- "Bowen Island OCP Subdividable"
+subtitle <- "This map shows whether parcels are subdividable into additional units on Bowen Island. Data provided by Daniel Martin (2025)."
+
+subdivide_tf_plot <- bowen_map(raster_layer = empty_rast,
+                               title = title,
+                               subtitle = subtitle,
+                               caption = caption,
+                               legend_label = "Subdividable?") +
+  geom_sf(data = ocp_subdivision_parcelmap,
+          aes(fill = `subdividable`, geometry = geom), color = NA
+  ) +
+  geom_sf(data = bowen_ocean_sf,
+          linewidth = bowen_ocean_linewidth,
+          fill = bowen_ocean_colour
+  ) +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend"
+  ) +
+  ggspatial::annotation_scale(
+    location = "br",
+    bar_cols = c("grey60", "white")
+  ) +
+  ggspatial::annotation_north_arrow(
+    location = "br", which_north = "true",
+    pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+    style = ggspatial::north_arrow_nautical(
+      fill = c("grey40", "white"),
+      line_col = "grey20"
+    )
+  ) 
+
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_subdividable_tf.png")),
+  subdivide_tf_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+
+# Subdividable Map (Continuous)
+title <- "Bowen Island OCP Subdividable Empty Lots"
+subtitle <- "This map shows the number of new units that parcels can be subdivided into on Bowen Island. Data provided by Daniel Martin (2025)."
+
+subdivide_cont_plot <- bowen_map(raster_layer = empty_rast,
+                               title = title,
+                               subtitle = subtitle,
+                               caption = caption,
+                               legend_label = "Subdividable?") +
+  geom_sf(data = ocp_subdivision_parcelmap, aes(fill = `Can Subdivide?`, geometry = geom), color = NA) +
+  scale_fill_viridis_c(direction = -1,
+                       breaks = c(0, 10, 20, 40),
+                       trans = scales::pseudo_log_trans(sigma = 1)) +
+  geom_sf(data = bowen_ocean_sf,
+          linewidth = bowen_ocean_linewidth,
+          fill = bowen_ocean_colour
+  ) +
+  ggplot2::geom_sf(data = bowen_trails,
+                   linewidth = 0.3,
+                   aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(data = bowen_roads,
+                   linewidth = 0.5,
+                   aes(color = roads_colour)
+  ) +
+  scale_colour_identity(name = "",
+                        breaks = c(trails_colour, roads_colour),
+                        labels = c("Trails", "Roads"),
+                        guide = "legend"
+  ) +
+  ggspatial::annotation_scale(
+    location = "br",
+    bar_cols = c("grey60", "white")
+  ) +
+  ggspatial::annotation_north_arrow(
+    location = "br", which_north = "true",
+    pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+    style = ggspatial::north_arrow_nautical(
+      fill = c("grey40", "white"),
+      line_col = "grey20"
+    )
+  ) 
+
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_subdividable_cont.png")),
+  subdivide_cont_plot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
 ```
+# Biodiversity Values in Subdivideable Properties
+```{r}
+# TODO: How much relative biodiversity value in subdivideable plots?
+# Get Zonation conservation priorities output
+# 2025/06/12
+# - Ranking by summed conservation value, for all pixels inside each parcel
+# - raster fuzzy join between conservation values and parcel, intersect with centroid of raster cell 
+# - Only for subdivideable plots 
+zonation <- terra::rast(here("inst/extdata/output_zonation/2025-05-05/rankmap.tif"))
+
+# Weighted sum of biodiversity value per parcel
+sum_bioval_weighted <- ocp_subdivision_parcelmap %>%
+  select(num_subdivide = `Can Subdivide?`,
+         geometry = geom) %>%
+  st_cast("MULTIPOLYGON") %>%
+  vect() %>%
+  terra::extract(zonation, ., 
+                 sum, 
+                 na.rm = TRUE, 
+                 weights = TRUE, 
+                 bind = TRUE) # sum biodiversity value by approx fraction of cell covered by polygon
+
+sum_bioval_weighted_sf <- sum_bioval_weighted %>% 
+  st_as_sf() %>%
+  mutate(area_ha = drop_units(st_area(geometry))/10000,
+         potential_units = num_subdivide + 1) %>%
+  rename(sum_bioval = rankmap) %>%
+  mutate(bioval_by_area = sum_bioval / area_ha,
+         potential_units_by_area = potential_units / area_ha) %>%
+  dplyr::filter(!is.na(sum_bioval)) %>% # Remove tiny parcels 
+  st_transform(3857)
+
+
+
+bioval_by_potential_units_gg <- function()  {
+  list(geom_sf(data = sum_bioval_weighted_sf, aes(fill = bioval_by_area / potential_units), color = NA),
+  scale_fill_viridis_c(name = "Biodiversity / Unit"))
+}
+
+test_func <- function() {
+  "random"
+}
+
+title <- "Bowen Island Relative Biodiversity per Potential Residential Units by Parcel"
+subtitle <- "This map shows the relative biodiversity values contained within each vacant parcel, divided by the number of potential new units that these parcels can be subdivided into. Data provided by Daniel Martin (April 2025)."
+caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+
+bioval_by_potential_units_ggplot <- bowen_map_ggplot(bioval_by_potential_units_gg,
+                                                     title = title,
+                                                     subtitle = subtitle,
+                                                     caption = caption
+)
+
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_bioval_by_potential_units.png")),
+  bioval_by_potential_units_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+
+
+# 2025/06/12
+# DONE: create clean outputs, send to Daniel Martin
+# DONE: Ask Daniel Martin for vacant lots 
+# - Realized that the lots I do have are the vacant lots 
+# DONE: Ask Daniel Martin for feedback thinking of subdividable and vacant lots as the most desirable for potential development
+# TODO: generally clean up code and document decision making
+```
+
 
