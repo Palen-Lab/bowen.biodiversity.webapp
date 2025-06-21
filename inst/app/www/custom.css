@@ -23,3 +23,15 @@ body {
   height: 40px;
 }
 
+#species_sidebar_btn, #habitats_sidebar_btn, #people_sidebar_btn, #values_sidebar_btn, #threats_sidebar_btn, #action_sidebar_btn {
+  margin: 0;
+  padding: 11px 0 10px 0;
+  font-size: 0.8rem;
+  border-radius: 0;
+  border-color: lightgrey;
+}
+
+#mini_sidebar i {
+  font-size: 20px;
+}
+
