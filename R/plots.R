@@ -260,7 +260,7 @@ bowen_map_ggplot <- function(gg_func,
   trails_colour <- "brown"
   roads_colour <- "darkgrey"
   # Bowen Island mask raster
-  bowen_mask <- terra::rast(here("inst/extdata/bowen_mask.tif")) %>%
+  bowen_mask <- terra::rast(here::here("inst/extdata/bowen_mask.tif")) %>%
     project("EPSG: 3857")
   bowen_mask_ext <- bowen_mask %>%
     ext()

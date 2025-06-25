@@ -1,0 +1,119 @@
+---
+title: "protected_areas"
+format: html
+---
+
+# Protected Areas Candidates
+First map / filter
+- Public lands (crown, municipal, MV lands)
+- Not in existing protected areas
+
+Second map / filter
+- Top 30% of conservation values 
+- Wetland / water / riparian values
+ 
+Algorithms in Zonation and Marxann for identifying these 
+- Find cluster
+
+```{r setup}
+library(bowen.biodiversity.webapp)
+library(sf)
+library(terra)
+library(dplyr)
+library(ggplot2)
+library(here)
+```
+
+## First filter for Potential Protected Area Candidates
+Find public lands that are not in existing protected areas
+```{r}
+parcels <- bowen_parcelmap %>%
+  # filter(!OwnerType %in% c("Private", "Unclassified", "Mixed Ownership")) %>%
+  filter(PID != 31243550) %>% # Remove ferry route 
+  st_transform(st_crs(bowen_protectedareas))
+
+parcels$geom <- parcels$geom %>%
+  st_cast("MULTIPOLYGON") %>%
+  st_make_valid()
+
+bowen_protectedareas_valid <- bowen_protectedareas %>%
+  st_make_valid()
+
+# tried st_join
+parcels_protected <- st_join(parcels, bowen_protectedareas_valid, largest = T)
+
+ggplot(parcels_protected) +
+  geom_sf(aes(fill = type))
+
+ggplot(bowen_parcelmap) +
+  geom_sf()
+ggplot() +
+  geom_sf(data = parcels, fill = "red") +
+  geom_sf(data = bowen_protectedareas, fill = "green")
+
+
+# Decided that the st_join is not very accurate
+# Parcels are too different
+# st_join overestimates the protected area (ex. a private lot with a covenant appears as entirely protected)
+
+#### trying clip instead ####
+test <- st_difference(parcels, bowen_protectedareas_valid)
+# this seems wrong, ends up with 551618 observations compared to 2388 expected at most
+
+# Dissolve protected areas into one geometry
+dissolved_protectedareas <- bowen_protectedareas_valid %>%
+  summarise() %>%
+  st_cast() %>%
+  st_buffer(1) # cleans up slivers compared to 0, buffer distance in metres
+class(dissolved_protectedareas) # sf data.frame
+
+notprotected_parcels <- st_difference(parcels, dissolved_protectedareas)
+plot(notprotected_parcels[1])
+plot(public_lands[1])
+
+
+# filter for public lands 
+notprotected_parcels$OwnerType %>% unique()
+# [1] "Private"          "Crown Provincial" "Local Government" "Mixed Ownership"  "Crown Agency"     "Federal"         
+# [7] "Unclassified" 
+notprotected_publiclands <- notprotected_parcels[!notprotected_parcels$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),] 
+notprotected_privatelands <- notprotected_parcels[notprotected_parcels$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),] 
+
+potential_protected_areas_ggfunc <- function() {
+  protected_colour <- "#b3e2cd"
+  notprotected_public_colour <-  "#fdcdac"
+  notprotected_private_colour <- "#cbd5e8"
+  output <- list(
+    geom_sf(data = bowen_protectedareas_valid, aes(fill = protected_colour)),
+    geom_sf(data = notprotected_publiclands, aes(fill = notprotected_public_colour)),
+    geom_sf(data = notprotected_privatelands, aes(fill = notprotected_private_colour)),
+    scale_fill_identity(name = "",
+                          breaks = c(protected_colour, notprotected_public_colour, notprotected_private_colour),
+                          labels = c("Protected", "Unprotected Public", "Unprotected Private"),
+                          guide = "legend"
+    ),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+  return(output)
+}
+
+caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+protected_areas_ggplot <- bowen_map_ggplot(
+  potential_protected_areas_ggfunc,
+  title = "Protected Areas and Parcels on Bowen Island",
+  subtitle = "Mapping the Protected Areas and unprotected parcels to identify potential parcels for future protection.",
+  caption = caption
+)
+
+output_dir <- here("vignettes/figures/protected_areas")
+dir.create(output_dir)
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_protected_areas_parcels.png")),
+  protected_areas_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+
+
