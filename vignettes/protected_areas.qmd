@@ -357,6 +357,93 @@ ggplot2::ggsave(
   width = 9, height = 12, units = "in", res = 300
 )
 
+#### PLOTTING PUBLIC LANDS ####
+# Conservation Vals Continuous
+conservation_vals_cont_gg <- function() {
+  list(
+    geom_sf(data = notprotected_cons_vals_sf[!notprotected_cons_vals_sf$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),] , aes(fill = rankmap), color = NA),
+    scale_fill_viridis_c(),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+}
+conservation_vals_cont_ggplot <- bowen_map_ggplot(
+  conservation_vals_cont_gg,
+  title = "Conservation Values by Unprotected Parcels",
+  subtitle = "Mapping the unprotected parcels and their relative biodiversity values to identify potential parcels for future protection.",
+  caption = caption
+)
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_conservation_vals_continuous_parcels.png")),
+  conservation_vals_cont_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+
+# Conservation Vals Top 30
+conservation_vals_top_gg <- function() {
+  list(
+    geom_sf(data = notprotected_cons_vals_sf[!notprotected_cons_vals_sf$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),], aes(fill = rankmap_top_30), color = NA),
+    scale_fill_viridis_c(),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+}
+conservation_vals_top_ggplot <- bowen_map_ggplot(
+  conservation_vals_top_gg,
+  title = "Top Conservation Values by Unprotected Parcels",
+  subtitle = "Mapping the unprotected parcels and number of top 30% conservation value cells to identify potential parcels for future protection.",
+  caption = caption
+)
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_conservation_vals_top_parcels.png")),
+  conservation_vals_top_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+
+# Freshwater sum richness
+freshwater_sum_gg <- function() {
+  list(
+    geom_sf(data = notprotected_cons_vals_sf[!notprotected_cons_vals_sf$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),], aes(fill = fw_sum_richness), color = NA),
+    scale_fill_viridis_c(),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+}
+freshwater_sum_ggplot <- bowen_map_ggplot(
+  freshwater_sum_gg,
+  title = "Relative Freshwater Habitat Richness by Unprotected Parcels",
+  subtitle = "Mapping the unprotected parcels and the total sum of freshwater habitat richness cells to identify potential parcels for future protection.",
+  caption = caption
+)
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_fw_sum_richness_parcels.png")),
+  freshwater_sum_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+# Freshwater num habitats richness
+freshwater_num_hab_gg <- function() {
+  list(
+    geom_sf(data = notprotected_cons_vals_sf[!notprotected_cons_vals_sf$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),], aes(fill = fw_num_hab_pres), color = NA),
+    scale_fill_viridis_c(),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+}
+freshwater_num_hab_ggplot <- bowen_map_ggplot(
+  freshwater_num_hab_gg,
+  title = "Number of Freshwater Habitats in Unprotected Parcels",
+  subtitle = "Mapping the unprotected parcels and number of freshwater habitat types present to identify potential parcels for future protection.",
+  caption = caption
+)
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_fw_num_hab_parcels.png")),
+  freshwater_num_hab_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
 
 
 
