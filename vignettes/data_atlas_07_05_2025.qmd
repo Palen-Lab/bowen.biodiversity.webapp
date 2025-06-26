@@ -180,6 +180,7 @@ SDM_stack <- sdm_df[sdm_df$category == "Bird" , "path"] %>%
 # Create species richness SDM 
 bird_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                           presence_threshold = presence_threshold)
+writeRaster(bird_richness, here("inst/extdata/2_species/birds_richness.tif"))
 
 title <- "Bird Species Richness"
 subtitle <- paste0("Based on >", 
@@ -239,6 +240,8 @@ SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create species richness SDM 
 mammalsmall_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                           presence_threshold = presence_threshold)
+writeRaster(mammalsmall_richness, here("inst/extdata/2_species/sm_mammals_richness.tif"))
+
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
 ## threshold of probability in the input SDMs. 
@@ -300,6 +303,7 @@ SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create species richness SDM 
 herptile_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                           presence_threshold = presence_threshold)
+writeRaster(herptile_richness, here("inst/extdata/2_species/herptiles_richness.tif"))
 
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
@@ -362,6 +366,7 @@ SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create species richness SDM 
 thr_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                         presence_threshold = presence_threshold)
+writeRaster(thr_richness, here("inst/extdata/2_species/threatened_richness.tif"))
 
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
@@ -424,6 +429,8 @@ SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create species richness SDM 
 total_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                           presence_threshold = presence_threshold)
+writeRaster(total_richness, here("inst/extdata/2_species/total_richness.tif"))
+
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
 ## threshold of probability in the input SDMs. 
@@ -483,6 +490,7 @@ SDM_filepaths <- sdm_df[, "path"]
 SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create summed SDM
 SDM_sum <- SDM_stack %>% sum(na.rm = T)
+writeRaster(SDM_sum, here("inst/extdata/2_species/sum_sdms.tif"))
 
 # Create plot
 bowen_plot <- bowen_map(raster_layer = SDM_sum,
