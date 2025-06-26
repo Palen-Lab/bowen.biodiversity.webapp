@@ -8,10 +8,20 @@
 #'
 #' @importFrom shiny NS tagList
 mod_habitats_ui <- function(id) {
-  ns <- NS(id)
   tabPanel(
     "habitats_panel",
-    h1("Habitats")
+    selectInput(
+      NS(id, "selectGroup"),
+      "Select Habitats:",
+      choices = c("All Habitats" = "all",
+                  "Freshwater" = "freshwater",
+                  "Forests" = "forests",
+                  "Other Terrestrial" = "other_terrestrial",
+                  "Intertidal" = "intertidal"),
+      selected = "all"
+    ),
+    htmlOutput(NS(id, "sidebarInfo")),
+    textOutput(NS(id, "test"))
   )
 }
 
@@ -22,18 +32,149 @@ mod_habitats_server <- function(id, map_id, parent_session){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
-    species_richness <- terra::rast(here::here("inst/extdata/bowen_sdm_richness.tif")) %>%
-      terra::project("epsg:4326")
-    species_richness_group <- "Species Richness"
-    species_richness_domain <- c(0, terra::minmax(species_richness)[2])
-    species_richness_pal <- leaflet::colorNumeric(c('#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'), species_richness_domain,
-                                                  na.color = "transparent")
+    #### Update raster when input changes ####
+    select_raster <- reactiveVal({
+      terra::rast(here::here("inst/extdata/bowen_sdm_richness.tif")) %>%
+        terra::project("epsg:4326")
+    })
+    observeEvent(input$selectGroup, {
+      # Options for habitats
+      if(input$selectGroup == "all") {
+        terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
+          terra::project("epsg:4326") %>%
+          select_raster()
+      } else if (input$selectGroup == "freshwater") {
+        terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
+          terra::project("epsg:4326") %>%
+          select_raster()
 
-    leaflet::leafletProxy(mapId = map_id,
-                          session = parent_session) %>%
-      leaflet::addRasterImage(x = species_richness,
-                              layerId = "species_richness_raster",
-                              colors = species_richness_pal)
+        # TODO: replace with actual
+        # if(fw_type() == "Richness") {
+        #   print("Richness")
+        #   terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
+        #     terra::project("epsg:4326") %>%
+        #     select_raster()
+        # } else if (fw_type() == "Ponds") {
+        #   print("Ponds")
+        #   terra::rast(here::here("inst/extdata/3_habitats/fw_ponds.tif")) %>%
+        #     terra::project("epsg:4326") %>%
+        #     select_raster()
+        # }
+
+      } else if (input$selectGroup == "forests") {
+        # TODO: replace with actual
+        terra::rast(here::here("inst/extdata/2_species/birds_richness.tif")) %>%
+          terra::project("epsg:4326") %>%
+          select_raster()
+      } else if (input$selectGroup == "other_terrestrial") {
+        # TODO: replace with actual
+        terra::rast(here::here("inst/extdata/2_species/sm_mammals_richness.tif")) %>%
+          terra::project("epsg:4326") %>%
+          select_raster()
+      } else if (input$selectGroup == "intertidal") {
+        # TODO: replace with actual
+        terra::rast(here::here("inst/extdata/2_species/herptiles_richness.tif")) %>%
+          terra::project("epsg:4326") %>%
+          select_raster()
+      }
+
+      raster_group <- "Species Richness"
+      raster_domain <- c(0, terra::minmax(select_raster())[2])
+      raster_pal <- leaflet::colorNumeric(c('#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'), raster_domain,
+                                                    na.color = "transparent")
+
+      # Update map
+      leaflet::leafletProxy(mapId = map_id,
+                            session = parent_session) %>%
+        leaflet::clearControls() %>%
+        leaflet::clearImages() %>%
+        leaflet::addRasterImage(
+          x = select_raster(),
+          colors = raster_pal
+        ) %>%
+        leaflet::addLegend(
+          pal = raster_pal,
+          values =  raster_domain,
+          title = raster_group
+        )
+    })
+
+    #### Update sidebar content based on selectGroup ####
+    observeEvent(input$selectGroup, {
+      if(input$selectGroup == "all") {
+        output$sidebarInfo <- renderUI({
+          h1("All Habitats")
+        })
+      } else if (input$selectGroup == "freshwater") {
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h1("Freshwater Habitats"),
+            selectInput(session$ns("select_fw"),
+                        "Select Freshwater",
+                        c("Richness", "Ponds"),
+                        selected = "Richness")
+          )
+        })
+      } else if (input$selectGroup == "forests") {
+        output$sidebarInfo <- renderUI({
+          h1("Forest Habitats")
+        })
+      } else if (input$selectGroup == "other_terrestrial") {
+        output$sidebarInfo <- renderUI({
+          h1("Other Terrestrial Habitats")
+        })
+      } else if (input$selectGroup == "intertidal") {
+        output$sidebarInfo <- renderUI({
+          h1("Intertidal Habitats")
+        })
+      }
+    })
+
+    #### Freshwater ####
+    fw_type <- reactive({
+      req(input$select_fw)
+      input$select_fw
+    })
+
+    observeEvent(input$select_fw, {
+      # TODO: replace with actual
+      if(fw_type() == "Richness") {
+        print("Richness")
+        terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
+          terra::project("epsg:4326") %>%
+          select_raster()
+      } else if (fw_type() == "Ponds") {
+        print("Ponds")
+        terra::rast(here::here("inst/extdata/3_habitats/fw_ponds.tif")) %>%
+          terra::project("epsg:4326") %>%
+          select_raster()
+      }
+      raster_group <- "Species Richness"
+      raster_domain <- c(0, terra::minmax(select_raster())[2])
+      raster_pal <- leaflet::colorNumeric(c('#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'), raster_domain,
+                                          na.color = "transparent")
+
+      # Update map
+      leaflet::leafletProxy(mapId = map_id,
+                            session = parent_session) %>%
+        leaflet::clearControls() %>%
+        leaflet::clearImages() %>%
+        leaflet::addRasterImage(
+          x = select_raster(),
+          colors = raster_pal
+        ) %>%
+        leaflet::addLegend(
+          pal = raster_pal,
+          values =  raster_domain,
+          title = raster_group
+        )
+    })
+
+
+    # output$test <- renderText({
+    #   req(input$select_fw)
+    #   input$select_fw
+    # })
   })
 }
 
