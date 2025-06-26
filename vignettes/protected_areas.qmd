@@ -19,9 +19,32 @@ Algorithms in Zonation and Marxann for identifying these
 library(bowen.biodiversity.webapp)
 library(sf)
 library(terra)
+library(tidyterra)
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(here)
+library(googlesheets4)
+
+sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
+habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
+output_dir <- here("vignettes/figures/protected_areas")
+if(!dir.exists(output_dir)) {
+  dir.create(output_dir)
+}
+
+#### CREATE DATAFRAME FOR INPUT LAYERS ####
+# Read from Google Sheets
+habitats_df <- read_sheet(habitats_url, sheet = "2025-05-02")
+habitats_df$weight <- habitats_df$weight / nrow(habitats_df)
+sdm_df <- read_sheet(sdm_url, sheet = "2025-05-02") 
+sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
+# Bind all input layers together
+layers_df <- sdm_df %>%
+  select(colnames(habitats_df)) %>% # Select common columns
+  bind_rows(habitats_df) %>%
+  filter(weight > 0)
+
 ```
 
 ## First filter for Potential Protected Area Candidates
@@ -106,8 +129,7 @@ protected_areas_ggplot <- bowen_map_ggplot(
   caption = caption
 )
 
-output_dir <- here("vignettes/figures/protected_areas")
-dir.create(output_dir)
+
 ggplot2::ggsave(
   here(output_dir, "/", paste0(Sys.Date(), "_protected_areas_parcels.png")),
   protected_areas_ggplot,
@@ -116,4 +138,92 @@ ggplot2::ggsave(
 )
 ```
 
+## Second filter 
+- Top 30% of conservation values 
+- Wetland / water / riparian values
+```{r}
+# Load Zonation
+zonation <- here("inst/extdata/output_zonation/2025-05-02/rankmap.tif") %>%
+  rast()
+
+#### Conservation values summed by parcel ####
+# extract zonation raster values from cells within each parcel
+notprotected_cons_vals <- notprotected_parcels %>% 
+  vect() %>%
+  terra::extract(zonation, ., 
+                 sum, 
+                 na.rm = TRUE, 
+                 weights = TRUE, # sum biodiversity value by approx fraction of cell covered by polygon
+                 bind = TRUE) 
+
+#### Top 30% conservation values summed by parcel ####
+# create top 30% zonation raster 
+rcl <- matrix(c(
+  0, 1, 1
+), ncol = 3, byrow = T)
+zonation_top_30 <- zonation %>%
+  remove_by_quantile(
+    prob = 0.7
+  ) %>% 
+  classify(rcl)
+names(zonation_top_30) <- "rankmap_top_30"
+# extract number of top conservation value cells within each parcel
+notprotected_cons_1 <- notprotected_cons_vals %>%
+  terra::extract(zonation_top_30, ., 
+                 sum, 
+                 na.rm = TRUE, 
+                 weights = TRUE, # sum biodiversity value by approx fraction of cell covered by polygon
+                 bind = TRUE) 
+
+#### Freshwater (wetland, ponds, rivers) ####
+# Get freshwater rasters, same used in zonation and data atlas
+fw_df <- layers_df[layers_df$category == "Freshwater",]
+fw_rast_stack <- layers_df[layers_df$category == "Freshwater", "path"] %>%
+  unlist() %>%
+  lapply(rast) %>%
+  rast() 
+fw_rast_stack %>% sources() # see order of paths 
+names(fw_rast_stack) <- c("riparian", "streams", "lakes", "ponds", "wetlands") # assign names to layers
+# TODO: decide what to do with stream classes, leave them as is?
+# 3 is fish-bearing streams, 2 is tributary to fish-bearing, 1 is non-fishbearing / drainage channel / unclassified 
+
+fw_richness <- fw_rast_stack %>%
+  lapply(not.na) %>%
+  lapply(function(x) {classify(x, cbind(FALSE, NA))}) %>%
+  rast() %>%
+  sum(na.rm = T) 
+names(fw_richness) <- "fw_richness"
+# summed richness by parcel
+notprotected_cons_2 <- notprotected_cons_1 %>%
+  terra::extract(fw_richness, ., 
+                 sum, 
+                 na.rm = TRUE, 
+                 weights = TRUE, # sum biodiversity value by approx fraction of cell covered by polygon
+                 bind = TRUE) 
+notprotected_cons_2 <- notprotected_cons_2 %>%
+  tidyterra::rename(fw_sum_richness = "fw_richness")
+# fw habitat diversity by parcel
+notprotected_cons_3 <- notprotected_cons_2 %>%
+  terra::extract(fw_rast_stack, ., 
+                 max(), 
+                 na.rm = TRUE,
+                 bind = TRUE) 
+
+#### Convert to sf for better data.frame utilities ####
+notprotected_cons_vals_sf <- notprotected_cons_3 %>%
+  st_as_sf() %>%
+  tidyr::replace_na(list( # Replace NAs with 0 in freshwater columns
+    riparian = 0, 
+    streams = 0, 
+    lakes = 0, 
+    ponds = 0, 
+    wetlands = 0
+  )) %>% 
+  mutate(fw_num_hab_pres = rowSums(across(names(fw_rast_stack)), na.rm = T)) # Get number of habitat types in each parcel
+
+
+# Plot to check
+ggplot(notprotected_cons_vals_sf) +
+  geom_sf(aes(fill = fw_num_hab_pres))
+```
 
