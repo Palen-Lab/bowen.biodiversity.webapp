@@ -47,20 +47,6 @@ mod_habitats_server <- function(id, map_id, parent_session){
         terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
-
-        # TODO: replace with actual
-        # if(fw_type() == "Richness") {
-        #   print("Richness")
-        #   terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
-        #     terra::project("epsg:4326") %>%
-        #     select_raster()
-        # } else if (fw_type() == "Ponds") {
-        #   print("Ponds")
-        #   terra::rast(here::here("inst/extdata/3_habitats/fw_ponds.tif")) %>%
-        #     terra::project("epsg:4326") %>%
-        #     select_raster()
-        # }
-
       } else if (input$selectGroup == "forests") {
         # TODO: replace with actual
         terra::rast(here::here("inst/extdata/2_species/birds_richness.tif")) %>%
@@ -109,41 +95,58 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$sidebarInfo <- renderUI({
           tagList(
             h1("Freshwater Habitats"),
-            selectInput(session$ns("select_fw"),
-                        "Select Freshwater",
+            selectInput(session$ns("subselectGroup"),
+                        "Select specific habitat",
                         c("Richness", "Ponds"),
                         selected = "Richness")
           )
         })
       } else if (input$selectGroup == "forests") {
         output$sidebarInfo <- renderUI({
-          h1("Forest Habitats")
+          tagList(
+            h1("Forest Habitats"),
+            selectInput(session$ns("subselectGroup"),
+                        "Select specific habitat",
+                        c("Richness", "Ponds"),
+                        selected = "Richness")
+          )
         })
       } else if (input$selectGroup == "other_terrestrial") {
         output$sidebarInfo <- renderUI({
-          h1("Other Terrestrial Habitats")
+          tagList(
+            h1("Other Terrestrial Habitats"),
+            selectInput(session$ns("subselectGroup"),
+                        "Select specific habitat",
+                        c("Richness", "Ponds"),
+                        selected = "Richness")
+          )
         })
       } else if (input$selectGroup == "intertidal") {
         output$sidebarInfo <- renderUI({
-          h1("Intertidal Habitats")
+          tagList(
+            h1("Intertidal Habitats"),
+            selectInput(session$ns("subselectGroup"),
+                        "Select specific habitat",
+                        c("Richness", "Ponds"),
+                        selected = "Richness")
+          )
         })
       }
     })
 
     #### Freshwater ####
-    fw_type <- reactive({
-      req(input$select_fw)
-      input$select_fw
+    subselect <- reactive({
+      req(input$subselectGroup)
+      input$subselectGroup
     })
 
-    observeEvent(input$select_fw, {
-      # TODO: replace with actual
-      if(fw_type() == "Richness") {
+    observeEvent(input$subselectGroup, {
+      if(subselect() == "Richness") {
         print("Richness")
         terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
-      } else if (fw_type() == "Ponds") {
+      } else if (subselect() == "Ponds") {
         print("Ponds")
         terra::rast(here::here("inst/extdata/3_habitats/fw_ponds.tif")) %>%
           terra::project("epsg:4326") %>%

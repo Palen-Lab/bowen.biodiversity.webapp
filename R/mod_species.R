@@ -51,27 +51,22 @@ mod_species_server <- function(id, map_id, parent_session){
           terra::project("epsg:4326") %>%
           select_raster()
       } else if (input$selectSpeciesGroup == "threatened") {
-        # TODO: replace with actual
         terra::rast(here::here("inst/extdata/2_species/threatened_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
       } else if (input$selectSpeciesGroup == "birds") {
-        # TODO: replace with actual
         terra::rast(here::here("inst/extdata/2_species/birds_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
       } else if (input$selectSpeciesGroup == "sm_mammals") {
-        # TODO: replace with actual
         terra::rast(here::here("inst/extdata/2_species/sm_mammals_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
       } else if (input$selectSpeciesGroup == "herptiles") {
-        # TODO: replace with actual
         terra::rast(here::here("inst/extdata/2_species/herptiles_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
       } else if (input$selectSpeciesGroup == "sum_sdms") {
-        # TODO: replace with actual
         terra::rast(here::here("inst/extdata/2_species/sum_sdms.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()

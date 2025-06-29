@@ -23,7 +23,7 @@ mod_values_server <- function(id, map_id, parent_session){
     ns <- session$ns
 
     #### Add Zonation Output Raster ####
-    zonation <- terra::rast(here::here("inst/extdata/rankmap.tif")) %>%
+    zonation <- terra::rast(here::here("inst/extdata/output_zonation/2025-05-02/rankmap.tif")) %>%
       terra::project("epsg:4326")
     zonation_pal <- leaflet::colorNumeric(c("#FFFFCC", "#41B6C4", "#0C2C84"), c(0, 1),
                                           na.color = "transparent")
