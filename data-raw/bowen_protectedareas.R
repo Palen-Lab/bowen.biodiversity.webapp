@@ -3,6 +3,7 @@ library(dplyr)
 library(sf)
 library(foreach)
 library(here)
+library(magrittr)
 # Bowen Protected Areas originally prepared and provided by John Dowler:
 # https://drive.google.com/drive/folders/1uO5FjvHfCnixZyF6UHcI4YUp1V2tv2kg
 dir <- here("data-raw/bowen_protectedareas")
@@ -54,9 +55,6 @@ bowenmuniparks <- bowenmuniparks[!st_is_empty(bowenmuniparks$geom),]
 bowenmuniparks$type <-"Bowen Island Municipality Park"
 bowenmuniparks$filepath <- bowenmuniparks_path
 
-# Old Growth Management Areas
-# - leave out for now
-
 # Provincial Parks
 provparks_path <- "data-raw/bowen_protectedareas/Bowen-Prov-Parks-JD.gpkg"
 provparks <- here(provparks_path) %>%
@@ -65,15 +63,6 @@ provparks <- here(provparks_path) %>%
 provparks <- provparks[!st_is_empty(provparks$geom),]
 provparks$type <-"Provincial Park"
 provparks$filepath <- provparks_path
-
-# # Crown Land
-# crown_path <- "data-raw/bowen_protectedareas/Crown-Land-JD.gpkg"
-# crown <- here(crown_path) %>%
-#   st_read() %>%
-#   select(name = parkname)
-# crown <- crown[!st_is_empty(crown$geom),]
-# crown$type <-"Crown Land"
-# crown$filepath <- crown_path
 
 # Ecological Reserves
 ecoreserve_path <- "data-raw/bowen_protectedareas/Eco-Reserve-JD.gpkg"
@@ -88,3 +77,24 @@ ecoreserve$filepath <- ecoreserve_path
 bowen_protectedareas <- rbind(alr, bowenmuniparks, conservancies, covenants, ecoreserve, mvparks, provparks)
 
 usethis::use_data(bowen_protectedareas, overwrite = TRUE)
+
+# Old Growth Management Areas
+ogma_path <- "data-raw/bowen_protectedareas/Bowen-OGMAs-JD.gpkg"
+ogma <- here(ogma_path) %>%
+  st_read() %>%
+  select(name = NAME)
+ogma <- ogma[!st_is_empty(ogma$geom),]
+ogma$type <-"Old Growth Management Area"
+ogma$filepath <- ogma_path
+usethis::use_data(ogma, overwrite = TRUE)
+
+# Crown Land
+crown_path <- "data-raw/bowen_protectedareas/Crown-Land-JD.gpkg"
+crown <- here(crown_path) %>%
+  st_read() %>%
+  select(name = parkname)
+crown <- crown[!st_is_empty(crown$geom),]
+crown$type <-"Crown Land"
+crown$filepath <- crown_path
+usethis::use_data(crown, overwrite = TRUE)
+
