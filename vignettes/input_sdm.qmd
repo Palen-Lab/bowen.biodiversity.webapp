@@ -48,21 +48,8 @@ if(!dir.exists(sdm_output_dir)) {
 ```
 
 ```{r, eval=FALSE}
-# Create Bowen Island mask using DSM
-sample_sdm <- rast(here(sdm_folder, sdm_folder_tif_NAs[1])) %>%
-  terra::project(y = sdm_crs) %>%
-  terra::crop(bowen_island_admin, snap = "out") %>%
-  terra::disagg(fact = 4)
-dsm <- rast(here("data-raw/bowen_dsm/chm.tif"))
-dsm_smooth <- dsm %>% 
-  focal(w=9, fun=mean, na.policy="only", na.rm=T) %>% 
-  terra::project(y = sdm_crs) %>%
-  terra::resample(sample_sdm, method = "average")
-m <- c(-1, 35, 1) %>% matrix(ncol = 3, byrow=T)
-bowen_island_mask <- dsm_smooth %>% 
-  classify(m) %>%
-  as.int()
-writeRaster(bowen_island_mask, here("inst/extdata/bowen_mask.tif"), overwrite = T)
+# Load Bowen Island Mask (created with vignettes/input_mask.qmd)
+bowen_island_mask <- rast(here("inst/extdata/bowen_mask.tif"))
 # Weights for terra::focal() function that provides moving window average
 # - Smoothing algorithm 
 # - Use this to fill some empty cells on Bowen Island with weighted mean of the neighbouring cells.
