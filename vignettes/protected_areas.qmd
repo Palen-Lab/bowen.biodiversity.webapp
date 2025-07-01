@@ -45,13 +45,13 @@ if(!dir.exists(output_dir)) {
 
 #### Zonation Raster Layers ####
 # Load Zonation Output / Conservation Values
-zonation <- here("inst/extdata/output_zonation/2025-05-02/rankmap.tif") %>%
+zonation <- here("inst/extdata/output_zonation/2025-06-30/rankmap.tif") %>%
   rast()
 # For assessing freshwater habitat overlap with potential protected areas. 
 # Read from Google Sheets
-habitats_df <- read_sheet(habitats_url, sheet = "2025-05-02")
+habitats_df <- read_sheet(habitats_url, sheet = "2025-06-30")
 habitats_df$weight <- habitats_df$weight / nrow(habitats_df)
-sdm_df <- read_sheet(sdm_url, sheet = "2025-05-02") 
+sdm_df <- read_sheet(sdm_url, sheet = "2025-06-30") 
 sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
 # Bind all input layers together
 layers_df <- sdm_df %>%
@@ -481,8 +481,61 @@ Great place to start using prioritizr!
 https://prioritizr.net/
 
 ```{r}
-# need planning units
+bowen_mask_broken <- rast(here("inst/extdata/bowen_mask.tif")) %>%
+  project(zonation)
+# for some reason, when bowen_mask is reprojected to match the zonation
+# raster, it ends up changing NA values to an extremely large number. 
+# probably some bit rollover issue?
+plot(bowen_mask_broken)
+bowen_mask_broken %>%
+  values() %>%
+  max() # 4294967296
+# this value is the highest unsigned 32-bit integer
+# https://github.com/rspatial/terra/issues/1356
+# seems like this issue has been reported, but not fixed
 
+# planning units
+bowen_mask <- rast(here("inst/extdata/bowen_mask.tif")) %>%
+  project(zonation) %>% 
+  mask(zonation) 
+
+plot(bowen_mask)
+
+# features
+plot(zonation)
+
+# calculate budget, get 5% of pixels of planning units
+prop_pixels <- 0.9
+budget <- terra::global(bowen_mask, "sum", na.rm = T)[[1]] * prop_pixels 
+
+# create problem
+p1 <- problem(bowen_mask, features = zonation) %>%
+  add_min_shortfall_objective(budget) %>%
+  add_relative_targets(1) %>% # need to be at least double the budget
+  # since we only have one feature, this target is meaningless but is a
+  # requirement for priortizr to work 
+  add_binary_decisions() %>%
+  add_default_solver(gap = 0.1, verbose = FALSE)
+
+# print conservation problem
+print(p1)
+
+presolve_check(p1)
+s1 <- solve(p1, force = T)
+
+# extract the objective
+print(attr(s1, "objective"))
+
+# compare plots
+plot(s1, main = "Solution", axes = FALSE)
+remove_by_quantile(zonation, 1 - prop_pixels) %>%
+  plot()
+
+s1 %>% values() %>% sum(na.rm = T) # 265 cells selected
+# it works! basic top pixels identified, and agrees with zonation
+# the main goal is to not use priortizr for conservation values
+# the goal is to use the constraints and penalties that are part 
+# of the package
 ```
 
 
