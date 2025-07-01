@@ -41,7 +41,7 @@ sdm_folder_tif <- list.files(sdm_folder, recursive = T, pattern = "*.tif$") # Ge
 # Correspondence with Viorel Popescu confirms that _NAs_ should be SDMs with rock, ice, large lakes layers masked
 sdm_folder_tif_NAs <- sdm_folder_tif[grepl("_NAs_", sdm_folder_tif)] # Get only .tif with "_NAs_" in filename
 # Directory to save SDMs
-sdm_output_dir <- here("inst/extdata/sdm")
+sdm_output_dir <- here("inst/extdata/bowen_sdm")
 if(!dir.exists(sdm_output_dir)) {
   dir.create(sdm_output_dir)
 }
@@ -49,7 +49,12 @@ if(!dir.exists(sdm_output_dir)) {
 
 ```{r, eval=FALSE}
 # Load Bowen Island Mask (created with vignettes/input_mask.qmd)
-bowen_island_mask <- rast(here("inst/extdata/bowen_mask.tif"))
+bowen_mask <- rast(here("inst/extdata/bowen_mask.tif"))
+# Bowen Land, from zoning 
+bowen_land <- bowen_zoning[!bowen_zoning$ZONE_CODE %in% c("WG1", "WG1(a)"),] %>% 
+  vect()
+
+#### PREPARE SDMs TO BOWEN ISLAND ####
 # Weights for terra::focal() function that provides moving window average
 # - Smoothing algorithm 
 # - Use this to fill some empty cells on Bowen Island with weighted mean of the neighbouring cells.
@@ -61,43 +66,6 @@ weights <- matrix(c(0, 0, 1, 1, 1, 0, 0,
                     0, 1, 1, 2, 1, 1, 0,
                     0, 0, 1, 1, 1, 0, 0
 ), nrow=7)
-#### PREPARE SDMs TO BOWEN ISLAND ####
-# Loop through SDMs
-foreach(sdm_tif = sdm_folder_tif_NAs) %do% {
-  sdm_path <- here(sdm_folder, sdm_tif) 
-  sdm_output_path <- here(sdm_output_dir, basename(sdm_tif))
-  sdm <- rast(sdm_path)
-  # Normalize SDMs that range from 0 to 1000
-  sdm_minmax <- terra::minmax(sdm)
-  if(sdm_minmax[2] > 1) {
-    sdm <- sdm / 1000
-  }
-  sdm_output <- sdm %>%
-    #### Reproject SDM ####
-    terra::project(y = sdm_crs) %>%
-    #### Crop SDM ####
-    # Figured out why the SDMs were cropped incorrectly
-    # The default for cropping a raster by a polygon is to snap = "near"
-    # This means that the polygon extent is snapped to the closest raster
-    # We need snap = "out" to make sure the full extent of the polygon is covered by the output raster
-    terra::crop(bowen_island_admin, snap = "out") %>%
-    #### Extrapolate for Southern Parts of Bowen Island
-    # - fills the NA values missing in south part of Bowen Island
-    terra::focal(w = weights,
-                 fun = "mean",
-                 na.policy = "only") %>%
-    #### Downsamples ####
-    # - from 400 m to 100 m resolution
-    terra::disagg(fact = 4) %>%
-    #### Smooths the raster ####
-    terra::focal(w = weights,
-                 fun = "mean",
-                 na.rm = T,
-                 na.policy = "omit") %>%
-    terra::mask(bowen_island_mask)
-  
-  writeRaster(sdm_output, sdm_output_path, overwrite = T)
-}
 # Create species list from available SDMs
 species_list <- sdm_folder_tif_NAs %>%
   basename() %>%
@@ -108,8 +76,10 @@ species_list <- sdm_folder_tif_NAs %>%
 taxon_list <- sdm_folder_tif_NAs %>%
   dirname() %>%
   str_remove("_mask")
-# Get iNaturalist and SDM congruence
-sdm_inat <- foreach(i = 1:length(species_list), .combine = "rbind") %do% {
+
+# Loop through SDMs
+sdm_inat <- foreach(i = 1:length(sdm_folder_tif_NAs), .combine = "rbind") %do% {
+  #### iNaturalist CHECK ####
   # Progress Message 
   print(paste0("Currently working on species ", i, " out of ", length(species_list),". This is ", species_list[i], "."))
   # Query iNaturalist by species name and Bowen Island Administrative Boundaries
@@ -127,23 +97,99 @@ sdm_inat <- foreach(i = 1:length(species_list), .combine = "rbind") %do% {
   } else {
     inat_n_obs <- nrow(rinat_results_sf)
   }
-  # Get Bowen Island SDM
-  sdm <- paste0(str_replace(species_list[i], " ", "."), "_NAs_pu_mask.tif") %>%
-    here(sdm_output_dir, .) %>%
-    rast()
+  
+  #### PREP RASTERS ####
+  sdm_tif <- sdm_folder_tif_NAs[i]
+  sdm_path <- here(sdm_folder, sdm_tif) 
+  sdm_output_path <- here(sdm_output_dir, basename(sdm_tif))
+  sdm <- rast(sdm_path)
+  # Normalize SDMs that range from 0 to 1000
+  sdm_minmax <- terra::minmax(sdm)
+  if(sdm_minmax[2] > 1) {
+    sdm <- sdm / 1000
+  }
+  sdm_output <- sdm %>%
+    #### Reproject SDM ####
+    terra::project(y = project_crs) %>%
+    #### Crop SDM ####
+    # Figured out why the SDMs were cropped incorrectly
+    # The default for cropping a raster by a polygon is to snap = "near"
+    # This means that the polygon extent is snapped to the closest raster
+    # We need snap = "out" to make sure the full extent of the polygon is covered by the output raster
+    terra::crop(bowen_mask, snap = "out") %>%
+    #### Extrapolate for Southern Parts of Bowen Island
+    # - fills the NA values missing in south part of Bowen Island
+    terra::focal(w = weights,
+                 fun = "mean",
+                 na.policy = "only") %>%
+    #### Downsamples ####
+    # - from 400 m to 100 m resolution
+    terra::disagg(fact = 4) %>%
+    #### Smooths the raster ####
+    terra::focal(w = weights,
+                 fun = "mean",
+                 na.rm = T,
+                 na.policy = "omit") %>%
+    terra::crop(bowen_mask, mask = T)
+  writeRaster(sdm_output, sdm_output_path, overwrite = T)
+  
   # Get highest value in SDM
-  sdm_max <- sdm %>% 
+  sdm_max <- sdm_output %>% 
     minmax() %>% 
     max()
-  # PREPARE OUTPUT ROW
+  
+    # PREPARE OUTPUT ROW
   # 1. scientific species name
   # 2. highest SDM cell value within area 
   # 3. observation count from iNaturalist
+  # 4. taxon group
+  # 5. filepath where SDM was saved
   result <- data.frame(species = species_list[i],
                        sdm_max_value = sdm_max,
-                       inat_n_obs = inat_n_obs)
+                       inat_n_obs = inat_n_obs,
+                       taxon_group = taxon_list[i],
+                       filepath = sdm_output_path)
 }
-sdm_inat$taxon_group <- taxon_list
+# 
+# # Get iNaturalist and SDM congruence
+# sdm_inat <- foreach(i = 1:length(species_list), .combine = "rbind") %do% {
+#   # Progress Message 
+#   print(paste0("Currently working on species ", i, " out of ", length(species_list),". This is ", species_list[i], "."))
+#   # Query iNaturalist by species name and Bowen Island Administrative Boundaries
+#   rinat_results_sf <- tryCatch({
+#     Sys.sleep(3) # Need to slow down queries to prevent requests being blocked
+#     rinat::get_inat_obs_sf(taxon_name = species_list[i],
+#                            area = st_as_sf(bowen_island_admin),
+#                            maxresults = 10000)
+#   }, error = function(cond) {
+#     NA
+#   })
+#   # Get number of iNaturalist observations
+#   if(!is.data.frame(rinat_results_sf)) {
+#     inat_n_obs <- 0
+#   } else {
+#     inat_n_obs <- nrow(rinat_results_sf)
+#   }
+#   # Get Bowen Island SDM
+#   sdm <- paste0(str_replace(species_list[i], " ", "."), "_NAs_pu_mask.tif") %>%
+#     here(sdm_output_dir, .) %>%
+#     rast()
+#   # Get highest value in SDM
+#   sdm_max <- sdm %>% 
+#     minmax() %>% 
+#     max()
+#   
+#   #### PREPARE OUTPUT ROW ####
+#   # 1. scientific species name
+#   # 2. highest SDM cell value within area 
+#   # 3. observation count from iNaturalist
+#   # 4. filepath where SDM was saved
+#   result <- data.frame(species = species_list[i],
+#                        sdm_max_value = sdm_max,
+#                        inat_n_obs = inat_n_obs,
+#                        filepath = sdm_output_path)
+# }
+# sdm_inat$taxon_group <- taxon_list
 #### Query eBird for birds ####
 # Number of eBird observations by bird species on Bowen Island
 # - Results from Natasha Beauregard (Summer 2024 USRA)
@@ -199,8 +245,7 @@ bowen_sdm_focal <- bowen_SDM_iNat_ebird %>%
 # write_sheet(bowen_sdm_focal,
 #             "https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing",
 #             "species")
-species_distribution_models_focal_bowen_info <- bowen_sdm_focal
-saveRDS(species_distribution_models_focal_bowen_info, file = here("inst/extdata/sdm/sdm_focal.rds"))
+saveRDS(bowen_sdm_focal, file = here("inst/extdata/sdm/sdm_focal.rds"))
 ```
 
 ### Creating Species Information Spreadsheet

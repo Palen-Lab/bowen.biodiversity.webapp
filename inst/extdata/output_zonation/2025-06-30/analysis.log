@@ -1,0 +1,90 @@
+[2025-07-01 10:32:15.441] [info] Zonation 5 v2.2
+[2025-07-01 10:32:15.443] [info] Arguments given: -a -w --mode=CAZ2 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/output
+[2025-07-01 10:32:15.443] [info] Using 8-bit quantization
+[2025-07-01 10:32:15.443] [info] Using 8 threads for computation
+[2025-07-01 10:32:15.443] [info] Loading project "/home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5"
+[2025-07-01 10:32:15.443] [info] Using setting: feature list file = features.txt
+[2025-07-01 10:32:15.444] [info] Using setting: analysis area mask layer = /home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/bowen_mask.tif
+[2025-07-01 10:32:15.444] [info] Using default setting: curves output interval = 9.99999975e-05
+[2025-07-01 10:32:15.444] [info] Using default setting: max iterations = 500
+[2025-07-01 10:32:15.444] [info] Using default setting: mean ranking error threshold = 0.00999999978
+[2025-07-01 10:32:15.444] [info] Using default setting: smoothing factor = 0
+[2025-07-01 10:32:15.444] [info] Using default setting: stop on plateau = 0
+[2025-07-01 10:32:15.444] [info] Using default setting: zero mode = all
+[2025-07-01 10:32:15.444] [info] Using default setting: stop after preprocessing = 0
+[2025-07-01 10:32:15.444] [info] Using default setting: quantization error warning threshold = 20
+[2025-07-01 10:32:15.444] [info] Loading feature layer information from "/home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/features.txt"
+[2025-07-01 10:32:15.454] [info] Validating project
+[2025-07-01 10:32:15.793] [info] Analysis area: all
+[2025-07-01 10:32:15.793] [info] Reading layer data
+[2025-07-01 10:32:15.933] [info] Reading analysis area mask
+[2025-07-01 10:32:15.968] [info] Gathering data statistics
+[2025-07-01 10:32:16.264] [info] Map dimensions (width * height): 87*98
+[2025-07-01 10:32:16.264] [info] Number of grid cells in map (width * height): 8526
+[2025-07-01 10:32:16.264] [info] Number of grid cells in map with data: 5314
+[2025-07-01 10:32:16.264] [info] Input feature layer count: 228
+[2025-07-01 10:32:16.264] [info] Feature layer count: 228
+[2025-07-01 10:32:16.264] [info] Positive weight feature count: 228
+[2025-07-01 10:32:16.264] [info] Negative weight feature count: 0
+[2025-07-01 10:32:16.264] [info] Zero weight feature count: 0
+[2025-07-01 10:32:16.264] [info] Total number of pixels with data across features: 1048897
+[2025-07-01 10:32:16.264] [info] Reading feature layers
+[2025-07-01 10:32:16.614] [info] Mean feature extent across study area: 100.00%
+[2025-07-01 10:32:16.614] [info] Memory usage of feature data: 1.10MB
+[2025-07-01 10:32:16.614] [info] Mean quantization error: 0.00215791%
+[2025-07-01 10:32:16.614] [info] Time used to read and preprocess layer data: 0s
+[2025-07-01 10:32:16.614] [info] Computing priority rank
+[2025-07-01 10:32:16.689] [info] Iteration 0, mean ranking error 5.09955%, mean rank change 3.86487%
+[2025-07-01 10:32:16.706] [info] Iteration 1, mean ranking error 2.86213%, mean rank change 1.39277%
+[2025-07-01 10:32:16.720] [info] Iteration 2, mean ranking error 1.93383%, mean rank change 0.878273%
+[2025-07-01 10:32:16.735] [info] Iteration 3, mean ranking error 1.40377%, mean rank change 0.61797%
+[2025-07-01 10:32:16.753] [info] Iteration 4, mean ranking error 1.06668%, mean rank change 0.463125%
+[2025-07-01 10:32:16.767] [info] Iteration 5, mean ranking error 0.828244%, mean rank change 0.358346%
+[2025-07-01 10:32:16.780] [info] Iteration 6, mean ranking error 0.677155%, mean rank change 0.285411%
+[2025-07-01 10:32:16.793] [info] Iteration 7, mean ranking error 0.554557%, mean rank change 0.232922%
+[2025-07-01 10:32:16.803] [info] Iteration 8, mean ranking error 0.462389%, mean rank change 0.191709%
+[2025-07-01 10:32:16.816] [info] Iteration 9, mean ranking error 0.393304%, mean rank change 0.161892%
+[2025-07-01 10:32:16.826] [info] Iteration 10, mean ranking error 0.335473%, mean rank change 0.137379%
+[2025-07-01 10:32:16.849] [info] Iteration 11, mean ranking error 0.286076%, mean rank change 0.11786%
+[2025-07-01 10:32:16.885] [info] Iteration 12, mean ranking error 0.25592%, mean rank change 0.101924%
+[2025-07-01 10:32:16.934] [info] Iteration 13, mean ranking error 0.228726%, mean rank change 0.0886305%
+[2025-07-01 10:32:16.967] [info] Iteration 14, mean ranking error 0.194539%, mean rank change 0.0769443%
+[2025-07-01 10:32:17.001] [info] Iteration 15, mean ranking error 0.168004%, mean rank change 0.0676946%
+[2025-07-01 10:32:17.022] [info] Iteration 16, mean ranking error 0.154033%, mean rank change 0.0603996%
+[2025-07-01 10:32:17.042] [info] Iteration 17, mean ranking error 0.1338%, mean rank change 0.053565%
+[2025-07-01 10:32:17.069] [info] Iteration 18, mean ranking error 0.119158%, mean rank change 0.0478494%
+[2025-07-01 10:32:17.079] [info] Iteration 19, mean ranking error 0.102966%, mean rank change 0.0422613%
+[2025-07-01 10:32:17.092] [info] Iteration 20, mean ranking error 0.0929788%, mean rank change 0.0382030%
+[2025-07-01 10:32:17.105] [info] Iteration 21, mean ranking error 0.0866060%, mean rank change 0.0340739%
+[2025-07-01 10:32:17.120] [info] Iteration 22, mean ranking error 0.0771818%, mean rank change 0.0311418%
+[2025-07-01 10:32:17.135] [info] Iteration 23, mean ranking error 0.0700161%, mean rank change 0.0280184%
+[2025-07-01 10:32:17.149] [info] Iteration 24, mean ranking error 0.0617999%, mean rank change 0.0251925%
+[2025-07-01 10:32:17.168] [info] Iteration 25, mean ranking error 0.0560871%, mean rank change 0.0235422%
+[2025-07-01 10:32:17.183] [info] Iteration 26, mean ranking error 0.0506225%, mean rank change 0.0211484%
+[2025-07-01 10:32:17.196] [info] Iteration 27, mean ranking error 0.0457547%, mean rank change 0.019229%
+[2025-07-01 10:32:17.206] [info] Iteration 28, mean ranking error 0.0400211%, mean rank change 0.0180250%
+[2025-07-01 10:32:17.220] [info] Iteration 29, mean ranking error 0.037169%, mean rank change 0.0163889%
+[2025-07-01 10:32:17.234] [info] Iteration 30, mean ranking error 0.0344586%, mean rank change 0.0154257%
+[2025-07-01 10:32:17.261] [info] Iteration 31, mean ranking error 0.0306858%, mean rank change 0.0142571%
+[2025-07-01 10:32:17.282] [info] Iteration 32, mean ranking error 0.0267399%, mean rank change 0.0127839%
+[2025-07-01 10:32:17.318] [info] Iteration 33, mean ranking error 0.0244371%, mean rank change 0.0117924%
+[2025-07-01 10:32:17.342] [info] Iteration 34, mean ranking error 0.0220179%, mean rank change 0.0106804%
+[2025-07-01 10:32:17.385] [info] Iteration 35, mean ranking error 0.0185447%, mean rank change 0.00934182%
+[2025-07-01 10:32:17.425] [info] Iteration 36, mean ranking error 0.0165451%, mean rank change 0.00881064%
+[2025-07-01 10:32:17.440] [info] Iteration 37, mean ranking error 0.0158759%, mean rank change 0.00833611%
+[2025-07-01 10:32:17.453] [info] Iteration 38, mean ranking error 0.0151131%, mean rank change 0.00774118%
+[2025-07-01 10:32:17.461] [info] Iteration 39, mean ranking error 0.0134247%, mean rank change 0.00672838%
+[2025-07-01 10:32:17.474] [info] Iteration 40, mean ranking error 0.0119904%, mean rank change 0.00601305%
+[2025-07-01 10:32:17.488] [info] Iteration 41, mean ranking error 0.0104821%, mean rank change 0.00528355%
+[2025-07-01 10:32:17.504] [info] Iteration 42, mean ranking error 0.00992021%, mean rank change 0.00502150%
+[2025-07-01 10:32:17.504] [info] Time used in prioritization: 0s
+[2025-07-01 10:32:17.504] [info] Number of iterations: 43
+[2025-07-01 10:32:17.504] [info] Final convergence level: 0.00992021%
+[2025-07-01 10:32:17.504] [info] Area under curve: 0.567340
+[2025-07-01 10:32:17.504] [info] Writing feature info
+[2025-07-01 10:32:17.505] [info] Writing feature curves
+[2025-07-01 10:32:18.452] [info] Writing priority rank map
+[2025-07-01 10:32:18.461] [info] Total time used: 3s
+[2025-07-01 10:32:18.461] [info] Number of errors: 0
+[2025-07-01 10:32:18.462] [info] Number of warnings: 0
+[2025-07-01 10:32:18.462] [info] Done

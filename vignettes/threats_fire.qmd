@@ -106,7 +106,8 @@ Three major components of vulnerability:
     4 Riparian: seldom burns, but if it burns biodiversity effects
     may be very negative 
     2 Wetlands: seldom burn, more often they create fire breaks 
-    0 Water: does not burn, but is vulnerable to ash deposition NA Built environment: NA (default to WUI map when talking about the built environment
+    0 Water: does not burn, but is vulnerable to ash deposition 
+    NA Built environment: NA (default to WUI map when talking about the built environment
 
 I suggest that we think about these basic ideas:
 
@@ -195,6 +196,9 @@ mv_sei_secl_codes <- read.csv(here("data-raw/metrovancouver_sensitive_ecosystem_
 
 ### Using SEI 
 ### TODO: use A. Whitehead wetland and freshwater layers 
+### Go with the lowest habitat score
+
+### In order to integrate A. Whitehead's layers, need to figure out the order to prioritize layers. 
 mv_sei_mod <- mv_sei %>%
   select("SECl_1", "SEsubcl_1", "SECl_2") %>%
   filter(!str_detect(SECl_1, "x")) %>% # remove lost habitats
@@ -211,8 +215,8 @@ mv_sei_mod <- mv_sei %>%
         SECl_1 == "RI" ~ 4, # "Riparian"
         SECl_1 == "WN" ~ 2, # "Wetland"
         SECl_1 == "OD" ~ 2, # "Old Field"
-        SECl_1 == "SV" ~ 0, # TODO: what score for "Sparsely Vegetated" category?
-        SECl_1 == "IT" ~ 0, # TODO: what score for "Intertidal" category? 
+        SECl_1 == "SV" ~ 1, # 2025/6/12: updated to score 1 after meeting with Wendy
+        SECl_1 == "IT" ~ 0, # 2025/6/12: keep to score 0
         SECl_1 == "FW" ~ 0,
         # Deal with XX Non-SE
         SECl_1 == "XX" & SECl_2 == "MF" ~ 10,

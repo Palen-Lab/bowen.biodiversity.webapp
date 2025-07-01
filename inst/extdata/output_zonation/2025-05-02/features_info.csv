@@ -1,5 +1,5 @@
 "number" "dsum" "count" "missing" "quant_error" "fname"
-0 4036.38 5053 5314 0.000851583 "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/habitats/bowen_human_footprint_inv.tif"
+0 4274.34 5407 4960 0.000600180 "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/habitats/bowen_human_footprint_inv.tif"
 1 7.0 7 10361 0.0 "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/habitats/el.tif"
 2 87.0 87 10281 0.0 "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/habitats/bs.tif"
 3 20.0 20 10348 0.0 "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/habitats/mf.tif"

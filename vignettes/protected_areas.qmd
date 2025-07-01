@@ -16,16 +16,26 @@ Algorithms in Zonation and Marxann for identifying these
 - Find cluster
 
 ```{r setup}
+# Current package within which this vignette is included
 library(bowen.biodiversity.webapp)
+# Spatial 
 library(sf)
 library(terra)
 library(tidyterra)
+# Analysis / Plotting
 library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(here)
+# Google Sheets
 library(googlesheets4)
+# Prioritizr and deps
+library(gurobi)
+library(prioritizr)
+```
 
+## Input layers
+```{r}
 sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
 habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
 output_dir <- here("vignettes/figures/protected_areas")
@@ -33,7 +43,11 @@ if(!dir.exists(output_dir)) {
   dir.create(output_dir)
 }
 
-#### CREATE DATAFRAME FOR INPUT LAYERS ####
+#### Zonation Raster Layers ####
+# Load Zonation Output / Conservation Values
+zonation <- here("inst/extdata/output_zonation/2025-05-02/rankmap.tif") %>%
+  rast()
+# For assessing freshwater habitat overlap with potential protected areas. 
 # Read from Google Sheets
 habitats_df <- read_sheet(habitats_url, sheet = "2025-05-02")
 habitats_df$weight <- habitats_df$weight / nrow(habitats_df)
@@ -45,12 +59,9 @@ layers_df <- sdm_df %>%
   bind_rows(habitats_df) %>%
   filter(weight > 0)
 
-```
 
-## First filter for Potential Protected Area Candidates
-Find public lands that are not in existing protected areas
-```{r}
-parcels <- bowen_parcelmap %>%
+#### Vector Layers ####
+parcels <- bowen.biodiversity.webapp::bowen_parcelmap %>%
   # filter(!OwnerType %in% c("Private", "Unclassified", "Mixed Ownership")) %>%
   filter(PID != 31243550) %>% # Remove ferry route 
   st_transform(st_crs(bowen_protectedareas))
@@ -62,38 +73,24 @@ parcels$geom <- parcels$geom %>%
 bowen_protectedareas_valid <- bowen_protectedareas %>%
   st_make_valid()
 
-# tried st_join
-parcels_protected <- st_join(parcels, bowen_protectedareas_valid, largest = T)
+# Crown Land
+bowen.biodiversity.webapp::crown
+# OGMA
+bowen.biodiversity.webapp::ogma
+```
 
-ggplot(parcels_protected) +
-  geom_sf(aes(fill = type))
-
-ggplot(bowen_parcelmap) +
-  geom_sf()
-ggplot() +
-  geom_sf(data = parcels, fill = "red") +
-  geom_sf(data = bowen_protectedareas, fill = "green")
-
-
-# Decided that the st_join is not very accurate
-# Parcels are too different
-# st_join overestimates the protected area (ex. a private lot with a covenant appears as entirely protected)
-
-#### trying clip instead ####
-test <- st_difference(parcels, bowen_protectedareas_valid)
-# this seems wrong, ends up with 551618 observations compared to 2388 expected at most
-
+## Parcels - Potential Protected Areas
+### Public Land Parcels outside of Protected Areas 
+This is the first filter for potential protected area candidates. We need to find public lands parcels that are not in existing protected areas. 
+```{r}
 # Dissolve protected areas into one geometry
 dissolved_protectedareas <- bowen_protectedareas_valid %>%
   summarise() %>%
   st_cast() %>%
-  st_buffer(1) # cleans up slivers compared to 0, buffer distance in metres
-class(dissolved_protectedareas) # sf data.frame
-
+  st_buffer(1) # cleans up geometry slivers compared to 0, buffer distance in metres
+# st_difference after 
+# doing st_difference without dissolving protected areas into one geometry 
 notprotected_parcels <- st_difference(parcels, dissolved_protectedareas)
-plot(notprotected_parcels[1])
-plot(public_lands[1])
-
 
 # filter for public lands 
 notprotected_parcels$OwnerType %>% unique()
@@ -101,7 +98,10 @@ notprotected_parcels$OwnerType %>% unique()
 # [7] "Unclassified" 
 notprotected_publiclands <- notprotected_parcels[!notprotected_parcels$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),] 
 notprotected_privatelands <- notprotected_parcels[notprotected_parcels$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),] 
+```
 
+### Plotting Potential Protected Areas from Undeveloped Parcels 
+```{r}
 potential_protected_areas_ggfunc <- function() {
   protected_colour <- "#b3e2cd"
   notprotected_public_colour <-  "#fdcdac"
@@ -129,7 +129,6 @@ protected_areas_ggplot <- bowen_map_ggplot(
   caption = caption
 )
 
-
 ggplot2::ggsave(
   here(output_dir, "/", paste0(Sys.Date(), "_protected_areas_parcels.png")),
   protected_areas_ggplot,
@@ -137,14 +136,11 @@ ggplot2::ggsave(
   width = 9, height = 12, units = "in", res = 300
 )
 ```
-
-## Second filter 
+### Conservation Values by Unprotected Public Parcel 
 - Top 30% of conservation values 
 - Wetland / water / riparian values
 ```{r}
-# Load Zonation
-zonation <- here("inst/extdata/output_zonation/2025-05-02/rankmap.tif") %>%
-  rast()
+
 
 #### Conservation values summed by parcel ####
 # extract zonation raster values from cells within each parcel
@@ -359,7 +355,7 @@ ggplot2::ggsave(
 
 #### PLOTTING PUBLIC LANDS ####
 # Conservation Vals Continuous
-conservation_vals_cont_gg <- function() {
+conservation_vals_cont_pub_gg <- function() {
   list(
     geom_sf(data = notprotected_cons_vals_sf[!notprotected_cons_vals_sf$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),] , aes(fill = rankmap), color = NA),
     scale_fill_viridis_c(),
@@ -367,21 +363,21 @@ conservation_vals_cont_gg <- function() {
     ggnewscale::new_scale_colour()
   )
 }
-conservation_vals_cont_ggplot <- bowen_map_ggplot(
-  conservation_vals_cont_gg,
+conservation_vals_cont_pub_ggplot <- bowen_map_ggplot(
+  conservation_vals_cont_pub_gg,
   title = "Conservation Values by Unprotected Parcels",
   subtitle = "Mapping the unprotected parcels and their relative biodiversity values to identify potential parcels for future protection.",
   caption = caption
 )
 ggplot2::ggsave(
-  here(output_dir, "/", paste0(Sys.Date(), "_conservation_vals_continuous_parcels.png")),
-  conservation_vals_cont_ggplot,
+  here(output_dir, "/", paste0(Sys.Date(), "_conservation_vals_continuous_pub_parcels.png")),
+  conservation_vals_cont_pub_ggplot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
 
 # Conservation Vals Top 30
-conservation_vals_top_gg <- function() {
+conservation_vals_top_pub_gg <- function() {
   list(
     geom_sf(data = notprotected_cons_vals_sf[!notprotected_cons_vals_sf$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),], aes(fill = rankmap_top_30), color = NA),
     scale_fill_viridis_c(),
@@ -389,21 +385,21 @@ conservation_vals_top_gg <- function() {
     ggnewscale::new_scale_colour()
   )
 }
-conservation_vals_top_ggplot <- bowen_map_ggplot(
-  conservation_vals_top_gg,
+conservation_vals_top_pub_ggplot <- bowen_map_ggplot(
+  conservation_vals_top_pub_gg,
   title = "Top Conservation Values by Unprotected Parcels",
   subtitle = "Mapping the unprotected parcels and number of top 30% conservation value cells to identify potential parcels for future protection.",
   caption = caption
 )
 ggplot2::ggsave(
-  here(output_dir, "/", paste0(Sys.Date(), "_conservation_vals_top_parcels.png")),
-  conservation_vals_top_ggplot,
+  here(output_dir, "/", paste0(Sys.Date(), "_conservation_vals_top_pub_parcels.png")),
+  conservation_vals_top_pub_ggplot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
 
 # Freshwater sum richness
-freshwater_sum_gg <- function() {
+freshwater_sum_pub_gg <- function() {
   list(
     geom_sf(data = notprotected_cons_vals_sf[!notprotected_cons_vals_sf$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),], aes(fill = fw_sum_richness), color = NA),
     scale_fill_viridis_c(),
@@ -411,20 +407,20 @@ freshwater_sum_gg <- function() {
     ggnewscale::new_scale_colour()
   )
 }
-freshwater_sum_ggplot <- bowen_map_ggplot(
-  freshwater_sum_gg,
+freshwater_sum_pub_ggplot <- bowen_map_ggplot(
+  freshwater_sum_pub_gg,
   title = "Relative Freshwater Habitat Richness by Unprotected Parcels",
   subtitle = "Mapping the unprotected parcels and the total sum of freshwater habitat richness cells to identify potential parcels for future protection.",
   caption = caption
 )
 ggplot2::ggsave(
-  here(output_dir, "/", paste0(Sys.Date(), "_fw_sum_richness_parcels.png")),
-  freshwater_sum_ggplot,
+  here(output_dir, "/", paste0(Sys.Date(), "_fw_sum_richness_pub_parcels.png")),
+  freshwater_sum_pub_ggplot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
 # Freshwater num habitats richness
-freshwater_num_hab_gg <- function() {
+freshwater_num_hab_pub_gg <- function() {
   list(
     geom_sf(data = notprotected_cons_vals_sf[!notprotected_cons_vals_sf$OwnerType %in% c("Private", "Mixed Ownership", "Unclassified"),], aes(fill = fw_num_hab_pres), color = NA),
     scale_fill_viridis_c(),
@@ -432,20 +428,63 @@ freshwater_num_hab_gg <- function() {
     ggnewscale::new_scale_colour()
   )
 }
-freshwater_num_hab_ggplot <- bowen_map_ggplot(
-  freshwater_num_hab_gg,
+freshwater_num_hab_pub_ggplot <- bowen_map_ggplot(
+  freshwater_num_hab_pub_gg,
   title = "Number of Freshwater Habitats in Unprotected Parcels",
   subtitle = "Mapping the unprotected parcels and number of freshwater habitat types present to identify potential parcels for future protection.",
   caption = caption
 )
 ggplot2::ggsave(
-  here(output_dir, "/", paste0(Sys.Date(), "_fw_num_hab_parcels.png")),
-  freshwater_num_hab_ggplot,
+  here(output_dir, "/", paste0(Sys.Date(), "_fw_num_hab_pub_parcels.png")),
+  freshwater_num_hab_pub_ggplot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
+```
+
+## Crown Land - Outside of Parcels
+### Polygon extent of unprotected crown land not in parcels 
+```{r}
+# Dissolve protected areas into one geometry
+dissolved_protectedareas <- bowen_protectedareas_valid %>%
+  summarise() %>%
+  st_cast() %>%
+  st_buffer(1) 
+
+crown_valid <- crown %>% 
+  st_snap(x = ., y = ., tolerance = 0.1) %>%
+  st_make_valid() 
+notprotected_crown <- st_difference(crown_valid, dissolved_protectedareas)
+
+# Manually check each crown land polygon
+for(i in 1:nrow(notprotected_crown)) {
+  plot(notprotected_crown[i,])
+}
+# Remove polygons that should not be included in notprotected areas 
+# rowname 1 (Fairy Fen Natural Reserve), sliver
+# rowname 74 (Seymour Bay Park), wrong polygon in the first place
+notprotected_crown_clean <- notprotected_crown[!rownames(notprotected_crown) %in% c("1","74"),]
+```
+### Identify potential protected areas within crown land not in parcels
+Rasterize layer
+Identify candidate protected areas
+Two ways that crown land can be good candidates
+1. High value pixels that are contiguous with other protected areas
+Things that fall under the top 30% are adjacent to protected areas 
+Ex. large areas west of Killarney Lake, northeast corner of Bowen Island, 
 
 
+2. Contiguous pixels of high value that are not connected to protected areas 
+Large enough for arguing for protection, 10 to 50 hectares or bigger
+
+Great place to start using prioritizr! 
+https://prioritizr.net/
+
+```{r}
+# need planning units
 
 ```
+
+
+
 

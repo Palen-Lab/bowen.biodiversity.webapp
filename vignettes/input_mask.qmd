@@ -37,9 +37,9 @@ dsm_smooth <- dsm %>%
   terra::resample(sample_sdm, method = "average") %>%
   terra::crop(bowen_land, mask = T)
 m <- c(-1, 35, 1) %>% matrix(ncol = 3, byrow=T)
-bowen_island_mask <- dsm_smooth %>% 
+bowen_mask <- dsm_smooth %>% 
   classify(m) %>%
   as.int()
-writeRaster(bowen_island_mask, here("inst/extdata/bowen_mask.tif"), overwrite = T)
+writeRaster(bowen_mask, here("inst/extdata/bowen_mask.tif"), overwrite = T)
 ```
 

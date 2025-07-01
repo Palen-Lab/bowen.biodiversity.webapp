@@ -70,12 +70,13 @@ output_dir <- here("vignettes/figures/data_atlas_07_05_2025")
 if(!dir.exists(output_dir)) {
   dir.create(output_dir)
 }
+sheet_date <- "2025-06-30"
 
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
 # Read from Google Sheets
-habitats_df <- read_sheet(habitats_url, sheet = "2025-05-02")
+habitats_df <- read_sheet(habitats_url, sheet = sheet_date)
 habitats_df$weight <- habitats_df$weight / nrow(habitats_df)
-sdm_df <- read_sheet(sdm_url, sheet = "2025-05-02") 
+sdm_df <- read_sheet(sdm_url, sheet = sheet_date) 
 sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
 # Bind all input layers together
 layers_df <- sdm_df %>%
@@ -180,7 +181,7 @@ SDM_stack <- sdm_df[sdm_df$category == "Bird" , "path"] %>%
 # Create species richness SDM 
 bird_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                           presence_threshold = presence_threshold)
-writeRaster(bird_richness, here("inst/extdata/2_species/birds_richness.tif"))
+writeRaster(bird_richness, here("inst/extdata/2_species/birds_richness.tif"), overwrite = T)
 
 title <- "Bird Species Richness"
 subtitle <- paste0("Based on >", 
@@ -240,7 +241,7 @@ SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create species richness SDM 
 mammalsmall_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                           presence_threshold = presence_threshold)
-writeRaster(mammalsmall_richness, here("inst/extdata/2_species/sm_mammals_richness.tif"))
+writeRaster(mammalsmall_richness, here("inst/extdata/2_species/sm_mammals_richness.tif"), overwrite = T)
 
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
@@ -303,7 +304,7 @@ SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create species richness SDM 
 herptile_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                           presence_threshold = presence_threshold)
-writeRaster(herptile_richness, here("inst/extdata/2_species/herptiles_richness.tif"))
+writeRaster(herptile_richness, here("inst/extdata/2_species/herptiles_richness.tif"), overwrite = T)
 
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
@@ -366,7 +367,7 @@ SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create species richness SDM 
 thr_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                         presence_threshold = presence_threshold)
-writeRaster(thr_richness, here("inst/extdata/2_species/threatened_richness.tif"))
+writeRaster(thr_richness, here("inst/extdata/2_species/threatened_richness.tif"), overwrite = T)
 
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
@@ -429,7 +430,7 @@ SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create species richness SDM 
 total_richness <- sdm_to_species_richness(SDM_stack = SDM_stack,
                                           presence_threshold = presence_threshold)
-writeRaster(total_richness, here("inst/extdata/2_species/total_richness.tif"))
+writeRaster(total_richness, here("inst/extdata/2_species/total_richness.tif"), overwrite = T)
 
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
@@ -490,7 +491,7 @@ SDM_filepaths <- sdm_df[, "path"]
 SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
 # Create summed SDM
 SDM_sum <- SDM_stack %>% sum(na.rm = T)
-writeRaster(SDM_sum, here("inst/extdata/2_species/sum_sdms.tif"))
+writeRaster(SDM_sum, here("inst/extdata/2_species/sum_sdms.tif"), overwrite = T)
 
 # Create plot
 bowen_plot <- bowen_map(raster_layer = SDM_sum,
@@ -656,6 +657,7 @@ fw_richness <- fw_rast_stack %>%
   lapply(function(x) {classify(x, cbind(FALSE, NA))}) %>%
   rast() %>%
   sum(na.rm = T)
+writeRaster(fw_richness, here("inst/extdata/3_habitats/fw_richness.tif"), overwrite = T)
 
 fw_richness_plot <- bowen_map(raster_layer = fw_richness,
                      title = title,
@@ -936,6 +938,7 @@ habitat_stack <- habitats_df %>%
   rast()
 # Sum habitat stack 
 habitat_richness <- habitat_stack %>% sum(na.rm = T)
+writeRaster(habitat_richness, here("inst/extdata/3_habitats/total_habitat_richness.tif"), overwrite = T)
 # Create species richness plots: 
 ## Each species is marked present in a cell, if they are above a certain 
 ## threshold of probability in the input SDMs. 
@@ -990,7 +993,7 @@ ggplot2::ggsave(
 ## 4.1 Biodiversity Values (0-1)
 
 ```{r}
-rankmap <- here("inst/extdata/output_zonation/2025-05-02/rankmap.tif") %>% 
+rankmap <- here(paste0("inst/extdata/output_zonation/", sheet_date, "/rankmap.tif")) %>% 
   rast() %>% 
   project("EPSG: 3857")
 
@@ -1044,7 +1047,7 @@ ggplot2::ggsave(
 
 ```{r}
 # Disturbance raster
-disturbed <- here::here("inst", "extdata", "bowen_human_footprint.tif") %>%
+disturbed <- here::here("inst", "extdata", "habitats", "bowen_human_footprint.tif") %>%
   terra::rast() %>%
   project(project_crs)
 
@@ -1083,7 +1086,7 @@ ggplot2::ggsave(
 
 ```{r}
 # Human Footprint
-disturbed_classified <- here::here("inst/extdata/bowen_human_footprint_recl.tif") %>%
+disturbed_classified <- here::here("inst/extdata/habitats/bowen_human_footprint_recl.tif") %>%
   terra::rast() %>%
   as.factor()
 
@@ -1190,7 +1193,8 @@ these other layers:
 
 ```{r, warning=F}
 # Function for converting Zonation output to boolean based on percentage (in top XX%)
-rankmap <- here("inst/extdata/output_zonation/2025-05-02" , "rankmap.tif") %>% rast() %>% project(project_crs)
+rankmap <- here(paste0("inst/extdata/output_zonation/", sheet_date, "/rankmap.tif")) %>%
+  rast() %>% project(project_crs)
 
 #' Only keep top or bottom cell values by quantile 
 #'
@@ -1309,7 +1313,7 @@ fw_rast_dissolve <- fw_rast_stack %>%
   classify(cbind(FALSE, NA)) 
 
 # Human Footprint (classified)
-bowen_hfp <- here("inst/extdata/bowen_human_footprint_recl.tif") %>%
+bowen_hfp <- here("inst/extdata/habitats/bowen_human_footprint_recl.tif") %>%
   rast() %>%
   as.factor()
 bowen_hfp_low <- bowen_hfp %>%
@@ -1535,7 +1539,7 @@ foreach(quant = quants) %do% {
   )
 
   # 5.5 Biodiversity Values overlap with Human Disturbance (continuous)
-  bowen_hfp_continuous_top <- rankmap_mask * rast(here("inst/extdata/bowen_human_footprint.tif"))
+  bowen_hfp_continuous_top <- rankmap_mask * rast(here("inst/extdata/habitats/bowen_human_footprint.tif"))
 
   bowen_hfp_continuous_plot <- bowen_map(bowen_hfp_continuous_top,
                              title = paste0("Top ", top_pct, "% Biodiversity Value with Human Footprint (Continuous)"),
@@ -1858,7 +1862,7 @@ foreach(quant = quants) %do% {
   )
 
   # 5.5 Biodiversity Values overlap with Human Disturbance (continuous)
-  bowen_hfp_continuous_bottom <- rankmap_mask * rast(here("inst/extdata/bowen_human_footprint.tif"))
+  bowen_hfp_continuous_bottom <- rankmap_mask * rast(here("inst/extdata/habitats/bowen_human_footprint.tif"))
 
   bowen_hfp_continuous_plot <- bowen_map(bowen_hfp_continuous_bottom,
                              title = paste0("Bottom ", bottom_pct, "% Biodiversity Value with Human Footprint (Continuous)"),

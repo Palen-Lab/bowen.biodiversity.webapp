@@ -33,7 +33,7 @@ library(RColorBrewer)
 
 sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
 habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
-output_date <- "2025-05-02"
+output_date <- "2025-06-30"
 output_dir <- here("inst/extdata/output_zonation", output_date)
 ```
 
