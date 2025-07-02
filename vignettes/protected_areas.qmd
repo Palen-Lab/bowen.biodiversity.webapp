@@ -480,13 +480,14 @@ Large enough for arguing for protection, 10 to 50 hectares or bigger
 Great place to start using prioritizr! 
 https://prioritizr.net/
 
+#### Inputs
 ```{r}
 bowen_mask_broken <- rast(here("inst/extdata/bowen_mask.tif")) %>%
   project(zonation)
 # for some reason, when bowen_mask is reprojected to match the zonation
 # raster, it ends up changing NA values to an extremely large number. 
 # probably some bit rollover issue?
-plot(bowen_mask_broken)
+plot(bowen_mask_broken, main = "Broken Bowen Mask")
 bowen_mask_broken %>%
   values() %>%
   max() # 4294967296
@@ -499,13 +500,16 @@ bowen_mask <- rast(here("inst/extdata/bowen_mask.tif")) %>%
   project(zonation) %>% 
   mask(zonation) 
 
-plot(bowen_mask)
+plot(bowen_mask, main = "Bowen Mask")
 
 # features
-plot(zonation)
+plot(zonation, main = "Zonation Output")
+```
 
-# calculate budget, get 5% of pixels of planning units
-prop_pixels <- 0.9
+#### Prioritizr
+```{r}
+# calculate budget, get prop of pixels of planning units
+prop_pixels <- 0.3 # for some reason, this provides weird results when not large enough
 budget <- terra::global(bowen_mask, "sum", na.rm = T)[[1]] * prop_pixels 
 
 # create problem
@@ -515,7 +519,11 @@ p1 <- problem(bowen_mask, features = zonation) %>%
   # since we only have one feature, this target is meaningless but is a
   # requirement for priortizr to work 
   add_binary_decisions() %>%
-  add_default_solver(gap = 0.1, verbose = FALSE)
+  add_default_solver(gap = 0.05, verbose = FALSE) 
+  # gap needs to be smaller than the difference between prop_pixels and locked constraints
+  # if this is not, leads to nonsensical solutions 
+  # gap value is the % from optimal
+  # therefore, if gap is too large, then any solution is close enough to optimal
 
 # print conservation problem
 print(p1)
@@ -526,18 +534,105 @@ s1 <- solve(p1, force = T)
 # extract the objective
 print(attr(s1, "objective"))
 
-# compare plots
-plot(s1, main = "Solution", axes = FALSE)
+# compare plots, check for agreement between priortizr and zonation
+plot(s1, main = "Priortizr Solution", axes = FALSE)
 remove_by_quantile(zonation, 1 - prop_pixels) %>%
-  plot()
+  plot(main = "Top Zonation Pixels")
 
+# check for number of cells 
 s1 %>% values() %>% sum(na.rm = T) # 265 cells selected
 # it works! basic top pixels identified, and agrees with zonation
 # the main goal is to not use priortizr for conservation values
 # the goal is to use the constraints and penalties that are part 
 # of the package
+
+# Existing Protected Areas
+bowen_protectedareas %>% plot() 
+# trying removing covenants, since very fragmented
+bowen_pa_rast <- bowen_protectedareas[bowen_protectedareas$type != "Covenants",] %>%
+  vect() %>%
+  project(bowen_mask) %>%
+  rasterize(bowen_mask, background = 0) %>%
+  mask(bowen_mask) 
+
+# bowen_pa_rast_2 <- bowen_protectedareas %>%
+#   vect() %>%
+#   project(bowen_mask) %>%
+#   rasterize(bowen_mask, background = 0) %>%
+#   mask(bowen_mask) 
+
+bowen_pa_cell_count <- bowen_pa_rast %>%
+  values() %>%
+  sum(na.rm = T)
+bowen_pa_prop <- bowen_pa_cell_count / sum(values(bowen_mask), na.rm = T)
+
+plot(bowen_pa_rast, main = "Existing Protected Areas")
+
+# create new problem with locked in constraints 
+p2 <- 
+  p1 %>%
+  add_locked_in_constraints(bowen_pa_rast)
+
+s2 <- solve(p2, force = T)
+plot(s2, main = "Solution with Existing Protected Areas")
+
+# Crown land
+## Maybe combine analysis with parcels? 
+## Keep seperate for now, combine later
+
+crown_rast <- crown %>%
+  vect() %>%
+  project(bowen_mask) %>%
+  rasterize(bowen_mask, background = 0, touches = T) %>%
+  mask(bowen_mask)
+
+# need to make sure it includes the protected areas
+crown_pa <- max(c(crown_rast, bowen_pa_rast))
+
+# reverse for locked out constraints
+m <- rbind(
+  c(0, 1),
+  c(1, 0)
+)
+
+lockedout <- crown_pa %>%
+  classify(m)
+
+# create new problem with locked out constraints
+p3 <-
+  p2 %>%
+  add_locked_out_constraints(lockedout)
+s3 <- solve(p3, force = T)
+plot(s3, main = "Solution with PA and Crown")
+
+# add boundary penalties
+p4 <-
+  p3 %>%
+  add_boundary_penalties(penalty = 0.000001, edge_factor = 0.5)
+s4 <- solve(p4, force = T)
+s4 %>% values() %>% sum(na.rm = T) # 1593
+# the total pixels selected under no boundary penalty is 1594
+# therefore, with this penalty value of 0.000001
+# boundary penalty has an effect, but not overly so that 
+# step just selects pixels around existing protected areas
+
+plot(s4, main = "Solution with PA, Crown, and Boundary")
+
+# importance scores
+imp <- 
+  p4 %>%
+  eval_rank_importance(s4, n = 5, force = T)
+print(imp)
+imp <- terra::mask(imp, s4, maskvalues = 0, updatevalue = -1)
+plot(imp, main = "Importance Scores")
+
+# remove existing protected areas 
+(imp - 2 * bowen_pa_rast) %>%
+  plot()
+
 ```
+### Plotting
+```{r}
 
-
-
+```
 
