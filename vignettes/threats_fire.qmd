@@ -237,3 +237,29 @@ fire_index <- slope_score + aspect_score + fuel_score
 plot(fire_index)
 ```
 
+## Plotting 
+```{r}
+fire_gg <- function() {
+  list(
+    geom_spatraster(data = fire_index),
+    scale_fill_viridis_c(option = "inferno", na.value = NA, name = "Fire Vul. Index"),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+}
+fire_ggplot <- bowen_map_ggplot(fire_gg,
+                 title = "Fire Vulnerability Index",
+                 subtitle = "Index of Vulnerability to Fire. This is not an assessment of the probability or behaviour of the fire. The intention of this index is to describe the relative vulnerability to biodiversity loss due to fire, under a scenario where the habitats burn. The three major components of this vulnerability index are slope, aspect, and fuel.",
+                 caption = caption)
+output_dir <- here("vignettes/figures/threats_fire")
+if(!dir.exists(output_dir)) {
+  dir.create(output_dir)
+}
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_fire_vulnerability_index.png")),
+  fire_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+```
+
