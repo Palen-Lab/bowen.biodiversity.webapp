@@ -32,6 +32,8 @@ library(googlesheets4)
 # Prioritizr and deps
 library(gurobi)
 library(prioritizr)
+
+caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
 ```
 
 ## Input layers
@@ -627,12 +629,46 @@ imp <- terra::mask(imp, s4, maskvalues = 0, updatevalue = -1)
 plot(imp, main = "Importance Scores")
 
 # remove existing protected areas 
-(imp - 2 * bowen_pa_rast) %>%
-  plot()
+m <- c(
+  -1, 0, NA
+)
+imp_clean <- (imp - 2 * bowen_pa_rast) %>%
+  ifel(. <= -1, NA, .) 
 
 ```
 ### Plotting
 ```{r}
-
+# gg
+crown_poten_ggfunc <- function() {
+  protected_colour <- "#b3e2cd"
+  parcels_colour <-  "#fdcdac"
+  output <- list(
+    geom_spatraster(data = imp_clean, na.rm = T),
+    scale_fill_viridis_c(na.value = NA, name = "Protected Area Potential"),
+    ggnewscale::new_scale_fill(),
+    geom_sf(data = parcels, aes(fill = parcels_colour)),
+    geom_sf(data = bowen_protectedareas_valid, aes(fill = protected_colour)),
+    scale_fill_identity(name = "",
+                          breaks = c(protected_colour, parcels_colour),
+                          labels = c("Protected", "Parcels"),
+                          guide = "legend"
+    ),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+  return(output)
+}
+crown_poten_ggplot <- bowen_map_ggplot(
+  crown_poten_ggfunc,
+  title = "Top Locations for Protected Areas (30x30)",
+  subtitle = "Mapping optimal Crown land for reaching 30x30 targets, using the conservation values analysis and existing protected areas. This output considers connectivity by applying boundary penalties, which prioritizes shorter boundaries relative to area. Currently, about 20% of Bowen Island is under some protection.",
+  caption = caption
+)
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_crown_potential.png")),
+  crown_poten_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
 ```
 
