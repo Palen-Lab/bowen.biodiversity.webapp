@@ -19,13 +19,16 @@ library(terra)
 
 # Bowen Wildland Urban Interfaces (WUI)
 
-Sources:
-https://www2.gov.bc.ca/gov/content/safety/wildfire-status/prevention/fire-fuel-management/wui-risk-class-maps/wui-downloads
-https://www.for.gov.bc.ca/ftp/HPR/external/!publish/WUI_RiskClass/Maps/Coast/WUI_RiskClass_36x48L_92G_SW.pdf
+Exploring the Wildland Urban Interfaces maps (WUI), produced by the Province of British Columbia, with the intention of using this information to assess the threats towards biodiversity during wildfires. These maps take into consideration the fuel load, climate conditions, and human development at the interface between urban and wildland areas. This would work well for our purposes, if it didn't take in human development. For our purposes, we just want to look at biodiversity impacts and not human development. We don't have access to the input layers directly, or some way to subtract the human development from the WUI maps. Therefore, we have chosen not to use the WUI data. 
+
 ![Bowen WUI](images/bowen_wui.png) Previous to this step, the KMZ files
 were loaded into QGIS and clipped to
 `data-raw/bowen_boundary/Bowen_boundary.shp`. This clipped KMZ was saved
 as `data-raw/bowen_wui.gpkg`.
+
+Sources:
+https://www2.gov.bc.ca/gov/content/safety/wildfire-status/prevention/fire-fuel-management/wui-risk-class-maps/wui-downloads
+https://www.for.gov.bc.ca/ftp/HPR/external/!publish/WUI_RiskClass/Maps/Coast/WUI_RiskClass_36x48L_92G_SW.pdf
 
 ```{r plots}
 bowen_wui <- here("data-raw/bowen_wui.gpkg") %>% 
@@ -235,6 +238,9 @@ fuel_score <- mv_sei_mod %>%
 # Cumulative Fire Vulnerability Index
 fire_index <- slope_score + aspect_score + fuel_score
 plot(fire_index)
+
+# Save
+writeRaster(fire_index, here("inst/extdata/6_threats/fire_index.tif"))
 ```
 
 ## Plotting 
