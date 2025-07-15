@@ -23,7 +23,7 @@ mod_people_server <- function(id, map_id, parent_session){
     ns <- session$ns
 
     #### Add Human Footprint Raster ####
-    human_footprint <- terra::rast(here::here("inst/extdata/bowen_human_footprint.tif")) %>%
+    human_footprint <- terra::rast(here::here("inst/extdata/4_people/bowen_human_footprint.tif")) %>%
       terra::project("epsg:4326")
     human_footprint_domain <- c(0, terra::minmax(human_footprint)[2])
     human_footprint_pal <- leaflet::colorNumeric(c("#1a9641", "#a6d96a", "#ffffbf", "#fdae61", "#d7191c"), human_footprint_domain,

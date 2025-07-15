@@ -34,7 +34,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
 
     #### Update raster when input changes ####
     select_raster <- reactiveVal({
-      terra::rast(here::here("inst/extdata/bowen_sdm_richness.tif")) %>%
+      terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
         terra::project("epsg:4326")
     })
     observeEvent(input$selectGroup, {

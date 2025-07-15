@@ -34,7 +34,7 @@ mod_species_server <- function(id, map_id, parent_session){
 
     #### Update raster when input changes ####
     select_raster <- reactiveVal({
-      terra::rast(here::here("inst/extdata/bowen_sdm_richness.tif")) %>%
+      terra::rast(here::here("inst/extdata/2_species/total_richness.tif")) %>%
         terra::project("epsg:4326")
     })
     observeEvent(input$selectSpeciesGroup, {
@@ -47,7 +47,7 @@ mod_species_server <- function(id, map_id, parent_session){
       # 6. Summed Species Distribution Models
 
       if(input$selectSpeciesGroup == "all") {
-        terra::rast(here::here("inst/extdata/bowen_sdm_richness.tif")) %>%
+        terra::rast(here::here("inst/extdata/2_species/total_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
       } else if (input$selectSpeciesGroup == "threatened") {
