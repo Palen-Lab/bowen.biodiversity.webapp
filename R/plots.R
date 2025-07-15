@@ -310,8 +310,9 @@ bowen_map_ggplot <- function(gg_func,
       legend.title = ggplot2::element_text(size = 10),
       legend.key.height = ggplot2::unit(0.5, "cm"),
       legend.key.width = ggplot2::unit(1.5, "cm"),
+      legend.margin = margin(),
       legend.direction = "horizontal",
-      legend.box = "horizontal",
+      legend.box = "vertical",
       legend.box.margin = margin(1, 1, 1, 1),
       plot.margin = unit(c(1.3,0.3,0.8,0), "cm")
     ) +
@@ -351,7 +352,8 @@ bowen_map_ggplot <- function(gg_func,
         fill = c("grey40", "white"),
         line_col = "grey20"
       )
-    )
+    ) +
+    guides(fill=guide_legend(nrow=2,byrow=TRUE))
   #### RETURN OUTPUT ####
   output_plot
 }
