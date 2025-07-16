@@ -1,5 +1,5 @@
 ---
-title: "Conservation Layer: Species"
+title: "Species"
 author: "Jay Matsushiba"
 date: "2025/04/25"
 format:
@@ -7,7 +7,11 @@ format:
     code-fold: true
 ---
 
-```{r setup}
+## Introduction
+This page describes the preparing of species layers for input into the Zonation5 conservation prioritization software. 
+
+## Setup
+```{r setup, output = F}
 #### Palen Lab Packages ####
 library(bowen.biodiversity.webapp)
 
@@ -252,13 +256,18 @@ saveRDS(bowen_sdm_focal, file = here("inst/extdata/sdm/sdm_focal.rds"))
 
 Conservation statuses for species at the provincial, federal, and global levels were obtained from the BC Species & Ecosystems Explorer and the IUCN Red List. Provincial statuses followed the Red, Blue, and Yellow List classifications, while federal statuses were based on COSEWIC assessments where applicable. In cases of taxonomic discrepancies, species names were updated to reflect current classifications and documented accordingly.
 
-BC Species and Ecosystems Explorer: <https://a100.gov.bc.ca/pub/eswp/> IUCN Red List: <https://www.iucnredlist.org/>
+**Sources for Threatened Status Classification of Species:**
+[BC Species and Ecosystems Explorer](https://a100.gov.bc.ca/pub/eswp/) 
+
+[IUCN Red List](https://www.iucnredlist.org/)
 
 The spreadsheet below contains all of the information on species name, taxon group, threatened status, weights to use for Zonation.
 
-Visit this link to view the spreadsheet, hosted on Google Drive. <https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing>
+The weights are saved to be accessible for the conservation prioritization step. These weights can be modified directly in the spreadsheet.
 
-```{r}
+Visit the spreadsheet, hosted on [Google Drive](https://docs.google.com/spreadsheets/d/1ehO30w4i7EDafilNyRpq3sgc86fm8g_TmYMI4ql3qms/edit?usp=sharing).
+
+```{r google_spreadsheet, eval=F, message=F}
 sdm_focal <- readRDS(here("inst/extdata/sdm/sdm_focal.rds"))
 #### REVISION ####
 # - This section necessary, since Google Sheet was uploaded at earlier time

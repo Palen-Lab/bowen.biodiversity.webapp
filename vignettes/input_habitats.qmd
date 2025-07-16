@@ -1,5 +1,5 @@
 ---
-title: "Conservation Layer: Habitats"
+title: "Habitats"
 author: "Jay Matsushiba"
 date: "2025/04/25"
 format:
@@ -7,8 +7,11 @@ format:
     code-fold: true
 ---
 
+## Introduction
+This page describes the preparing of habitat layers for input into the Zonation5 conservation prioritization software. 
 
-```{r setup}
+## Setup
+```{r setup, output = F}
 library(bowen.biodiversity.webapp)
 library(here)
 library(sf)
@@ -47,10 +50,8 @@ habitats_df <- data.frame(
 )
 ```
 
-# Introduction
-
-Prepare habitat layers for input into Zonation. Previously, for the Feb 1 2025 workshop, we used the Sensitive Ecosystem Inventory from Metro Vancouver. These habitat types were originally represented as polygon areas, which was converted to raster.
-
+## Metro Vancouver Sensitive Ecosystem Inventory
+Previously, for the Feb 1 2025 workshop, we used the Sensitive Ecosystem Inventory from Metro Vancouver. These habitat types were originally represented as polygon areas, which was converted to raster.
 ```{r}
 #### Metro Vancouver Sensitive Ecosystems Inventory ####
 # Contents of "data-raw/metrovancouver_sensitive_ecosystem_inventory/" downloaded from MetroVancouver Open Data Catalogue
@@ -69,7 +70,7 @@ bowen_sei <- mvsei %>%
 
 ## Wetlands
 
-There were some areas identified as potentially incorrect during the Feb 1 2025 workshop. We followed up with Alan Whitehead and John Dowler via email for additional details. See issue here: <https://github.com/Palen-Lab/bowen.biodiversity.webapp/issues/23>
+There were some areas identified as potentially incorrect during the Feb 1 2025 workshop. We followed up with Alan Whitehead and John Dowler via email for additional details. See issue here: [Link](https://github.com/Palen-Lab/bowen.biodiversity.webapp/issues/23)
 
 Alan Whitehead provided ponds and wetlands shapefiles, that he had created over the years as an environmental consultant on Bowen Island. 
 
@@ -362,11 +363,14 @@ for(category in bowen_sei_no_tem_categories) {
 ## Bowen Heron Watch
 Data on Heron and Raptor nest sites on Bowen Island from Carla Skuce on Feb 4 2025. 
 
-Challenges:
+**Challenges:**
+
 - No common ID between Excel spreadsheet and shapefile point locations
 
 Addressed by manually looking up location description on Google Maps and matching to points in QGIS. For some points, I created new points that matched the location description. I figured at the 100 m resolution that we are working with, the precise location would not be that necessary. 
-```{r}
+
+Due to sensitivity of this data, this layer will not be provided or mapped on its own. 
+```{r, output = F}
 #### Heron Nests ####
 # This geopackage was created in QGIS with manual matching between excel spreadsheet and shapefile provided from Bowen Heron Watch
 bowen_heron_watch <- st_read(here("data-raw/bowen_heron_watch/bowen_heron_watch.gpkg")) 
@@ -430,7 +434,9 @@ disturb <- terra::rast(disturb_path)
 bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
   rast()
 #### Resample Raster to Bowen Island ####
-disturb_resamp <- terra::resample(disturb, bowen_island_mask) %>%
+disturb_resamp <- 
+  terra::project(disturb, bowen_island_mask) %>%
+  terra::resample(bowen_island_mask) %>%
   terra::focal(w = 9,
                fun = "mean",
                na.policy = "only") %>%
@@ -510,7 +516,10 @@ habitats_df <- data.frame(
 
 
 ## Save Habitat Weights
-```{r}
+The weights are saved to be accessible for the conservation prioritization step. These weights can be modified directly in the spreadsheet.
+
+The paths and weights for each habitat layer are saved to the habitats spreadsheet hosted here: [Habitat Spreadsheet](https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=sharing)
+```{r habitat_weights,  output = F}
 # Save to CSV
 write.csv(habitats_df, here(output_path, paste0(Sys.Date(),"_habitats.csv")))
 # Save to Google Sheets
@@ -523,8 +532,8 @@ write_sheet(
 ```
 
 ## Exploring Habitat Rasters
-
-```{r}
+You can use this interactive map to explore some of the input habitat layers.
+```{r explore_habitat_rasters}
 leaflet(width = "100%", height = "800px") %>%
   addProviderTiles(provider = providers$Stadia.AlidadeSmooth) %>%
   addRasterImage(x = wetlands_aw_rast, group = "A. Whitehead Wetlands", colors = "lightgreen") %>%

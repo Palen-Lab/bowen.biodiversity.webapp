@@ -7,14 +7,8 @@ format:
     code-fold: true
 ---
 
-```{r, include = FALSE}
-knitr::opts_chunk$set(
-  collapse = TRUE,
-  comment = "#>"
-)
-```
-
-```{r setup}
+## Setup
+```{r setup, output = F}
 library(bowen.biodiversity.webapp)
 library(here)
 library(sf)
@@ -27,14 +21,11 @@ library(dplyr)
 library(lasR)
 ```
 
-# 
-Downloaded from LidarBC: 
-https://lidar.gov.bc.ca/ 
+## Extract Tree Tops from LiDAR Data
+LiDAR data files were downloaded from [LidarBC](https://lidar.gov.bc.ca/). 
 
-# Convert from .laz to .las
+The lasR package was used to extract tree tops data from the LiDAR data.
 
-
-# 
 ```{r lasR, eval=F}
 set_parallel_strategy(concurrent_files(4))
 # Read las 
@@ -51,6 +42,9 @@ ans = exec(pipeline2, on = ctg)
 ttops <- ans$local_maximum %>% st_transform(4326)
 st_write(ttops, here("data-raw/ttops.gpkg"))
 ```
+
+## Visualize Tree Tops Data with Heatmap
+
 ```{r visualize}
 ttops <- st_read(here("data-raw/ttops.gpkg")) 
 ttops_coord <- ttops %>% st_coordinates() %>% as.data.frame()
