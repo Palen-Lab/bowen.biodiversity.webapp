@@ -1,6 +1,9 @@
 ---
-title: "protected_areas"
+title: "Protected Areas"
 format: html
+author: "Jay Matsushiba"
+published: July 2 2025
+date-modified: July 15 2025
 ---
 
 # Protected Areas Candidates
@@ -74,11 +77,6 @@ parcels$geom <- parcels$geom %>%
 
 bowen_protectedareas_valid <- bowen_protectedareas %>%
   st_make_valid()
-
-# Crown Land
-bowen.biodiversity.webapp::crown
-# OGMA
-bowen.biodiversity.webapp::ogma
 ```
 
 ## Parcels - Potential Protected Areas
@@ -142,8 +140,6 @@ ggplot2::ggsave(
 - Top 30% of conservation values 
 - Wetland / water / riparian values
 ```{r}
-
-
 #### Conservation values summed by parcel ####
 # extract zonation raster values from cells within each parcel
 notprotected_cons_vals <- notprotected_parcels %>% 
@@ -203,7 +199,7 @@ notprotected_cons_2 <- notprotected_cons_2 %>%
 # fw habitat diversity by parcel
 notprotected_cons_3 <- notprotected_cons_2 %>%
   terra::extract(fw_rast_stack, ., 
-                 max(), 
+                 max, 
                  na.rm = TRUE,
                  bind = TRUE) 
 
