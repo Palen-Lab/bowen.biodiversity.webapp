@@ -15,9 +15,9 @@ mod_species_ui <- function(id) {
       "Select Species Group:",
       choices = c("All Species" = "all",
                   "Threatened Species" = "threatened",
-                  "Bird Species" = "birds",
-                  "Small Mammals" = "sm_mammals",
-                  "Amphibians / Reptile" = "herptiles",
+                  # "Bird Species" = "birds",
+                  # "Small Mammals" = "sm_mammals",
+                  # "Amphibians / Reptile" = "herptiles",
                   "Summed Species Distribution Models" = "sum_sdms"),
       selected = "all"
     ),
@@ -54,18 +54,18 @@ mod_species_server <- function(id, map_id, parent_session){
         terra::rast(here::here("inst/extdata/2_species/threatened_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
-      } else if (input$selectSpeciesGroup == "birds") {
-        terra::rast(here::here("inst/extdata/2_species/birds_richness.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
-      } else if (input$selectSpeciesGroup == "sm_mammals") {
-        terra::rast(here::here("inst/extdata/2_species/sm_mammals_richness.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
-      } else if (input$selectSpeciesGroup == "herptiles") {
-        terra::rast(here::here("inst/extdata/2_species/herptiles_richness.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
+      # } else if (input$selectSpeciesGroup == "birds") {
+      #   terra::rast(here::here("inst/extdata/2_species/birds_richness.tif")) %>%
+      #     terra::project("epsg:4326") %>%
+      #     select_raster()
+      # } else if (input$selectSpeciesGroup == "sm_mammals") {
+      #   terra::rast(here::here("inst/extdata/2_species/sm_mammals_richness.tif")) %>%
+      #     terra::project("epsg:4326") %>%
+      #     select_raster()
+      # } else if (input$selectSpeciesGroup == "herptiles") {
+      #   terra::rast(here::here("inst/extdata/2_species/herptiles_richness.tif")) %>%
+      #     terra::project("epsg:4326") %>%
+      #     select_raster()
       } else if (input$selectSpeciesGroup == "sum_sdms") {
         terra::rast(here::here("inst/extdata/2_species/sum_sdms.tif")) %>%
           terra::project("epsg:4326") %>%
@@ -115,18 +115,18 @@ mod_species_server <- function(id, map_id, parent_session){
         output$sidebarInfo <- renderUI({
           h1("Threatened Species")
         })
-      } else if (input$selectSpeciesGroup == "birds") {
-        output$sidebarInfo <- renderUI({
-          h1("Bird Species")
-        })
-      } else if (input$selectSpeciesGroup == "sm_mammals") {
-        output$sidebarInfo <- renderUI({
-          h1("Small Mammal Species")
-        })
-      } else if (input$selectSpeciesGroup == "herptiles") {
-        output$sidebarInfo <- renderUI({
-          h1("Amphibian and Reptile Species")
-        })
+      # } else if (input$selectSpeciesGroup == "birds") {
+      #   output$sidebarInfo <- renderUI({
+      #     h1("Bird Species")
+      #   })
+      # } else if (input$selectSpeciesGroup == "sm_mammals") {
+      #   output$sidebarInfo <- renderUI({
+      #     h1("Small Mammal Species")
+      #   })
+      # } else if (input$selectSpeciesGroup == "herptiles") {
+      #   output$sidebarInfo <- renderUI({
+      #     h1("Amphibian and Reptile Species")
+      #   })
       } else if (input$selectSpeciesGroup == "sum_sdms") {
         output$sidebarInfo <- renderUI({
           h1("Summed Species Distribution Models")
