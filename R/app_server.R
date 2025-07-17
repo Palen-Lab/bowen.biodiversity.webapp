@@ -63,7 +63,7 @@ app_server <- function(input, output, session) {
   output$map <- leaflet::renderLeaflet({
     leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = TRUE,
                                               zoomSnap = 0.25,
-                                              zoomDelta = 1)
+                                              zoomDelta = 0.25)
                      ) %>%
       leaflet::setView(-123.3698, 49.3738, zoom = 13) %>%
       leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron,
@@ -72,7 +72,7 @@ app_server <- function(input, output, session) {
       leaflet::addPolygons(data = bowen_boundary_4326,
                            group = bowen_boundary_group,
                            stroke = TRUE,
-                           color = "darkgrey",
+                           color = "#333333",
                            fill = FALSE)
   })
 
