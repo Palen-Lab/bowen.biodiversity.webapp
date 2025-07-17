@@ -9,7 +9,9 @@ app_server <- function(input, output, session) {
   r <- reactiveValues(active_panel = "start")
   observeEvent(input$start_sidebar_btn, {
     r$active_panel <- "start"
-    mod_start_server("start_1")
+    mod_start_server("start_1",
+                     map_id = "map",
+                     parent_session = session)
   })
   observeEvent(input$species_sidebar_btn, {
     r$active_panel <- "species"
@@ -53,16 +55,25 @@ app_server <- function(input, output, session) {
   })
 
   #### Init Main Map ####
-  # TODO: add interactive legend, to reveal top % of zonation output
+  #### Add Bowen Admin Boundary ####
+  bowen_boundary_4326 <- bowen_boundary %>%
+    sf::st_transform(crs = 4326)
+  bowen_boundary_group <- "Admin Boundary"
+
   output$map <- leaflet::renderLeaflet({
     leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = TRUE,
                                               zoomSnap = 0.25,
                                               zoomDelta = 1)
                      ) %>%
-      leaflet::setView(-123.3698, 49.3738, zoom = 12) %>%
+      leaflet::setView(-123.3698, 49.3738, zoom = 13) %>%
       leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron,
                                 options = leaflet::providerTileOptions(noWrap = TRUE, minZoom = 10, maxZoom = 18)
-      )
+      ) %>%
+      leaflet::addPolygons(data = bowen_boundary_4326,
+                           group = bowen_boundary_group,
+                           stroke = TRUE,
+                           color = "darkgrey",
+                           fill = FALSE)
   })
 
   # #### Add Bowen Admin Boundary ####

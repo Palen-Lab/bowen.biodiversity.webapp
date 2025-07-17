@@ -17,12 +17,18 @@ mod_start_ui <- function(id) {
 #' start Server Functions
 #'
 #' @noRd
-mod_start_server <- function(id){
+mod_start_server <- function(id, map_id, parent_session){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
+    # Update map
+    leaflet::leafletProxy(mapId = map_id,
+                          session = parent_session) %>%
+      leaflet::clearControls() %>%
+      leaflet::clearImages()
   })
 }
+
 
 ## To be copied in the UI
 # mod_start_ui("start_1")
