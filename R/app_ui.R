@@ -32,6 +32,11 @@ app_ui <- function(request) {
             gap = 0,
             open = "always",
             actionButton(
+              "start_sidebar_btn",
+              "Start",
+              icon = icon("play")
+            ),
+            actionButton(
               "species_sidebar_btn",
               "Species",
               icon = icon("dove")
@@ -71,7 +76,7 @@ app_ui <- function(request) {
                 type = "hidden",
                 tabPanel(
                   "start",
-                  h1("WELCOME")
+                  mod_start_ui("start_1")
                 ),
                 tabPanel(
                   "species",

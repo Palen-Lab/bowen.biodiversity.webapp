@@ -7,6 +7,10 @@
 app_server <- function(input, output, session) {
   #### Active Panel ####
   r <- reactiveValues(active_panel = "start")
+  observeEvent(input$start_sidebar_btn, {
+    r$active_panel <- "start"
+    mod_start_server("start_1")
+  })
   observeEvent(input$species_sidebar_btn, {
     r$active_panel <- "species"
     mod_species_server("species_1",
