@@ -8,6 +8,16 @@
 #'
 #' @importFrom shiny NS tagList
 mod_species_ui <- function(id) {
+  # Description and Links, across all Species Pages
+  docs_link <- tagList(
+    h4("More Details / Downloads"),
+    p("The full code for producing these maps can be found at our documentation site. Many of these layers can also be downloaded."),
+    a("Documentation / Downloads",
+      href = "https://palen-lab.github.io/bowen.biodiversity.webapp/",
+      target = "_blank",
+      class = "btn btn-primary")
+  )
+
   tabPanel(
     "species_panel",
     selectInput(
@@ -21,7 +31,12 @@ mod_species_ui <- function(id) {
                   "Summed Species Distribution Models" = "sum_sdms"),
       selected = "all"
     ),
-    htmlOutput(NS(id, "sidebarInfo"))
+    bslib::card(
+      bslib::card_body(
+        htmlOutput(NS(id, "sidebarInfo")),
+      )
+    ),
+    docs_link
   )
 }
 
@@ -97,6 +112,23 @@ mod_species_server <- function(id, map_id, parent_session){
 
     #### Update sidebar content based on selection ####
 
+    # Simple Legend
+    simple_legend <- tagList(
+      div(
+        style = "display: inline-flex",
+        div(
+          style = "height: 24px; width: 24px; background-color: #006d2c; border-radius: 50%; border-style: solid; border-color: #555;"
+        ),
+        strong("= More Species", style = "margin-left: 5px;")
+      ),
+      div(
+        style = "display: inline-flex",
+        div(
+          style = "height: 24px; width: 24px; background-color: #edf8fb; border-radius: 50%; border-style: solid; border-color: #555"
+        ),
+        strong("= Less Species", style = "margin-left: 5px;")
+      )
+    )
 
     observeEvent(input$selectSpeciesGroup, {
       # Options for species richness
@@ -109,11 +141,34 @@ mod_species_server <- function(id, map_id, parent_session){
 
       if(input$selectSpeciesGroup == "all") {
         output$sidebarInfo <- renderUI({
-          h1("All Species")
+          tagList(
+            h1("All Species"),
+            tags$figure(
+              img(
+                src = "www/pileated-woodpecker-close-up.jpg",
+                width = "100%",
+                alt = "This photo displays the Pileated Woodpecker as an example of a species present on Bowen Island.",
+                title = "The Pileated Woodpecker is an example of a species present on Bowen Island."
+              ),
+              tags$figcaption(
+                em("Pileated Woodpecker"),
+                class = "text-center"
+              ),
+              class = "p-0 m-0"
+            ),
+            simple_legend,
+            p("This map shows the Species Richness by 100m resolution cell or pixel on Bowen Island."),
+            p("Based on probability of occurrence in Species Distribution Models. There are 193 of these species present on Bowen Island with species distribution models available.")
+          )
         })
       } else if (input$selectSpeciesGroup == "threatened") {
         output$sidebarInfo <- renderUI({
-          h1("Threatened Species")
+          tagList(
+            h1("Threatened Species"),
+            simple_legend,
+            p("This map shows the Species Richness by 100m resolution cell or pixel on Bowen Island."),
+            p("Based on probability of occurrence in Species Distribution Models. Species that are listed under the Red or Blue Lists according to the British Columbia Conservation Data Centre are included in this map. There are 24 of these species present on Bowen Island with species distribution models available.")
+          )
         })
       # } else if (input$selectSpeciesGroup == "birds") {
       #   output$sidebarInfo <- renderUI({
@@ -129,7 +184,12 @@ mod_species_server <- function(id, map_id, parent_session){
       #   })
       } else if (input$selectSpeciesGroup == "sum_sdms") {
         output$sidebarInfo <- renderUI({
-          h1("Summed Species Distribution Models")
+          tagList(
+            h1("Summed Species Distribution Models"),
+            simple_legend,
+            p("The values from each species distribution model (ranging from 0 to 1 as probability of occurrence in the cell) are summed to provide a relative biodiversity layer."),
+            p("Higher values correspond to cells with higher probability of species occurring, and vice versa. 193 species included in this analysis.")
+          )
         })
       }
     })

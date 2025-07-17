@@ -70,6 +70,7 @@ app_ui <- function(request) {
           # Main Content, with interactive information sidebar and map
           bslib::layout_sidebar(
             sidebar = bslib::sidebar(
+              width = "300px",
               # Interactive Sidebar (modules go here)
               tabsetPanel(
                 id = "main_sidebar",
