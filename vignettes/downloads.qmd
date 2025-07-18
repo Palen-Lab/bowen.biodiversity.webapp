@@ -17,7 +17,7 @@ July 16 2025
 
 **Download:** 
 
-[PNG](https://drive.google.com/file/d/1n-lkO8Ed5-M-5EgR4G_TCEYFEjnuSgNg/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} [TIF](https://drive.google.com/file/d/1SxNMvh3u8U9hxkPgbOSVHqlve7DRYpWc/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[.PNG](https://drive.google.com/file/d/1n-lkO8Ed5-M-5EgR4G_TCEYFEjnuSgNg/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} [.TIF](https://drive.google.com/file/d/1SxNMvh3u8U9hxkPgbOSVHqlve7DRYpWc/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
 
 ### Total Species Diversity
 This describes the sum of probability of occurence across available species distribution models per 100 m resolution cell on Bowen Island. 
@@ -28,7 +28,7 @@ July 16 2025
 
 **Download:** 
 
-[PNG](https://drive.google.com/file/d/1Vzg2_Cf6f8vO0T6b2-BXpj1jQrotNE5-/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} [TIF](https://drive.google.com/file/d/179Ly9BqGHXid_ZPgC3ChUifGOD2EQnQr/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[.PNG](https://drive.google.com/file/d/1Vzg2_Cf6f8vO0T6b2-BXpj1jQrotNE5-/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} [.TIF](https://drive.google.com/file/d/179Ly9BqGHXid_ZPgC3ChUifGOD2EQnQr/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
 
 ### Threatened Species Richness
 This describes the sum of species presence per 100 m resolution cell on Bowen Island, based on species distribution models. Includes only Threatened species. 
@@ -39,9 +39,46 @@ July 16 2025
 
 **Download:** 
 
-[PNG](https://drive.google.com/file/d/1XasplTMTFpYuXUfFU-gvFyPKV8B2vDYY/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} [TIF](https://drive.google.com/file/d/1n8MLFBu37SJOKx956uicnjAmayp5sQJ3/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[.PNG](https://drive.google.com/file/d/1XasplTMTFpYuXUfFU-gvFyPKV8B2vDYY/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} [.TIF](https://drive.google.com/file/d/1n8MLFBu37SJOKx956uicnjAmayp5sQJ3/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
 
 ## Habitats 
+### Freshwater - Richness
+
+**Last Updated:**
+
+July 16 2025
+
+**Download:**
+
+[.PNG](https://drive.google.com/file/d/1OM92kFOQWmo8SdG0tgERmtypq7rMASOu/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[.TIF](https://drive.google.com/file/d/1YhbV62TJzc_0tprQOBhYNV5eWR1knFBq/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+
+### Freshwater - Habitats
+
+**Last Updated:**
+
+July 16 2025
+
+**Download:**
+
+[.PNG](https://drive.google.com/file/d/1f_zAJRWOeRSlBWzduOrWSlBTAWOXt_H9/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[Lakes. TIF](https://drive.google.com/file/d/1GtUWDkuGGSnQNY5_I9jBneFcaXy0ay9e/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[Ponds .TIF](https://drive.google.com/file/d/1xCPOIYUjUuZumEOJWpG1hApZziQrf4K8/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[Riparian .TIF](https://drive.google.com/file/d/1R5OgT4u8i8utQxOZKFPfpkNOnG6kZPns/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[Streams .TIF](https://drive.google.com/file/d/1ojaGigrxLmKV2uSys-jrr8E37l1iFLwM/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[Wetlands .TIF](https://drive.google.com/file/d/1cnY8_YiVi-_3DVG7hkAVG3AMwVk_oqcV/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"}
+
+### Total Habitat Richness
+
+**Last Updated:**
+
+July 16 2025
+
+**Download:**
+
+[.PNG](https://drive.google.com/file/d/1DVYMR7nA1fZ_DBtysXPOvnmdWmiKAvwe/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+[.TIF](https://drive.google.com/file/d/1IXEw6Mhb6TgZTbThg_elL6fKiSYET7-W/view?usp=drive_link){.btn .btn-outline-primary .btn role="button"} 
+
 
 ## Conservation Values 
 

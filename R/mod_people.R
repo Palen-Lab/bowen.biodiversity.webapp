@@ -11,7 +11,8 @@ mod_people_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     "people_panel",
-    h1("People")
+    h1("People"),
+    p("Under Construction")
   )
 }
 

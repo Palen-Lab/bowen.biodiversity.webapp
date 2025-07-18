@@ -21,7 +21,8 @@ mod_habitats_ui <- function(id) {
       selected = "all"
     ),
     htmlOutput(NS(id, "sidebarInfo")),
-    textOutput(NS(id, "test"))
+    textOutput(NS(id, "test")),
+    p("Under Construction")
   )
 }
 

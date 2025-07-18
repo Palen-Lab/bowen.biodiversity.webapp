@@ -11,7 +11,8 @@ mod_values_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     "values_panel",
-    h1("Values")
+    h1("Values"),
+    p("Under Construction")
   )
 }
 

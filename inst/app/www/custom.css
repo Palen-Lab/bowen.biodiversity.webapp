@@ -23,7 +23,8 @@ body {
   height: 40px;
 }
 
-#species_sidebar_btn, #habitats_sidebar_btn, #people_sidebar_btn, #values_sidebar_btn, #threats_sidebar_btn, #action_sidebar_btn {
+#start_sidebar_btn, #species_sidebar_btn, #habitats_sidebar_btn, #people_sidebar_btn, #values_sidebar_btn, #threats_sidebar_btn, #action_sidebar_btn {
+  display: grid;
   margin: 0;
   padding: 11px 0 10px 0;
   font-size: 0.8rem;
