@@ -14,7 +14,7 @@
     "href": "vignettes/downloads.html#species",
     "title": "Downloads",
     "section": "Species",
-    "text": "Species\n\nTotal Species Richness\nThis describes the sum of species presence per 100 m resolution cell on Bowen Island, based on species distribution models.\nLast Updated:\nJuly 16 2025\nDownload:\nPNG TIF\n\n\nTotal Species Diversity\nThis describes the sum of probability of occurence across available species distribution models per 100 m resolution cell on Bowen Island.\nLast Updated:\nJuly 16 2025\nDownload:\nPNG TIF\n\n\nThreatened Species Richness\nThis describes the sum of species presence per 100 m resolution cell on Bowen Island, based on species distribution models. Includes only Threatened species.\nLast Updated:\nJuly 16 2025\nDownload:\nPNG TIF",
+    "text": "Species\n\nTotal Species Richness\nThis describes the sum of species presence per 100 m resolution cell on Bowen Island, based on species distribution models.\nLast Updated:\nJuly 16 2025\nDownload:\n.PNG .TIF\n\n\nTotal Species Diversity\nThis describes the sum of probability of occurence across available species distribution models per 100 m resolution cell on Bowen Island.\nLast Updated:\nJuly 16 2025\nDownload:\n.PNG .TIF\n\n\nThreatened Species Richness\nThis describes the sum of species presence per 100 m resolution cell on Bowen Island, based on species distribution models. Includes only Threatened species.\nLast Updated:\nJuly 16 2025\nDownload:\n.PNG .TIF",
     "crumbs": [
       "Downloads"
     ]
@@ -24,7 +24,7 @@
     "href": "vignettes/downloads.html#habitats",
     "title": "Downloads",
     "section": "Habitats",
-    "text": "Habitats",
+    "text": "Habitats\n\nFreshwater - Richness\nLast Updated:\nJuly 16 2025\nDownload:\n.PNG .TIF\n\n\nFreshwater - Habitats\nLast Updated:\nJuly 16 2025\nDownload:\n.PNG Lakes. TIF Ponds .TIF Riparian .TIF Streams .TIF Wetlands .TIF\n\n\nTotal Habitat Richness\nLast Updated:\nJuly 16 2025\nDownload:\n.PNG .TIF",
     "crumbs": [
       "Downloads"
     ]
