@@ -27,7 +27,8 @@ Imports:
     pkgload,
     sf,
     shiny,
-    stringr
+    stringr,
+    terra
 Suggests: 
     knitr,
     rmarkdown,

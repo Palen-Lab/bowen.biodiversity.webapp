@@ -283,6 +283,21 @@ for(tem_code in bowen_TEM_categories) {
   ) %>%
     bind_rows(habitats_df)
 }
+# Create combined raster rather than separate layers, for mapping
+bowen_TEM_rast <- bowen_TEM %>%
+  vect() %>% 
+  terra::project(project_crs) %>% # Reproject to the mask CRS
+  terra::rasterize(bowen_island_mask,
+                   touches = T,
+                   field = "SITEMC_S1_",
+                   background = NA) # Rasterize to match mask, set background values to NA
+writeRaster(bowen_TEM_rast, here("inst/extdata/3_habitats/other_tem.tif"))
+bowen_TEM_habitat_types <- bowen_TEM[,c("SITEMC_S1_", "SITE_S1_LA")] %>% 
+  st_drop_geometry() %>% 
+  unique() %>% 
+  arrange(SITEMC_S1_) %>%
+  distinct(SITEMC_S1_, .keep_all = T)
+saveRDS(bowen_TEM_habitat_types, here("inst/extdata/3_habitats/other_tem_types.rds"))
 
 #### Metro Vancouver SEI for Young Forest, Mature Forest, Old Forest designation ####
 # OF - Old Forest

@@ -38,8 +38,6 @@ mod_habitats_ui <- function(id) {
     ),
     docs_link
   )
-
-
 }
 
 #' habitats Server Functions
@@ -54,70 +52,21 @@ mod_habitats_server <- function(id, map_id, parent_session){
       terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
         terra::project("epsg:4326")
     })
+    #### Define reactive value for specificselectGroup ####
+    subselect <- reactive({
+      req(input$subselectGroup)
+      input$subselectGroup
+    })
+    #### Update sidebar based on selectGroup ####
     observeEvent(input$selectGroup, {
       # Habitat Category Selection
       if(input$selectGroup == "all") {
-        terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
-      } else if (input$selectGroup == "freshwater") {
-        terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
-      } else if (input$selectGroup == "forests") {
-        # TODO: replace with actual
-        terra::rast(here::here("inst/extdata/2_species/birds_richness.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
-      } else if (input$selectGroup == "other_terrestrial") {
-        # TODO: replace with actual
-        terra::rast(here::here("inst/extdata/2_species/sm_mammals_richness.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
-      } else if (input$selectGroup == "intertidal") {
-        # TODO: replace with actual
-        terra::rast(here::here("inst/extdata/2_species/herptiles_richness.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
-      }
-      # TODO: rename raster group
-      raster_group <- "Species Richness"
-      raster_domain <- c(0, terra::minmax(select_raster())[2])
-      raster_pal <- leaflet::colorNumeric(c('#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'), raster_domain,
-                                                    na.color = "transparent")
-
-      # Update map
-      leaflet::leafletProxy(mapId = map_id,
-                            session = parent_session) %>%
-        leaflet::clearControls() %>%
-        leaflet::clearImages() %>%
-        leaflet::addRasterImage(
-          x = select_raster(),
-          colors = raster_pal
-        ) %>%
-        leaflet::addLegend(
-          pal = raster_pal,
-          values =  raster_domain,
-          title = raster_group
-        )
-    })
-
-    #### Update sidebar content based on selectGroup ####
-    observeEvent(input$selectGroup, {
-      # Select subcategory / specific layer within each category
-      if(input$selectGroup == "all") {
-        output$sidebarInfo <- renderUI({
-          h1("All Habitats")
-        })
         # Update Sidebar
-        output$specific_sidebarInfo <- renderUI({
-          tagList(
-            h3("Diversity of Bowen Island Habitats"),
-            p("Bowen Island features a rich mosaic of habitats—ranging from mature temperate rainforests and dry coastal bluffs to freshwater wetlands, lakes, streams, and intertidal shores—each supporting distinct communities of plants, animals, and fungi. This diversity of ecosystems underpins high ecological resilience and biodiversity, making the island a vital refuge for both terrestrial and aquatic life.")
-          )
+        output$sidebarInfo <- renderUI({
+          h1("Diversity of Bowen Island Habitats")
         })
-
       } else if (input$selectGroup == "freshwater") {
+        # Update Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
             h1("Freshwater Habitats"),
@@ -128,47 +77,110 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       } else if (input$selectGroup == "forests") {
+        # Update Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
             h1("Forest Habitats"),
             selectInput(session$ns("subselectGroup"),
                         "Select specific habitat",
-                        c("Forest Richness", "Old Forest", "Mature Forest", "Young Forest"),
-                        selected = "Forest Richness")
+                        c("Old Forest", "Mature Forest", "Young Forest", "Young Forest (small)"),
+                        selected = "Old Forest")
           )
         })
       } else if (input$selectGroup == "other_terrestrial") {
+        # Update Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1("Other Terrestrial Habitats"),
-            selectInput(session$ns("subselectGroup"),
-                        "Select specific habitat",
-                        c("Richness", "Ponds"),
-                        selected = "Richness")
+            h1("Other Terrestrial Habitats")
           )
         })
       } else if (input$selectGroup == "intertidal") {
+        # Update UI
         output$sidebarInfo <- renderUI({
           tagList(
-            h1("Intertidal Habitats"),
-            selectInput(session$ns("subselectGroup"),
-                        "Select specific habitat",
-                        c("Richness", "Ponds"),
-                        selected = "Richness")
+            h1("Intertidal Habitats")
           )
         })
       }
     })
 
-    subselect <- reactive({
-      req(input$subselectGroup)
-      input$subselectGroup
-    })
-    # Update raster layer on map based on specific layer selection
-    observeEvent(input$subselectGroup, {
+    #### Update habitat raster layer and specific_sidebarInfo on Leaflet ####
+    # Triggered by changes in both selectGroup and subselectGroup inputs
+    # For habitats without subselectGroups, need to put them before in the else if
+    observeEvent(list(input$subselectGroup, input$selectGroup), {
+      #### ALL HABITATS ####
+      if(input$selectGroup == "all") {
+        # Update Leaflet Map Parameters
+        raster_group <- "Habitat Richness"
+        terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
+          terra::project("epsg:3857", method = "near") %>%
+          select_raster()
+        raster_domain <- terra::values(select_raster()) %>%
+          unique() %>%
+          sort()
+        raster_labels <- raster_domain
+        raster_pal <- leaflet::colorNumeric(
+          c('#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'),
+          raster_domain,
+          na.color = "transparent"
+        )
+        # Update Specfic Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            util_ui_simple_legend(low_colour = '#edf8fb', high_colour = '#006d2c', low_label =  "= Fewer Habitat Types", high_label =  "= More Habitat Types"),
+            p("Bowen Island features a rich mosaic of habitats—ranging from mature temperate rainforests and dry coastal bluffs to freshwater wetlands, lakes, streams, and intertidal shores—each supporting distinct communities of plants, animals, and fungi. This diversity of ecosystems underpins high ecological resilience and biodiversity, making the island a vital refuge for both terrestrial and aquatic life.")
+          )
+        })
+      }
+      #### OTHER TERRESTRIAL ####
+      else if (input$selectGroup == "other_terrestrial") {
+        # Update Leaflet Map Parameters
+        raster_group <- "Other Terrestrial"
+        terra::rast(here::here("inst/extdata/3_habitats/other_tem.tif")) %>%
+          terra::project("epsg:3857", method = "near") %>%
+          select_raster()
+        bowen_TEM_habitat_types <- readRDS("inst/extdata/3_habitats/other_tem_types.rds")
+
+        raster_domain <- seq(from = 0, to = (length(bowen_TEM_habitat_types$SITEMC_S1_)-1))
+        raster_labels <- bowen_TEM_habitat_types$SITE_S1_LA
+        raster_pal <- leaflet::colorFactor(
+          "viridis",
+          raster_domain,
+          na.color = "transparent"
+        )
+        # Update Specific Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            p("Here, the more detailed habitat types captured by the Terrestrial Ecosystem Mapping project are represented. Specific plant, soil, and moisture characteristics were mapped on Bowen Island.")
+          )
+        })
+      }
+      #### INTERTIDAL ####
+      else if (input$selectGroup == "intertidal") {
+        # Update Leaflet Map Parameters
+        raster_group <- "Other Terrestrial"
+        terra::rast(here::here("inst/extdata/3_habitats/other_tem.tif")) %>%
+          terra::project("epsg:3857", method = "near") %>%
+          select_raster()
+        bowen_TEM_habitat_types <- readRDS("inst/extdata/3_habitats/other_tem_types.rds")
+
+        raster_domain <- seq(from = 0, to = (length(bowen_TEM_habitat_types$SITEMC_S1_)-1))
+        raster_labels <- bowen_TEM_habitat_types$SITEMC_S1_
+        raster_pal <- leaflet::colorFactor(
+          "viridis",
+          raster_domain,
+          na.color = "transparent"
+        )
+        # Update Specific Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            p("Here, the more detailed habitat types captured by the Terrestrial Ecosystem Mapping project are represented. Specific plant, soil, and moisture characteristics were mapped on Bowen Island.")
+          )
+        })
+      }
       #### FRESHWATER ####
-      if(subselect() == "Freshwater Richness") {
-        # Update Map
+      else if(subselect() == "Freshwater Richness") {
+        # Update Leaflet Map Parameters
         raster_group <- "Freshwater Richness"
         terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
           # method = "near" or else get mean values from multiple cells
@@ -182,7 +194,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           raster_domain,
           na.color = "transparent"
         )
-        # Update Sidebar
+        # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Diversity of Freshwater Habitats"),
@@ -217,7 +229,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           raster_domain,
           na.color = "transparent"
         )
-        # Update Sidebar
+        # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Lakes of Bowen Island"),
@@ -238,7 +250,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           raster_domain,
           na.color = "transparent"
         )
-        # Update Sidebar
+        # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Ponds of Bowen Island"),
@@ -259,7 +271,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           raster_domain,
           na.color = "transparent"
         )
-        # Update Sidebar
+        # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Riparian Habitat of Bowen Island"),
@@ -280,7 +292,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           raster_domain,
           na.color = "transparent"
         )
-        # Update Sidebar
+        # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Streams of Bowen Island"),
@@ -303,7 +315,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           raster_domain,
           na.color = "transparent"
         )
-        # Update Sidebar
+        # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Wetlands of Bowen Island"),
@@ -311,32 +323,96 @@ mod_habitats_server <- function(id, map_id, parent_session){
             p("Wetlands on Bowen Island are ecologically significant as they regulate water flow, improve water quality, support high biodiversity, and provide critical breeding and foraging habitat for amphibians, birds, and other wildlife.")
           )
         })
+      }
       #### FORESTS ####
-      } else if (subselect() == "Forest Richness") {
+      else if (subselect() == "Old Forest") {
         # Update Map
-        raster_group <- "Forest Richness"
-        terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
-          # method = "near" or else get mean values from multiple cells
+        raster_group <- "Old Forest"
+        terra::rast(here::here("inst/extdata/3_habitats/forests_OF.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
           select_raster()
-        raster_domain <- terra::values(select_raster()) %>%
-          unique()
-        raster_labels <- raster_domain
-        raster_pal <- leaflet::colorNumeric(
-          c('#eff3ff','#bdd7e7','#6baed6','#3182bd','#08519c'),
+        raster_domain <- 1
+        raster_labels <- "Present"
+        raster_pal <- leaflet::colorFactor(
+          c('#2ca25f'),
           raster_domain,
           na.color = "transparent"
         )
-        # Update Sidebar
+        # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
-            h3("Forests of Bowen Island"),
-            p("Wetlands on Bowen Island are ecologically significant as they regulate water flow, improve water quality, support high biodiversity, and provide critical breeding and foraging habitat for amphibians, birds, and other wildlife.")
+            h3("Old Forests of Bowen Island"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "= Not Present", high_label = "= Present"),
+            p("Old forests are generally conifer-dominated forest with complex vertical structure, where the canopy tree ages are mostly 250 years old or older, but may include older mixed coniferous stands."),
+            p("Old forests on Bowen Island are ecologically significant for providing rare habitat for diverse species, storing large amounts of carbon, and maintaining watershed stability and long-term forest resilience.")
+          )
+        })
+      } else if (subselect() == "Mature Forest") {
+        # Update Leaflet Map Parameters
+        raster_group <- "Mature Forest"
+        terra::rast(here::here("inst/extdata/3_habitats/forests_MF.tif")) %>%
+          terra::project("epsg:3857", method = "near") %>%
+          select_raster()
+        raster_domain <- 1
+        raster_labels <- "Present"
+        raster_pal <- leaflet::colorFactor(
+          c('#2ca25f'),
+          raster_domain,
+          na.color = "transparent"
+        )
+        # Update Specific Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            h3("Mature Forests of Bowen Island"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "= Not Present", high_label = "= Present"),
+            p("Mature forests are generally greater than 80 years old and less than 250 years old. Mature forests are not as structurally complex as old forests, but can function as essential habitat areas for many wildlife species and as primary connections between ecosystems in a highly fragmented landscape.")
+          )
+        })
+      } else if (subselect() == "Young Forest") {
+        # Update Map
+        raster_group <- "Mature Forest"
+        terra::rast(here::here("inst/extdata/3_habitats/forests_YF.tif")) %>%
+          terra::project("epsg:3857", method = "near") %>%
+          select_raster()
+        raster_domain <- 1
+        raster_labels <- "Present"
+        raster_pal <- leaflet::colorFactor(
+          c('#2ca25f'),
+          raster_domain,
+          na.color = "transparent"
+        )
+        # Update Specific Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            h3("Young Forests of Bowen Island"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "= Not Present", high_label = "= Present"),
+            p("Young forests are generally greater than 30 – 40 years old and less than 80 years old. Young forests can be important habitat areas for many wildlife species and serve as primary connections between ecosystems in a highly fragmented landscape.")
+          )
+        })
+      } else if (subselect() == "Young Forest (small)") {
+        # Update Map
+        raster_group <- "Young Forest (small)"
+        terra::rast(here::here("inst/extdata/3_habitats/forests_YS.tif")) %>%
+          terra::project("epsg:3857", method = "near") %>%
+          select_raster()
+        raster_domain <- 1
+        raster_labels <- "Present"
+        raster_pal <- leaflet::colorFactor(
+          c('#2ca25f'),
+          raster_domain,
+          na.color = "transparent"
+        )
+        # Update Specific Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            h3("Young Forests (small)"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "= Not Present", high_label = "= Present"),
+            p("These are patches of young forests that are less than 5 ha. Patch size is important in ecosystems because larger patches typically support greater biodiversity, offer more stable habitats, and enhance ecological processes by reducing edge effects and increasing habitat connectivity.")
           )
         })
       }
 
-      # Update map
+      #### Update Leaflet Map ####
       leaflet::leafletProxy(mapId = map_id,
                             session = parent_session) %>%
         leaflet::clearControls() %>%
