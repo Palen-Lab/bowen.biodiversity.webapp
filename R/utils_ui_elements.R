@@ -30,9 +30,9 @@ util_ui_simple_legend_element <- function(colour, label) {
 }
 
 docs_link <- tagList(
-  h4("More Details / Downloads"),
+  h4("More Details"),
   p("The full code for producing these maps can be found at our documentation site. Many of these layers can also be downloaded."),
-  a("Documentation / Downloads",
+  a(icon("up-right-from-square"), "Visit Documentation",
     href = "https://palen-lab.github.io/bowen.biodiversity.webapp/",
     target = "_blank",
     class = "btn btn-primary")

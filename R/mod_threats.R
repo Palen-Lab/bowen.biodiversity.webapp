@@ -70,9 +70,9 @@ mod_threats_server <- function(id, map_id, parent_session){
       else if (input$selectGroup == "wildfire") {
         # Update Leaflet Map Parameters
         raster_group <- "Relative Wildfire Vuln."
-        fire_index_simple <- terra::rast(here::here("inst/extdata/6_threats/fire_index_32m.tif")) %>%
+        fire_index_simple <- terra::rast(here::here("inst/extdata/6_threats/fire_index_40m.tif")) %>%
           terra::project("epsg:3857", method = "near")
-        NAflag(fire_index_simple) <- 4294967296
+        terra::NAflag(fire_index_simple) <- 4294967296
         select_raster(fire_index_simple)
 
         raster_domain <- terra::values(select_raster()) %>%

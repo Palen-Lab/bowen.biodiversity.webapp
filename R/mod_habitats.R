@@ -31,7 +31,7 @@ mod_habitats_ui <- function(id) {
 }
 
 #' habitats Server Functions
-#'
+#' @importFrom foreach %do% foreach
 #' @noRd
 mod_habitats_server <- function(id, map_id, parent_session){
   moduleServer(id, function(input, output, session){
