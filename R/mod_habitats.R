@@ -127,7 +127,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         # Update Specfic Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
-            util_ui_simple_legend(low_colour = '#edf8fb', high_colour = '#006d2c', low_label =  "= Fewer Habitat Types", high_label =  "= More Habitat Types"),
+            util_ui_simple_legend(low_colour = '#edf8fb', high_colour = '#006d2c', low_label =  "Fewer Habitat Types", high_label =  "More Habitat Types"),
             p("Bowen Island features a rich mosaic of habitats—ranging from mature temperate rainforests and dry coastal bluffs to freshwater wetlands, lakes, streams, and intertidal shores—each supporting distinct communities of plants, animals, and fungi. This diversity of ecosystems underpins high ecological resilience and biodiversity, making the island a vital refuge for both terrestrial and aquatic life.")
           )
         })
@@ -218,7 +218,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
             #   ),
             #   class = "p-0 m-0"
             # ),
-            util_ui_simple_legend(low_colour = '#eff3ff', high_colour = '#08519c', low_label = "= Fewer Habitats", high_label = "= More Habitats"),
+            util_ui_simple_legend(low_colour = '#eff3ff', high_colour = '#08519c', low_label = "Fewer Habitats", high_label = "More Habitats"),
             p("Bowen Island hosts a diverse range of freshwater habitats, including lakes, wetlands, and streams that support species such as amphibians, aquatic invertebrates, and native fish. These ecosystems are shaped by the island's forested terrain and seasonal rainfall, contributing to rich biodiversity and ecological resilience.")
           )
         })
@@ -239,7 +239,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Lakes of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "= Not Present", high_label = "= Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "Not Present", high_label = "Present"),
             p("The lakes on Bowen Island, such as Killarney and Grafton Lakes, are ecologically significant as they provide critical habitat for amphibians, birds, and aquatic invertebrates, help regulate local hydrology, and serve as important sources of clean water and biodiversity within the island’s forested ecosystem.")
           )
         })
@@ -260,7 +260,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Ponds of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "= Not Present", high_label = "= Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "Not Present", high_label = "Present"),
             p("The ponds on Bowen Island—including natural and beaver-created wetlands—are ecologically vital as they provide habitat for amphibians, invertebrates, and waterfowl, support sediment and nutrient retention, and serve as key micro‑watersheds within the island’s freshwater network.")
           )
         })
@@ -281,7 +281,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Riparian Habitat of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "= Not Present", high_label = "= Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "Not Present", high_label = "Present"),
             p("Riparian zones on Bowen Island—those lush, water‑adjacent strips of vegetation along creeks, streams, and lakes—are ecologically crucial because they stabilize stream banks, filter sediment and nutrients, moderate water temperatures, recharge groundwater, and provide high‑value habitat and movement corridors for fish, amphibians, birds, and terrestrial wildlife, playing a key role in watershed health and biodiversity.")
           )
         })
@@ -302,9 +302,9 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Streams of Bowen Island"),
-            util_ui_simple_legend_element("#ece7f2", "= Non-fish bearing"),
-            util_ui_simple_legend_element('#a6bddb', "= Tributary to fish-bearing"),
-            util_ui_simple_legend_element('#2b8cbe', "= Fish-bearing"),
+            util_ui_simple_legend_element("#ece7f2", "Non-fish bearing"),
+            util_ui_simple_legend_element('#a6bddb', "Tributary to fish-bearing"),
+            util_ui_simple_legend_element('#2b8cbe', "Fish-bearing"),
             p("Streams on Bowen Island play a vital ecological role by sustaining freshwater habitats, supporting salmonid populations, and connecting upland forests to wetlands and marine ecosystems, thereby maintaining biodiversity and ecosystem health.")
           )
         })
@@ -325,7 +325,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Wetlands of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "= Not Present", high_label = "= Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "Not Present", high_label = "Present"),
             p("Wetlands on Bowen Island are ecologically significant as they regulate water flow, improve water quality, support high biodiversity, and provide critical breeding and foraging habitat for amphibians, birds, and other wildlife.")
           )
         })
@@ -348,7 +348,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Old Forests of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "= Not Present", high_label = "= Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "Not Present", high_label = "Present"),
             p("Old forests are generally conifer-dominated forest with complex vertical structure, where the canopy tree ages are mostly 250 years old or older, but may include older mixed coniferous stands."),
             p("Old forests on Bowen Island are ecologically significant for providing rare habitat for diverse species, storing large amounts of carbon, and maintaining watershed stability and long-term forest resilience.")
           )
@@ -370,7 +370,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Mature Forests of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "= Not Present", high_label = "= Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "Not Present", high_label = "Present"),
             p("Mature forests are generally greater than 80 years old and less than 250 years old. Mature forests are not as structurally complex as old forests, but can function as essential habitat areas for many wildlife species and as primary connections between ecosystems in a highly fragmented landscape.")
           )
         })
@@ -391,7 +391,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Young Forests of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "= Not Present", high_label = "= Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "Not Present", high_label = "Present"),
             p("Young forests are generally greater than 30 – 40 years old and less than 80 years old. Young forests can be important habitat areas for many wildlife species and serve as primary connections between ecosystems in a highly fragmented landscape.")
           )
         })
@@ -412,7 +412,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Young Forests (small)"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "= Not Present", high_label = "= Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#2ca25f', low_label = "Not Present", high_label = "Present"),
             p("These are patches of young forests that are less than 5 ha. Patch size is important in ecosystems because larger patches typically support greater biodiversity, offer more stable habitats, and enhance ecological processes by reducing edge effects and increasing habitat connectivity.")
           )
         })
