@@ -15,9 +15,9 @@ mod_people_ui <- function(id) {
       bslib::card_body(
         tagList(
           h1("Human Disturbance"),
-          util_ui_simple_legend_element(label = "High", colour = "#d7191c"),
+          util_ui_simple_legend_element(label = "Higher", colour = "#d7191c"),
           util_ui_simple_legend_element(label = "Medium", colour = "#ffffbf"),
-          util_ui_simple_legend_element(label = "Low", colour = "#1a9641"),
+          util_ui_simple_legend_element(label = "Lower", colour = "#1a9641"),
           p("Human disturbance on Bowen Island, including development, recreation, and habitat fragmentation, has impacted native ecosystems by altering land cover, increasing pollution, and putting pressure on sensitive habitats like wetlands, forests, and shorelines."),
           # p("Kristen Hirsh-Pearson, Chris J. Johnson, Richard Schuster, Roger D. Wheate, and Oscar Venter. 2022. Canada’s human footprint reveals large intact areas juxtaposed against areas under immense anthropogenic pressure. FACETS. 7: 398-419.")
         )
