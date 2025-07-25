@@ -8,16 +8,6 @@
 #'
 #' @importFrom shiny NS tagList
 mod_species_ui <- function(id) {
-  # Description and Links, across all Species Pages
-  docs_link <- tagList(
-    h4("More Details / Downloads"),
-    p("The full code for producing these maps can be found at our documentation site. Many of these layers can also be downloaded."),
-    a("Documentation / Downloads",
-      href = "https://palen-lab.github.io/bowen.biodiversity.webapp/",
-      target = "_blank",
-      class = "btn btn-primary")
-  )
-
   tabPanel(
     "species_panel",
     selectInput(
