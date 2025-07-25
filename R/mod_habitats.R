@@ -158,23 +158,29 @@ mod_habitats_server <- function(id, map_id, parent_session){
       #### INTERTIDAL ####
       else if (input$selectGroup == "intertidal") {
         # Update Leaflet Map Parameters
-        raster_group <- "Other Terrestrial"
-        terra::rast(here::here("inst/extdata/3_habitats/other_tem.tif")) %>%
+        raster_group <- "Intertidal"
+        terra::rast(here::here("inst/extdata/3_habitats/intertidal.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
           select_raster()
-        bowen_TEM_habitat_types <- readRDS("inst/extdata/3_habitats/other_tem_types.rds")
 
-        raster_domain <- seq(from = 0, to = (length(bowen_TEM_habitat_types$SITEMC_S1_)-1))
-        raster_labels <- bowen_TEM_habitat_types$SITEMC_S1_
+        raster_domain <- seq(from = 0, to = 4)
+        raster_labels <- c("Beaches", "Coastal Herbaceous", "Eelgrass", "Mudflats", "Vegetated Shoreline")
+        raster_colours <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99")
         raster_pal <- leaflet::colorFactor(
-          "viridis",
+          raster_colours,
           raster_domain,
           na.color = "transparent"
         )
         # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
-            p("Here, the more detailed habitat types captured by the Terrestrial Ecosystem Mapping project are represented. Specific plant, soil, and moisture characteristics were mapped on Bowen Island.")
+            foreach(i = 1:length(raster_labels)) %do% {
+              util_ui_simple_legend_element(
+                label = raster_labels[i],
+                colour = raster_colours[i]
+              )
+            },
+            p("Intertidal ecosystems on Bowen Island play a vital ecological role by supporting high biodiversity, including shellfish, seaweeds, and invertebrates that serve as food for birds and fish; they also contribute to nutrient cycling, filter water, and provide natural shoreline protection against erosion, storm surges, and sea-level rise, making them key components of coastal resilience.")
           )
         })
       }
