@@ -213,7 +213,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       } else if (subselect() == "Lakes") {
-        # Update Map
+        # Update Leaflet Map Parameters
         raster_group <- "Lakes"
         terra::rast(here::here("inst/extdata/3_habitats/fw_lakes.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
@@ -234,7 +234,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       } else if (subselect() == "Ponds") {
-        # Update Map
+        # Update Leaflet Map Parameters
         raster_group <- "Ponds"
         terra::rast(here::here("inst/extdata/3_habitats/fw_ponds.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
@@ -255,7 +255,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       } else if (subselect() == "Riparian") {
-        # Update Map
+        # Update Leaflet Map Parameters
         raster_group <- "Riparian"
         terra::rast(here::here("inst/extdata/3_habitats/fw_riparian.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
@@ -276,7 +276,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       } else if (subselect() == "Streams") {
-        # Update Map
+        # Update Leaflet Map Parameters
         raster_group <- "Streams"
         terra::rast(here::here("inst/extdata/3_habitats/fw_streams.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
@@ -299,7 +299,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       } else if (subselect() == "Wetlands") {
-        # Update Map
+        # Update Leaflet Map Parameters
         raster_group <- "Wetlands"
         terra::rast(here::here("inst/extdata/3_habitats/fw_wetlands.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
@@ -322,7 +322,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
       }
       #### FORESTS ####
       else if (subselect() == "Old Forest") {
-        # Update Map
+        # Update Leaflet Map Parameters
         raster_group <- "Old Forest"
         terra::rast(here::here("inst/extdata/3_habitats/forests_OF.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
@@ -365,7 +365,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       } else if (subselect() == "Young Forest") {
-        # Update Map
+        # Update Leaflet Map Parameters
         raster_group <- "Mature Forest"
         terra::rast(here::here("inst/extdata/3_habitats/forests_YF.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
@@ -386,7 +386,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       } else if (subselect() == "Young Forest (small)") {
-        # Update Map
+        # Update Leaflet Map Parameters
         raster_group <- "Young Forest (small)"
         terra::rast(here::here("inst/extdata/3_habitats/forests_YS.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
