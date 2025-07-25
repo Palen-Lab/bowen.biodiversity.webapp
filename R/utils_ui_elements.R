@@ -1,0 +1,30 @@
+#' util_ui_simple_legend
+#'
+#' @description A utils function
+#'
+#' @return tagList object
+#'
+#' @noRd
+util_ui_simple_legend <- function(low_colour, high_colour, low_label, high_label) {
+  tagList(
+    util_ui_simple_legend_element(high_colour, high_label),
+    util_ui_simple_legend_element(low_colour, low_label)
+  )
+}
+
+#' util_ui_simple_legend_element
+#'
+#' @param colour Hex code for colour
+#' @param label Label for circle legend item
+#'
+#' @returns HTML
+#' @noRd
+util_ui_simple_legend_element <- function(colour, label) {
+  div(
+    style = "display: inline-flex",
+    div(
+      style = paste0("height: 24px; width: 24px; background-color: ", colour, "; border-radius: 50%; border-style: solid; border-color: #555;")
+    ),
+    strong(label, style = "margin-left: 5px;")
+  )
+}
