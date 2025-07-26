@@ -241,6 +241,13 @@ plot(fire_index)
 
 # Save
 writeRaster(fire_index, here("inst/extdata/6_threats/fire_index.tif"))
+# Save simple for web app
+fire_index_simple <- fire_index %>%
+  aggregate(fact = 20, fun = mean) %>%
+  round()
+writeRaster(fire_index_simple, here("inst/extdata/6_threats/fire_index_40m.tif"),
+            overwrite = T)
+
 ```
 
 ## Plotting 
