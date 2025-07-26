@@ -40,31 +40,56 @@ mod_threats_server <- function(id, map_id, parent_session){
       terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
         terra::project("epsg:4326")
     })
+
+    dev_layer <- sf::st_read(here::here("inst/extdata/6_threats/development_potential.gpkg"))
+
     observeEvent(input$selectGroup, {
       #### DEVELOPMENT ####
       if(input$selectGroup == "development") {
         # Update Leaflet Map Parameters
-        raster_group <- "Development Potential"
-        terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
-        raster_domain <- terra::values(select_raster()) %>%
-          unique() %>%
-          sort()
-        raster_labels <- raster_domain
-        raster_pal <- leaflet::colorNumeric(
-          c('#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'),
-          raster_domain,
-          na.color = "transparent"
+        layer_domain <- c(0, dev_layer$bioval_per_unit)
+        pal <- leaflet::colorNumeric(
+          palette = "YlOrRd",
+          domain = layer_domain
         )
+
         # Update Specfic Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1("Development"),
-            util_ui_simple_legend(low_colour = '#edf8fb', high_colour = '#006d2c', low_label =  "Fewer Habitat Types", high_label =  "More Habitat Types"),
-            p("Bowen Island features a rich mosaic of habitats—ranging from mature temperate rainforests and dry coastal bluffs to freshwater wetlands, lakes, streams, and intertidal shores—each supporting distinct communities of plants, animals, and fungi. This diversity of ecosystems underpins high ecological resilience and biodiversity, making the island a vital refuge for both terrestrial and aquatic life.")
+            h1("Development Potential and Biodiversity"),
+            util_ui_simple_legend(low_colour = '#ffeda0', high_colour = '#f03b20', low_label = "Lower Biodiversity Per Unit", high_label =  "Higher Biodiversity Per Unit"),
+            p("This section outlines how development potential on Bowen Island can be quantified by identifying where land can be subdivided to allow more buildings. Subdividing larger properties into smaller lots—while staying above the minimum lot size—enables increased density within existing zoning regulations."),
+            p("This development potential was compared to the ", strong("Conservation Values"), " to produce this map, showing the biodiversity per potential unit on this map."),
+            em(strong("Note: "), "This map does not show all developments or plots on Bowen Island, only those identified as having potential for future development / densification.")
+            # p("The intention here is to show the trade-off between development and biodiversity, highlighting the plots that are relatively more important for conservation than for development.")
           )
         })
+        #### Update Leaflet Map ####
+        leaflet::leafletProxy(mapId = map_id,
+                              session = parent_session) %>%
+          leaflet::clearControls() %>%
+          leaflet::clearImages() %>%
+          leaflet::clearGroup(group = "clear_each_update") %>%
+          leaflet::addPolygons(
+            data = dev_layer,
+            group = "clear_each_update",
+            color = ~pal(bioval_per_unit),
+            stroke = FALSE,
+            fillOpacity = 1,
+            smoothFactor = 0.2
+          ) %>%
+          leaflet::addLegend(
+            pal = pal,
+            values = layer_domain,
+            title = "Rel. Biodiversity per Potential Unit",
+            opacity = 0.7
+          )
+          # leaflet::addLegend(
+          #   colors = raster_pal(raster_domain),
+          #   labels = raster_labels,
+          #   labFormat = labelFormat(),
+          #   title = raster_group
+          # )
       }
       #### WILDFIRE ####
       else if (input$selectGroup == "wildfire") {
@@ -95,22 +120,24 @@ mod_threats_server <- function(id, map_id, parent_session){
             p("We base this on three things: how steep the land is (fires spread faster uphill), which direction it faces (south-facing slopes tend to burn hotter), and what kind of habitat is there (some forests and sensitive ecosystems are more easily harmed by fire).")
           )
         })
+        #### Update Leaflet Map ####
+        leaflet::leafletProxy(mapId = map_id,
+                              session = parent_session) %>%
+          leaflet::clearControls() %>%
+          leaflet::clearImages() %>%
+          leaflet::clearGroup(group = "clear_each_update") %>%
+          leaflet::addRasterImage(
+            x = select_raster(),
+            colors = raster_pal
+          ) %>%
+          leaflet::addLegend(
+            colors = raster_pal(raster_domain),
+            labels = raster_labels,
+            labFormat = labelFormat(),
+            title = raster_group
+          )
       }
-      #### Update Leaflet Map ####
-      leaflet::leafletProxy(mapId = map_id,
-                            session = parent_session) %>%
-        leaflet::clearControls() %>%
-        leaflet::clearImages() %>%
-        leaflet::addRasterImage(
-          x = select_raster(),
-          colors = raster_pal
-        ) %>%
-        leaflet::addLegend(
-          colors = raster_pal(raster_domain),
-          labels = raster_labels,
-          labFormat = labelFormat(),
-          title = raster_group
-        )
+
     })
   })
 }

@@ -44,7 +44,8 @@ mod_start_server <- function(id, map_id, parent_session){
     leaflet::leafletProxy(mapId = map_id,
                           session = parent_session) %>%
       leaflet::clearControls() %>%
-      leaflet::clearImages()
+      leaflet::clearImages() %>%
+      leaflet::clearGroup(group = "clear_each_update")
   })
 }
 

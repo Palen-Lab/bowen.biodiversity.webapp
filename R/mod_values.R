@@ -45,6 +45,7 @@ mod_values_server <- function(id, map_id, parent_session){
                           session = parent_session) %>%
       leaflet::clearControls() %>%
       leaflet::clearImages() %>%
+      leaflet::clearGroup(group = "clear_each_update") %>%
       leaflet::addRasterImage(
         x = zonation,
         layerId = "zonation_raster",

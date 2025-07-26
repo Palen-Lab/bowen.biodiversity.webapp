@@ -413,6 +413,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
                             session = parent_session) %>%
         leaflet::clearControls() %>%
         leaflet::clearImages() %>%
+        leaflet::clearGroup(group = "clear_each_update") %>%
         leaflet::addRasterImage(
           x = select_raster(),
           colors = raster_pal
