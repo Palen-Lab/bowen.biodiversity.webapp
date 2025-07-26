@@ -303,7 +303,7 @@ sum_bioval_weighted_sf <- sum_bioval_weighted %>%
          potential_units_by_area = potential_units / area_ha) %>%
   mutate(bioval_per_unit = bioval_by_area / potential_units_by_area) %>%
   dplyr::filter(!is.na(sum_bioval)) %>% # Remove tiny parcels 
-  st_transform(4326)
+  st_transform(4326) 
 # For web application
 st_write(sum_bioval_weighted_sf, here("inst/extdata/6_threats/development_potential.gpkg"), append = F) 
 

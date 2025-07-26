@@ -547,17 +547,16 @@ s1 %>% values() %>% sum(na.rm = T) # 265 cells selected
 # Existing Protected Areas
 bowen_protectedareas %>% plot() 
 # trying removing covenants, since very fragmented
-bowen_pa_rast <- bowen_protectedareas[bowen_protectedareas$type != "Covenants",] %>%
+bowen_pa_vect <- bowen_protectedareas[bowen_protectedareas$type != "Covenants",] %>%
   vect() %>%
-  project(bowen_mask) %>%
-  rasterize(bowen_mask, background = 0) %>%
+  project(bowen_mask)
+bowen_pa_rast <- bowen_pa_vect %>%
+  rasterize(
+    bowen_mask, 
+    background = 0,
+    touches = F
+  ) %>%
   mask(bowen_mask) 
-
-# bowen_pa_rast_2 <- bowen_protectedareas %>%
-#   vect() %>%
-#   project(bowen_mask) %>%
-#   rasterize(bowen_mask, background = 0) %>%
-#   mask(bowen_mask) 
 
 bowen_pa_cell_count <- bowen_pa_rast %>%
   values() %>%
@@ -630,10 +629,32 @@ m <- c(
 )
 imp_clean <- (imp - 2 * bowen_pa_rast) %>%
   ifel(. <= -1, NA, .) 
-
 ```
 ### Plotting
 ```{r}
+# Create raster for web application
+m <- rbind(
+  c(0.0100, 1),
+  c(0.2575, 2),
+  c(0.5050, 3),
+  c(0.7525, 4),
+  c(1.0000, 5),
+  c(NA, NaN)
+)
+imp_reclass <- imp_clean %>%
+  classify(m) %>%
+  as.factor()
+levels(imp_reclass) <- data.frame(
+  id = 1:5,
+  priority = c("Low", "Medium-Low", "Medium", "Medium-High", "High")
+)
+writeRaster(imp_reclass, here("inst/extdata/7_action/potential_protected_areas.tif"))
+# Create vector for web application - existing protected areas
+bowen_pa <- bowen_protectedareas[bowen_protectedareas$type != "Covenants",] %>%
+  vect() %>%
+  project("EPSG:4326")
+writeVector(bowen_pa, here("inst/extdata/7_action/existing_protected_areas.gpkg"), overwrite = T)
+
 # gg
 crown_poten_ggfunc <- function() {
   protected_colour <- "#b3e2cd"

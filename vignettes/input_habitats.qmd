@@ -374,6 +374,15 @@ for(category in bowen_sei_no_tem_categories) {
   ) %>%
     bind_rows(habitats_df)
 }
+# Create combined raster rather than separate layers, for mapping
+bowen_sei_no_tem_rast <- bowen_sei_no_tem %>%
+  vect() %>% 
+  terra::project(project_crs) %>% # Reproject to the mask CRS
+  terra::rasterize(bowen_island_mask,
+                   touches = T,
+                   field = "SEsubcl_1",
+                   background = NA) # Rasterize to match mask, set background values to NA
+writeRaster(bowen_sei_no_tem_rast, here("inst/extdata/3_habitats/intertidal.tif"))
 ```
 ## Bowen Heron Watch
 Data on Heron and Raptor nest sites on Bowen Island from Carla Skuce on Feb 4 2025. 
