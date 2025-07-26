@@ -49,7 +49,7 @@ mod_action_server <- function(id, map_id, parent_session){
     )
 
     #### Add Existing Protected Areas Vector ####
-    bowen_pa <- here("inst/extdata/7_action/existing_protected_areas.gpkg") %>%
+    bowen_pa <- here::here("inst/extdata/7_action/existing_protected_areas.gpkg") %>%
       sf::st_read()
 
     leaflet::leafletProxy(mapId = map_id,
