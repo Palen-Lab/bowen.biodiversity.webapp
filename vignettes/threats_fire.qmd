@@ -51,7 +51,16 @@ ggplot(bowen_wui) +
 
 ```{r}
 bowen_mask <- here("inst/extdata/bowen_mask.tif") %>% rast()
-bowen_wui_vect <- bowen_wui %>% vect() %>% project(bowen_mask)
+
+# Assign values to vect to correctly be able to rasterize the levels later
+d <- data.frame(
+  id = c(3, 0, 0, 1, 2),
+  cover = unique(bowen_wui$WUI_PSTA)
+)
+bowen_wui_vect <- bowen_wui %>% 
+  vect() %>%
+  project(bowen_mask)
+levels(bowen_wui_vect) <- d
 
 bowen_wui_rast <- bowen_wui_vect %>%
   rasterize(bowen_mask, "WUI_PSTA", touches = T)
@@ -239,8 +248,17 @@ fuel_score <- mv_sei_mod %>%
 fire_index <- slope_score + aspect_score + fuel_score
 plot(fire_index)
 
+# Crop WUI out
+bowen_wui_rast_fi <- bowen_wui_vect %>%
+  project(fire_index) %>%
+  rasterize(fire_index, "WUI_PSTA", touches = T)
+
 # Save
-writeRaster(fire_index, here("inst/extdata/6_threats/fire_index.tif"))
+writeRaster(
+  fire_index, 
+  here("inst/extdata/6_threats/fire_index.tif"),
+  overwrite = T
+)
 # Save simple for web app
 fire_index_simple <- fire_index %>%
   aggregate(fact = 20, fun = mean) %>%
