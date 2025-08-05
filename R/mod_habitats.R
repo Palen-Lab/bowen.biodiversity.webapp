@@ -17,7 +17,7 @@ mod_habitats_ui <- function(id) {
                   "Freshwater" = "freshwater",
                   "Forests" = "forests",
                   "Other Terrestrial" = "other_terrestrial",
-                  "Intertidal" = "intertidal"),
+                  "Coastal" = "Coastal"),
       selected = "all"
     ),
     bslib::card(
@@ -84,11 +84,11 @@ mod_habitats_server <- function(id, map_id, parent_session){
             h1("Other Terrestrial Habitats")
           )
         })
-      } else if (input$selectGroup == "intertidal") {
+      } else if (input$selectGroup == "Coastal") {
         # Update UI
         output$sidebarInfo <- renderUI({
           tagList(
-            h1("Intertidal Habitats")
+            h1("Coastal Habitats")
           )
         })
       }
@@ -118,7 +118,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             util_ui_simple_legend(low_colour = '#edf8fb', high_colour = '#006d2c', low_label =  "Fewer Habitat Types", high_label =  "More Habitat Types"),
-            p("Bowen Island features a rich mosaic of habitats—ranging from mature temperate rainforests and dry coastal bluffs to freshwater wetlands, lakes, streams, and intertidal shores—each supporting distinct communities of plants, animals, and fungi. This diversity of ecosystems underpins high ecological resilience and biodiversity, making the island a vital refuge for both terrestrial and aquatic life.")
+            p("Bowen Island features a rich mosaic of habitats—ranging from mature temperate rainforests and dry coastal bluffs to freshwater wetlands, lakes, streams, and Coastal shores—each supporting distinct communities of plants, animals, and fungi. This diversity of ecosystems underpins high ecological resilience and biodiversity, making the island a vital refuge for both terrestrial and aquatic life.")
           )
         })
       }
@@ -145,10 +145,10 @@ mod_habitats_server <- function(id, map_id, parent_session){
           )
         })
       }
-      #### INTERTIDAL ####
-      else if (input$selectGroup == "intertidal") {
+      #### Coastal ####
+      else if (input$selectGroup == "Coastal") {
         # Update Leaflet Map Parameters
-        raster_group <- "Intertidal"
+        raster_group <- "Coastal"
         terra::rast(here::here("inst/extdata/3_habitats/intertidal.tif")) %>%
           terra::project("epsg:3857", method = "near") %>%
           select_raster()
@@ -170,7 +170,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
                 colour = raster_colours[i]
               )
             },
-            p("Intertidal ecosystems on Bowen Island play a vital ecological role by supporting high biodiversity, including shellfish, seaweeds, and invertebrates that serve as food for birds and fish; they also contribute to nutrient cycling, filter water, and provide natural shoreline protection against erosion, storm surges, and sea-level rise, making them key components of coastal resilience.")
+            p("Coastal ecosystems on Bowen Island play a vital ecological role by supporting high biodiversity, including shellfish, seaweeds, and invertebrates that serve as food for birds and fish; they also contribute to nutrient cycling, filter water, and provide natural shoreline protection against erosion, storm surges, and sea-level rise, making them key components of coastal resilience.")
           )
         })
       }
@@ -185,8 +185,9 @@ mod_habitats_server <- function(id, map_id, parent_session){
         raster_domain <- terra::values(select_raster()) %>%
           unique()
         raster_labels <- raster_domain
+        raster_colour_ramp <- viridis::mako(5, end = 0.8, direction = -1)
         raster_pal <- leaflet::colorNumeric(
-          c('#eff3ff','#bdd7e7','#6baed6','#3182bd','#08519c'),
+          raster_colour_ramp,
           raster_domain,
           na.color = "transparent"
         )
@@ -208,7 +209,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
             #   ),
             #   class = "p-0 m-0"
             # ),
-            util_ui_simple_legend(low_colour = '#eff3ff', high_colour = '#08519c', low_label = "Fewer Habitats", high_label = "More Habitats"),
+            util_ui_simple_legend(low_colour = raster_colour_ramp[1], high_colour = raster_colour_ramp[5], low_label = "Fewer Habitats", high_label = "More Habitats"),
             p("Bowen Island hosts a diverse range of freshwater habitats, including lakes, wetlands, and streams that support species such as amphibians, aquatic invertebrates, and native fish. These ecosystems are shaped by the island's forested terrain and seasonal rainfall, contributing to rich biodiversity and ecological resilience.")
           )
         })
