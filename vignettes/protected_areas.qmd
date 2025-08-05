@@ -497,18 +497,13 @@ bowen_mask_broken %>%
 bowen_mask <- rast(here("inst/extdata/bowen_mask.tif")) %>%
   project(zonation) %>% 
   mask(zonation) 
-
-plot(bowen_mask, main = "Bowen Mask")
-
-# features
-plot(zonation, main = "Zonation Output")
 ```
 
-#### Prioritizr
+#### Prioritizr for 30% protected on Bowen Island
 ```{r}
 # calculate budget, get prop of pixels of planning units
 prop_pixels <- 0.3 # for some reason, this provides weird results when not large enough
-budget <- terra::global(bowen_mask, "sum", na.rm = T)[[1]] * prop_pixels 
+budget <- terra::global(bowen_mask, "sum", na.rm = T)[[1]] * prop_pixels # 1594.2
 
 # create problem
 p1 <- problem(bowen_mask, features = zonation) %>%
@@ -554,7 +549,24 @@ bowen_pa_rast <- bowen_pa_vect %>%
   rasterize(
     bowen_mask, 
     background = 0,
-    touches = F
+    # touches = T,
+    cover = T
+  ) %>%
+  # Reclassify, greater than 50% coverage counts as protected cell
+  classify(
+    matrix(
+      c(0, 0.5, 0, 
+        0.5, 2, 1),
+      ncol = 3, byrow = T
+    ), 
+    include.lowest = T
+  ) %>%
+  mask(bowen_mask) 
+bowen_pa_rast_orig <- bowen_pa_vect %>%
+  rasterize(
+    bowen_mask, 
+    background = 0,
+    touches = T,
   ) %>%
   mask(bowen_mask) 
 
@@ -574,17 +586,20 @@ s2 <- solve(p2, force = T)
 plot(s2, main = "Solution with Existing Protected Areas")
 
 # Crown land
-## Maybe combine analysis with parcels? 
-## Keep seperate for now, combine later
-
+## Combine analysis with parcels
 crown_rast <- crown %>%
   vect() %>%
   project(bowen_mask) %>%
   rasterize(bowen_mask, background = 0, touches = T) %>%
   mask(bowen_mask)
+notprotected_publiclands_rast <- notprotected_publiclands %>%
+  vect() %>%
+  project(bowen_mask) %>%
+  rasterize(bowen_mask, background = 0, touches = T) %>%
+  mask(bowen_mask)
 
-# need to make sure it includes the protected areas
-crown_pa <- max(c(crown_rast, bowen_pa_rast))
+# need to make sure it includes the protected areas, to work as locked-in constraint
+crown_pa <- max(c(crown_rast, bowen_pa_rast, notprotected_publiclands_rast))
 
 # reverse for locked out constraints
 m <- rbind(
@@ -624,12 +639,219 @@ imp <- terra::mask(imp, s4, maskvalues = 0, updatevalue = -1)
 plot(imp, main = "Importance Scores")
 
 # remove existing protected areas 
-m <- c(
-  -1, 0, NA
-)
-imp_clean <- (imp - 2 * bowen_pa_rast) %>%
-  ifel(. <= -1, NA, .) 
+imp_clean <- ifel((imp - 2 * bowen_pa_rast) <= 0.1, yes = NA, no = 1) 
 ```
+#### Checking for boundary penalty sensitivity
+```{r}
+# Try plotting a bunch of different boundary penalties
+penalties <- seq(from = 0, to = 0.00002, by = 0.0000001)
+
+dir.create(here(output_dir, "/boundary_penalty_check_03/"))
+for(i in 1:length(penalties)) {
+ # add boundary penalties
+  p4 <- p3 %>%
+    add_boundary_penalties(penalty = penalties[i], edge_factor = 0.5)
+  s4 <- solve(p4, force = T)
+  png(here(output_dir, "/boundary_penalty_check_03/", paste0(Sys.Date(), "_", i, "_boundary_penalty.png")), width = 800, height = 600)
+  plot(s4, main = paste0("Solution with PA, Crown, and Boundary. Boundary Penalty = ", penalties[i]))
+  dev.off()
+}
+```
+
+#### Comparison with top 30% in Zonation
+In summary, the potential protected areas covers 8.2% of Bowen Island, while increasing the proportion of the top 30% zonation pixels that are protected by 13.3%. In comparison, the existing protected areas cover 19.5% of Bowen Island, while protecting 26.7% of the top 30% of zonation pixels. Therefore, these potential protected areas are more efficient at protecting the top biodiversity areas per unit area. 
+
+```{r}
+# Potential protected areas
+imp_clean %>% plot()
+# Existing protected areas
+bowen_pa_rast_1 <- bowen_pa_rast %>%
+  classify(cbind(0, NA)) 
+bowen_pa_rast_1 %>% plot()
+# Zonation top 30% 
+zonation_top_30 <- remove_by_quantile(zonation, 1 - prop_pixels) %>%
+  classify(matrix(c(0, 1, 1), ncol = 3, byrow = T))
+zonation_top_30 %>% plot()
+
+# Top 30% zonation coverage by potential PA
+n_pot_pa_zon <- (imp_clean * zonation_top_30) %>% 
+  values() %>% 
+  sum(na.rm = T) 
+prop_pot_pa_zon <- n_pot_pa_zon / sum(values(zonation_top_30), na.rm = T) # 0.1336261
+prop_pot_pa_area <- sum(values(imp_clean), na.rm = T) / sum(values(bowen_mask), na.rm = T) # 0.08167106
+prop_pot_pa_zon / prop_pot_pa_area # Relative value of each pixel for protecting top 30% zonation = 1.63615
+# Top 30% zonation coverage by existing PA
+n_exi_pa_zon <- (bowen_pa_rast_1 * zonation_top_30) %>% 
+  values() %>% 
+  sum(na.rm = T) 
+prop_exi_pa_zon <- n_exi_pa_zon / sum(values(zonation_top_30), na.rm = T) # 0.2672522
+prop_exi_pa_area <- sum(values(bowen_pa_rast_1), na.rm = T) / sum(values(bowen_mask), na.rm = T) # 0.1951449
+prop_exi_pa_zon / prop_exi_pa_area # Relative value of each pixel for protecting top 30% zonation = 1.369506
+
+# Total coverage of top 30% zonation by new and existing PA
+prop_pot_pa_zon + prop_exi_pa_zon # 0.4008783
+```
+
+
+#### Prioritizr for 50% protected on Bowen Island
+Conclusion after running this analysis - seems like this doesn't output potential protected areas that are useful. 50% coverage on Bowen Island is too close to all public lands being protected, so running the prioritizr analysis doesn't really output a meaningful result. 
+
+The budget (total cells to select) is 2657 at 50% of Bowen Island. The total valid cells which could be protected is 2926. 
+
+```{r}
+# calculate budget, get prop of pixels of planning units
+prop_pixels <- 0.5 # for some reason, this provides weird results when not large enough
+budget <- terra::global(bowen_mask, "sum", na.rm = T)[[1]] * prop_pixels # 2657
+
+# create problem
+p1 <- problem(bowen_mask, features = zonation) %>%
+  add_min_shortfall_objective(budget) %>%
+  add_relative_targets(1) %>% # need to be at least double the budget
+  # since we only have one feature, this target is meaningless but is a
+  # requirement for priortizr to work 
+  add_binary_decisions() %>%
+  add_default_solver(gap = 0.05, verbose = FALSE) 
+  # gap needs to be smaller than the difference between prop_pixels and locked constraints
+  # if this is not, leads to nonsensical solutions 
+  # gap value is the % from optimal
+  # therefore, if gap is too large, then any solution is close enough to optimal
+
+# print conservation problem
+print(p1)
+
+presolve_check(p1)
+s1 <- solve(p1, force = T)
+
+# extract the objective
+print(attr(s1, "objective"))
+
+# compare plots, check for agreement between priortizr and zonation
+plot(s1, main = "Priortizr Solution", axes = FALSE)
+remove_by_quantile(zonation, 1 - prop_pixels) %>%
+  plot(main = "Top Zonation Pixels")
+
+# check for number of cells 
+s1 %>% values() %>% sum(na.rm = T) # 265 cells selected
+# it works! basic top pixels identified, and agrees with zonation
+# the main goal is to not use priortizr for conservation values
+# the goal is to use the constraints and penalties that are part 
+# of the package
+
+# Existing Protected Areas
+bowen_protectedareas %>% plot() 
+# trying removing covenants, since very fragmented
+bowen_pa_vect <- bowen_protectedareas[bowen_protectedareas$type != "Covenants",] %>%
+  vect() %>%
+  project(bowen_mask)
+bowen_pa_rast <- bowen_pa_vect %>%
+  rasterize(
+    bowen_mask, 
+    background = 0,
+    # touches = T,
+    cover = T
+  ) %>%
+  # Reclassify, greater than 50% coverage counts as protected cell
+  classify(
+    matrix(
+      c(0, 0.5, 0, 
+        0.5, 2, 1),
+      ncol = 3, byrow = T
+    ), 
+    include.lowest = T
+  ) %>%
+  mask(bowen_mask) 
+bowen_pa_rast_orig <- bowen_pa_vect %>%
+  rasterize(
+    bowen_mask, 
+    background = 0,
+    touches = T,
+  ) %>%
+  mask(bowen_mask) 
+
+bowen_pa_cell_count <- bowen_pa_rast %>%
+  values() %>%
+  sum(na.rm = T)
+bowen_pa_prop <- bowen_pa_cell_count / sum(values(bowen_mask), na.rm = T)
+
+plot(bowen_pa_rast, main = "Existing Protected Areas")
+
+# create new problem with locked in constraints 
+p2 <- 
+  p1 %>%
+  add_locked_in_constraints(bowen_pa_rast)
+
+s2 <- solve(p2, force = T)
+plot(s2, main = "Solution with Existing Protected Areas")
+
+# Crown land# Crown land
+## Combine analysis with parcels
+crown_rast <- crown %>%
+  vect() %>%
+  project(bowen_mask) %>%
+  rasterize(bowen_mask, background = 0, touches = T) %>%
+  mask(bowen_mask)
+notprotected_publiclands_rast <- notprotected_publiclands %>%
+  vect() %>%
+  project(bowen_mask) %>%
+  rasterize(bowen_mask, background = 0, touches = T) %>%
+  mask(bowen_mask)
+
+# need to make sure it includes the protected areas, to work as locked-in constraint
+crown_pa <- max(c(crown_rast, bowen_pa_rast, notprotected_publiclands_rast))
+
+# reverse for locked out constraints
+m <- rbind(
+  c(0, 1),
+  c(1, 0)
+)
+
+lockedout <- crown_pa %>%
+  classify(m)
+
+# create new problem with locked out constraints
+p3 <-
+  p2 %>%
+  add_locked_out_constraints(lockedout)
+s3 <- solve(p3, force = T)
+plot(s3, main = "Solution with PA and Crown")
+
+# add boundary penalties
+p4 <-
+  p3 %>%
+  add_boundary_penalties(penalty = 0.000001, edge_factor = 0.5)
+s4 <- solve(p4, force = T)
+s4 %>% values() %>% sum(na.rm = T) # 1593
+# the total pixels selected under no boundary penalty is 1594
+# therefore, with this penalty value of 0.000001
+# boundary penalty has an effect, but not overly so that 
+# step just selects pixels around existing protected areas
+
+dir.create(here(output_dir, "/boundary_penalty_check_05/"))
+for(i in 1:length(penalties)) {
+ # add boundary penalties
+  p4 <- p3 %>%
+    add_boundary_penalties(penalty = penalties[i], edge_factor = 0.5)
+  s4 <- solve(p4, force = T)
+  png(here(output_dir, "/boundary_penalty_check_05/", paste0(Sys.Date(), "_", i, "_boundary_penalty.png")), width = 800, height = 600)
+  plot(s4, main = paste0("Solution with PA, Crown, and Boundary. Boundary Penalty = ", penalties[i]))
+  dev.off()
+}
+
+plot(s4, main = "Solution with PA, Crown, and Boundary")
+
+# importance scores
+imp <- 
+  p4 %>%
+  eval_rank_importance(s4, n = 5, force = T)
+print(imp)
+imp <- terra::mask(imp, s4, maskvalues = 0, updatevalue = -1)
+plot(imp, main = "Importance Scores")
+
+# remove existing protected areas 
+imp_clean <- ifel((imp - 2 * bowen_pa_rast) <= 0.1, yes = NA, no = 1) 
+```
+
+
 ### Plotting
 ```{r}
 # Create raster for web application
@@ -663,7 +885,7 @@ crown_poten_ggfunc <- function() {
     geom_spatraster(data = imp_clean, na.rm = T),
     scale_fill_viridis_c(na.value = NA, name = "Protected Area Potential"),
     ggnewscale::new_scale_fill(),
-    geom_sf(data = parcels, aes(fill = parcels_colour)),
+    geom_sf(data = notprotected_publiclands, aes(fill = parcels_colour)),
     geom_sf(data = bowen_protectedareas_valid, aes(fill = protected_colour)),
     scale_fill_identity(name = "",
                           breaks = c(protected_colour, parcels_colour),
@@ -679,7 +901,7 @@ crown_poten_ggplot <- bowen_map_ggplot(
   crown_poten_ggfunc,
   title = "Top Locations for Protected Areas (30x30)",
   subtitle = "Mapping optimal Crown land for reaching 30x30 targets, using the conservation values analysis and existing protected areas. This output considers connectivity by applying boundary penalties, which prioritizes shorter boundaries relative to area. Currently, about 20% of Bowen Island is under some protection.",
-  caption = caption
+  caption = paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
 )
 ggplot2::ggsave(
   here(output_dir, "/", paste0(Sys.Date(), "_crown_potential.png")),
@@ -687,5 +909,22 @@ ggplot2::ggsave(
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
+
+protected_colour <- "#b3e2cd"
+parcels_colour <-  "#fdcdac"
+ggplot() +
+  geom_spatraster(data = imp_clean) +
+  scale_fill_viridis_c(na.value = NA, name = "Protected Area Potential") +
+  ggnewscale::new_scale_fill() +
+  geom_sf(data = parcels, aes(fill = parcels_colour)) +
+  geom_sf(data = bowen_protectedareas_valid, aes(fill = protected_colour)) +
+  scale_fill_identity(name = "",
+                      breaks = c(protected_colour, parcels_colour),
+                      labels = c("Protected", "Parcels"),
+                      guide = "legend"
+  ) +
+  ggnewscale::new_scale_fill() +
+  ggnewscale::new_scale_colour()
+
 ```
 
