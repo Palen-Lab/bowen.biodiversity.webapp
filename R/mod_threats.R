@@ -8,7 +8,6 @@
 #'
 #' @importFrom shiny NS tagList
 mod_threats_ui <- function(id) {
-  ns <- NS(id)
   tabPanel(
     "threats_panel",
     selectInput(
@@ -23,6 +22,7 @@ mod_threats_ui <- function(id) {
     bslib::card(
       bslib::card_body(
         htmlOutput(NS(id, "sidebarInfo")),
+        htmlOutput(NS(id, "specific_sidebarInfo"))
       )
     ),
     docs_link
@@ -37,62 +37,55 @@ mod_threats_server <- function(id, map_id, parent_session){
     ns <- session$ns
     #### Update raster when input changes ####
     select_raster <- reactiveVal({
-      terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
+      terra::rast(here::here("inst/extdata/bowen_mask.tif")) %>%
         terra::project("epsg:4326")
     })
-
+    #### Load vector layers ####
     dev_layer <- sf::st_read(here::here("inst/extdata/6_threats/development_potential.gpkg"))
+    #### Define reactive value for specificselectGroup ####
+    subselect <- reactive({
+      req(input$subselectGroup)
+      input$subselectGroup
+    })
 
+    #### Update sidebar based on selectGroup ####
     observeEvent(input$selectGroup, {
-      #### DEVELOPMENT ####
+      # Development Category Selection
       if(input$selectGroup == "development") {
-        # Update Leaflet Map Parameters
-        layer_domain <- c(0, dev_layer$bioval_per_unit)
-        pal <- leaflet::colorNumeric(
-          palette = "YlOrRd",
-          domain = layer_domain
-        )
-
-        # Update Specfic Sidebar
+        # Update Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1("Development Potential and Biodiversity"),
-            util_ui_simple_legend(low_colour = '#ffeda0', high_colour = '#f03b20', low_label = "Lower Biodiversity Per Unit", high_label =  "Higher Biodiversity Per Unit"),
-            p("This section outlines how development potential on Bowen Island can be quantified by identifying where land can be subdivided to allow more buildings. Subdividing larger properties into smaller lots—while staying above the minimum lot size—enables increased density within existing zoning regulations."),
-            p("This development potential was compared to the ", strong("Conservation Values"), " to produce this map, showing the biodiversity per potential unit on this map."),
-            em(strong("Note: "), "This map does not show all developments or plots on Bowen Island, only those identified as having potential for future development / densification.")
-            # p("The intention here is to show the trade-off between development and biodiversity, highlighting the plots that are relatively more important for conservation than for development.")
+            h1("Development"),
+            selectInput(session$ns("subselectGroup"),
+                        "Select layer to view",
+                        c("Development", "Development and Biodiversity"),
+                        selected = "Development")
           )
         })
-        #### Update Leaflet Map ####
-        leaflet::leafletProxy(mapId = map_id,
-                              session = parent_session) %>%
-          leaflet::clearControls() %>%
-          leaflet::clearImages() %>%
-          leaflet::clearGroup(group = "clear_each_update") %>%
-          leaflet::addPolygons(
-            data = dev_layer,
-            group = "clear_each_update",
-            color = ~pal(bioval_per_unit),
-            stroke = FALSE,
-            fillOpacity = 1,
-            smoothFactor = 0.2
-          ) %>%
-          leaflet::addLegend(
-            pal = pal,
-            values = layer_domain,
-            title = "Rel. Biodiversity per Potential Unit",
-            opacity = 0.7
-          )
-          # leaflet::addLegend(
-          #   colors = raster_pal(raster_domain),
-          #   labels = raster_labels,
-          #   labFormat = labelFormat(),
-          #   title = raster_group
-          # )
       }
-      #### WILDFIRE ####
+      # Wildfire Category Selection
       else if (input$selectGroup == "wildfire") {
+        # Update Sidebar
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h1("Freshwater Habitats"),
+            selectInput(session$ns("subselectGroup"),
+                        "Select specific habitat",
+                        c("Freshwater Richness", "Lakes", "Ponds", "Riparian", "Streams", "Wetlands"),
+                        selected = "Freshwater Richness")
+          )
+        })
+      }
+    })
+
+
+    #### Update raster layer and specific_sidebarInfo on Leaflet ####
+    # Triggered by changes in both selectGroup and subselectGroup inputs
+    # For pages without subselectGroups, need to put them before in the else-if
+    observeEvent(list(input$subselectGroup, input$selectGroup), {
+      #### SINGLE PAGE SELECT GROUPS ####
+      # Wildfire
+      if(input$selectGroup == "wildfire") {
         # Update Leaflet Map Parameters
         raster_group <- "Relative Wildfire Vuln."
         fire_index_simple <- terra::rast(here::here("inst/extdata/6_threats/fire_index_40m.tif")) %>%
@@ -120,7 +113,7 @@ mod_threats_server <- function(id, map_id, parent_session){
             p("We base this on three things: how steep the land is (fires spread faster uphill), which direction it faces (south-facing slopes tend to burn hotter), and what kind of habitat is there (some forests and sensitive ecosystems are more easily harmed by fire).")
           )
         })
-        #### Update Leaflet Map ####
+        # Update Leaflet Map
         leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
           leaflet::clearControls() %>%
@@ -137,7 +130,88 @@ mod_threats_server <- function(id, map_id, parent_session){
             title = raster_group
           )
       }
+      #### MULTIPLE PAGE SUBSELECT GROUPS ####
+      # Development
+      else if(subselect() == "Development") {
+        # Update Leaflet Map Parameters
+        layer_domain <- c(0, dev_layer$potential_units)
+        pal <- leaflet::colorNumeric(
+          palette = "YlOrRd",
+          domain = layer_domain
+        )
 
+        # Update Specfic Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            h1("Development Potential"),
+            util_ui_simple_legend(low_colour = '#ffeda0', high_colour = '#f03b20', low_label = "Fewer Potential Units", high_label =  "More Potential Units"),
+            p("This section outlines how development potential on Bowen Island can be quantified by identifying where land can be subdivided to allow more buildings. Subdividing larger properties into smaller lots—while staying above the minimum lot size—enables increased density within existing zoning regulations."),
+            em(strong("Note: "), "This map does not show all developments or plots on Bowen Island, only those identified as having potential for future development / densification.")
+            # p("The intention here is to show the trade-off between development and biodiversity, highlighting the plots that are relatively more important for conservation than for development.")
+          )
+        })
+        #### Update Leaflet Map ####
+        leaflet::leafletProxy(mapId = map_id,
+                              session = parent_session) %>%
+          leaflet::clearControls() %>%
+          leaflet::clearImages() %>%
+          leaflet::clearGroup(group = "clear_each_update") %>%
+          leaflet::addPolygons(
+            data = dev_layer,
+            group = "clear_each_update",
+            color = ~pal(potential_units),
+            stroke = FALSE,
+            fillOpacity = 1,
+            smoothFactor = 0.2
+          ) %>%
+          leaflet::addLegend(
+            pal = pal,
+            values = layer_domain,
+            title = "Potential Units",
+            opacity = 0.7
+          )
+      }
+      # Development and Biodiversity
+      else if(subselect() == "Development and Biodiversity") {
+        # Update Leaflet Map Parameters
+        layer_domain <- c(0, dev_layer$bioval_per_unit)
+        pal <- leaflet::colorNumeric(
+          palette = "YlOrRd",
+          domain = layer_domain
+        )
+
+        # Update Specfic Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            h1("Development Potential and Biodiversity"),
+            util_ui_simple_legend(low_colour = '#ffeda0', high_colour = '#f03b20', low_label = "Lower Biodiversity Per Unit", high_label =  "Higher Biodiversity Per Unit"),
+            p("This section outlines how development potential on Bowen Island can be quantified by identifying where land can be subdivided to allow more buildings. Subdividing larger properties into smaller lots—while staying above the minimum lot size—enables increased density within existing zoning regulations."),
+            p("This development potential was compared to the ", strong("Conservation Values"), " to produce this map, showing the biodiversity per potential unit on this map."),
+            em(strong("Note: "), "This map does not show all developments or plots on Bowen Island, only those identified as having potential for future development / densification.")
+            # p("The intention here is to show the trade-off between development and biodiversity, highlighting the plots that are relatively more important for conservation than for development.")
+          )
+        })
+        # Update Leaflet Map
+        leaflet::leafletProxy(mapId = map_id,
+                              session = parent_session) %>%
+          leaflet::clearControls() %>%
+          leaflet::clearImages() %>%
+          leaflet::clearGroup(group = "clear_each_update") %>%
+          leaflet::addPolygons(
+            data = dev_layer,
+            group = "clear_each_update",
+            color = ~pal(bioval_per_unit),
+            stroke = FALSE,
+            fillOpacity = 1,
+            smoothFactor = 0.2
+          ) %>%
+          leaflet::addLegend(
+            pal = pal,
+            values = layer_domain,
+            title = "Rel. Biodiversity per Potential Unit",
+            opacity = 0.7
+          )
+      }
     })
   })
 }

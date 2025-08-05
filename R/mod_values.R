@@ -39,31 +39,7 @@ mod_values_server <- function(id, map_id, parent_session){
     zonation <- terra::rast(here::here("inst/extdata/5_values/rankmap.tif")) %>%
       terra::project("epsg:4326")
 
-    # top_pct <- 25
-    # zonation_colour_ramp <- viridis::viridis(100)[(100-top_pct):100]
-    # zonation_pal <- leaflet::colorNumeric(
-    #   colorRamp(colors = zonation_colour_ramp),
-    #   c((1 - top_pct/100), 1),
-    #   na.color = "transparent",
-    #   reverse = TRUE
-    # )
-    # leaflet::leafletProxy(mapId = map_id,
-    #                       session = parent_session) %>%
-    #   leaflet::clearControls() %>%
-    #   leaflet::clearImages() %>%
-    #   leaflet::clearGroup(group = "clear_each_update") %>%
-    #   leaflet::addRasterImage(
-    #     x = zonation,
-    #     layerId = "zonation_raster",
-    #     colors = zonation_pal
-    #   ) %>%
-    #   leaflet::addLegend(
-    #     pal = zonation_pal,
-    #     layerId = "zonation_legend",
-    #     values =  c(0,1),
-    #     title = "Rel. Conservation Value",
-    #   )
-
+    #### Update map each time slider is updated ####
     observeEvent(input$top_pct_slider, {
       top_pct <- input$top_pct_slider
       zonation_colour_ramp <- viridis::viridis(100)[0:top_pct]
