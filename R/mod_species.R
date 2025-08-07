@@ -13,12 +13,15 @@ mod_species_ui <- function(id) {
     selectInput(
       NS(id, "selectSpeciesGroup"),
       "Select Species Group:",
-      choices = c("All Species" = "all",
-                  "Threatened Species" = "threatened",
-                  # "Bird Species" = "birds",
-                  # "Small Mammals" = "sm_mammals",
-                  # "Amphibians / Reptile" = "herptiles",
-                  "Summed Species Distribution Models" = "sum_sdms"),
+      choices = c(
+        "All Species" = "all",
+        "Threatened Species" = "threatened",
+        "Bird Species" = "birds",
+        "Other Species" = "other_species"
+        # "Small Mammals" = "sm_mammals",
+        # "Amphibians / Reptile" = "herptiles",
+        # "Summed Species Distribution Models" = "sum_sdms"
+      ),
       selected = "all"
     ),
     bslib::card(
@@ -47,6 +50,9 @@ mod_species_server <- function(id, map_id, parent_session){
       # 1. All Species Richness
       # 2. Threatened Species Richness
       # 3. Bird Species Richness
+      # 4. Other Species Richness
+
+      # Not using these options currently
       # 4. Small Mammal Species Richness
       # 5. Amphibian / Reptile Species Richness
       # 6. Summed Species Distribution Models
@@ -59,11 +65,22 @@ mod_species_server <- function(id, map_id, parent_session){
         terra::rast(here::here("inst/extdata/2_species/threatened_richness.tif")) %>%
           terra::project("epsg:4326") %>%
           select_raster()
-      # } else if (input$selectSpeciesGroup == "birds") {
-      #   terra::rast(here::here("inst/extdata/2_species/birds_richness.tif")) %>%
-      #     terra::project("epsg:4326") %>%
-      #     select_raster()
-      # } else if (input$selectSpeciesGroup == "sm_mammals") {
+      } else if (input$selectSpeciesGroup == "birds") {
+        terra::rast(here::here("inst/extdata/2_species/birds_richness.tif")) %>%
+          terra::project("epsg:4326") %>%
+          select_raster()
+      }
+      else if (input$selectSpeciesGroup == "sm_mammals") {
+        sm_mammals_rast <- terra::rast(here::here("inst/extdata/2_species/sm_mammals_richness.tif")) %>%
+          terra::project("epsg:4326")
+
+        herptiles_rast <- terra::rast(here::here("inst/extdata/2_species/herptiles_richness.tif")) %>%
+          terra::project("epsg:4326")
+
+        other_species_rast <- sum(sm_mammals_rast, herptiles_rast, na.rm=T)
+        select_raster(other_species_rast)
+      }
+      # else if (input$selectSpeciesGroup == "sm_mammals") {
       #   terra::rast(here::here("inst/extdata/2_species/sm_mammals_richness.tif")) %>%
       #     terra::project("epsg:4326") %>%
       #     select_raster()
@@ -71,11 +88,11 @@ mod_species_server <- function(id, map_id, parent_session){
       #   terra::rast(here::here("inst/extdata/2_species/herptiles_richness.tif")) %>%
       #     terra::project("epsg:4326") %>%
       #     select_raster()
-      } else if (input$selectSpeciesGroup == "sum_sdms") {
-        terra::rast(here::here("inst/extdata/2_species/sum_sdms.tif")) %>%
-          terra::project("epsg:4326") %>%
-          select_raster()
-      }
+      # } else if (input$selectSpeciesGroup == "sum_sdms") {
+      #   terra::rast(here::here("inst/extdata/2_species/sum_sdms.tif")) %>%
+      #     terra::project("epsg:4326") %>%
+      #     select_raster()
+      # }
 
       species_richness_group <- "Species Richness"
       species_richness_domain <- c(0, terra::minmax(select_raster())[2])
@@ -161,10 +178,23 @@ mod_species_server <- function(id, map_id, parent_session){
             p("Based on probability of occurrence in Species Distribution Models. Species that are listed under the Red or Blue Lists according to the British Columbia Conservation Data Centre are included in this map. There are 24 of these species present on Bowen Island with species distribution models available.")
           )
         })
-      # } else if (input$selectSpeciesGroup == "birds") {
-      #   output$sidebarInfo <- renderUI({
-      #     h1("Bird Species")
-      #   })
+      } else if (input$selectSpeciesGroup == "birds") {
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h1("Bird Species"),
+            simple_legend,
+            p("This map shows the Species Richness of Birds by 100m resolution cell or pixel on Bowen Island."),
+          )
+        })
+      } else if (input$selectSpeciesGroup == "other_species") {
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h1("Other Species"),
+            simple_legend,
+            p("This map shows the Species Richness of other species, including reptiles, amphibians, and small mammals, by 100m resolution cell or pixel on Bowen Island."),
+          )
+        })
+      }
       # } else if (input$selectSpeciesGroup == "sm_mammals") {
       #   output$sidebarInfo <- renderUI({
       #     h1("Small Mammal Species")
@@ -173,16 +203,16 @@ mod_species_server <- function(id, map_id, parent_session){
       #   output$sidebarInfo <- renderUI({
       #     h1("Amphibian and Reptile Species")
       #   })
-      } else if (input$selectSpeciesGroup == "sum_sdms") {
-        output$sidebarInfo <- renderUI({
-          tagList(
-            h1("Summed Species Distribution Models"),
-            simple_legend,
-            p("The values from each species distribution model (ranging from 0 to 1 as probability of occurrence in the cell) are summed to provide a relative biodiversity layer."),
-            p("Higher values correspond to cells with higher probability of species occurring, and vice versa. 193 species included in this analysis.")
-          )
-        })
-      }
+      # } else if (input$selectSpeciesGroup == "sum_sdms") {
+      #   output$sidebarInfo <- renderUI({
+      #     tagList(
+      #       h1("Summed Species Distribution Models"),
+      #       simple_legend,
+      #       p("The values from each species distribution model (ranging from 0 to 1 as probability of occurrence in the cell) are summed to provide a relative biodiversity layer."),
+      #       p("Higher values correspond to cells with higher probability of species occurring, and vice versa. 193 species included in this analysis.")
+      #     )
+      #   })
+      # }
     })
 
   })
