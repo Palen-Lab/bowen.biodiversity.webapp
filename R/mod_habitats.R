@@ -13,11 +13,14 @@ mod_habitats_ui <- function(id) {
     selectInput(
       NS(id, "selectGroup"),
       "Select Habitats:",
-      choices = c("All Habitats" = "all",
-                  "Freshwater" = "freshwater",
-                  "Forests" = "forests",
-                  "Other Terrestrial" = "other_terrestrial",
-                  "Coastal" = "Coastal"),
+      choices = c(
+        "All Habitats" = "all",
+        "Freshwater" = "freshwater",
+        "Terrestrial" = "terrestrial"
+        # "Forests" = "forests",
+        # "Other Terrestrial" = "other_terrestrial",
+        # "Coastal" = "Coastal"
+      ),
       selected = "all"
     ),
     bslib::card(
@@ -66,32 +69,44 @@ mod_habitats_server <- function(id, map_id, parent_session){
                         selected = "Freshwater Richness")
           )
         })
-      } else if (input$selectGroup == "forests") {
+      } else if (input$selectGroup == "terrestrial") {
         # Update Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1("Forest Habitats"),
+            h1("Terrestrial Habitats"),
             selectInput(session$ns("subselectGroup"),
                         "Select specific habitat",
-                        c("Old Forest", "Mature Forest", "Young Forest", "Young Forest (small)"),
-                        selected = "Old Forest")
-          )
-        })
-      } else if (input$selectGroup == "other_terrestrial") {
-        # Update Sidebar
-        output$sidebarInfo <- renderUI({
-          tagList(
-            h1("Other Terrestrial Habitats")
-          )
-        })
-      } else if (input$selectGroup == "Coastal") {
-        # Update UI
-        output$sidebarInfo <- renderUI({
-          tagList(
-            h1("Coastal Habitats")
+                        c("Old Forest", "Mature Forest", "Young Forest", "Young Forest (small)", "Other Terrestrial", "Coastal"),
+                        selected = "Freshwater Richness")
           )
         })
       }
+      # } else if (input$selectGroup == "forests") {
+      #   # Update Sidebar
+      #   output$sidebarInfo <- renderUI({
+      #     tagList(
+      #       h1("Forest Habitats"),
+      #       selectInput(session$ns("subselectGroup"),
+      #                   "Select specific habitat",
+      #                   c("Old Forest", "Mature Forest", "Young Forest", "Young Forest (small)"),
+      #                   selected = "Old Forest")
+      #     )
+      #   })
+      # } else if (input$selectGroup == "other_terrestrial") {
+      #   # Update Sidebar
+      #   output$sidebarInfo <- renderUI({
+      #     tagList(
+      #       h1("Other Terrestrial Habitats")
+      #     )
+      #   })
+      # } else if (input$selectGroup == "Coastal") {
+      #   # Update UI
+      #   output$sidebarInfo <- renderUI({
+      #     tagList(
+      #       h1("Coastal Habitats")
+      #     )
+      #   })
+      # }
     })
 
     #### Update habitat raster layer and specific_sidebarInfo on Leaflet ####
@@ -123,7 +138,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         })
       }
       #### OTHER TERRESTRIAL ####
-      else if (input$selectGroup == "other_terrestrial") {
+      else if (subselect() == "Other Terrestrial") {
         # Update Leaflet Map Parameters
         raster_group <- "Other Terrestrial"
         terra::rast(here::here("inst/extdata/3_habitats/other_tem.tif")) %>%
@@ -141,12 +156,13 @@ mod_habitats_server <- function(id, map_id, parent_session){
         # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
+            h3("Other Terrestrial Habitats"),
             p("Here, the more detailed habitat types captured by the Terrestrial Ecosystem Mapping project are represented. Specific plant, soil, and moisture characteristics were mapped on Bowen Island.")
           )
         })
       }
       #### Coastal ####
-      else if (input$selectGroup == "Coastal") {
+      else if (subselect() == "Coastal") {
         # Update Leaflet Map Parameters
         raster_group <- "Coastal"
         terra::rast(here::here("inst/extdata/3_habitats/intertidal.tif")) %>%
@@ -164,6 +180,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
+            h3("Coastal Habitats"),
             foreach(i = 1:length(raster_labels)) %do% {
               util_ui_simple_legend_element(
                 label = raster_labels[i],
