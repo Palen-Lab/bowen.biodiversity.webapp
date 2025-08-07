@@ -239,7 +239,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         raster_domain <- 1
         raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(
-          c('#6baed6'),
+          c('#41B6C4'),
           raster_domain,
           na.color = "transparent"
         )
@@ -247,7 +247,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Lakes of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "Not Present", high_label = "Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#41B6C4', low_label = "Not Present", high_label = "Present"),
             p("The lakes on Bowen Island, such as Killarney and Grafton Lakes, are ecologically significant as they provide critical habitat for amphibians, birds, and aquatic invertebrates, help regulate local hydrology, and serve as important sources of clean water and biodiversity within the island’s forested ecosystem.")
           )
         })
@@ -260,7 +260,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         raster_domain <- 1
         raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(
-          c('#6baed6'),
+          c("#2C7FB8"),
           raster_domain,
           na.color = "transparent"
         )
@@ -268,7 +268,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Ponds of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "Not Present", high_label = "Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = "#2C7FB8", low_label = "Not Present", high_label = "Present"),
             p("The ponds on Bowen Island—including natural and beaver-created wetlands—are ecologically vital as they provide habitat for amphibians, invertebrates, and waterfowl, support sediment and nutrient retention, and serve as key micro‑watersheds within the island’s freshwater network.")
           )
         })
@@ -281,7 +281,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         raster_domain <- 1
         raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(
-          c('#6baed6'),
+          c("#FFFFCC"),
           raster_domain,
           na.color = "transparent"
         )
@@ -289,7 +289,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Riparian Habitat of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "Not Present", high_label = "Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = "#FFFFCC", low_label = "Not Present", high_label = "Present"),
             p("Riparian zones on Bowen Island—those lush, water‑adjacent strips of vegetation along creeks, streams, and lakes—are ecologically crucial because they stabilize stream banks, filter sediment and nutrients, moderate water temperatures, recharge groundwater, and provide high‑value habitat and movement corridors for fish, amphibians, birds, and terrestrial wildlife, playing a key role in watershed health and biodiversity.")
           )
         })
@@ -325,7 +325,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         raster_domain <- 1
         raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(
-          c('#6baed6'),
+          c("#253494"),
           raster_domain,
           na.color = "transparent"
         )
@@ -333,7 +333,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Wetlands of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = '#6baed6', low_label = "Not Present", high_label = "Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = "#253494", low_label = "Not Present", high_label = "Present"),
             p("Wetlands on Bowen Island are ecologically significant as they regulate water flow, improve water quality, support high biodiversity, and provide critical breeding and foraging habitat for amphibians, birds, and other wildlife.")
           )
         })
