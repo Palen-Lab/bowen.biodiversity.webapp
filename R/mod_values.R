@@ -16,7 +16,7 @@ mod_values_ui <- function(id) {
           h1("Conservation Values"),
           util_ui_simple_legend_element(label = "Relatively Higher Value", colour = viridis::viridis(2)[1]),
           util_ui_simple_legend_element(label = "Relatively Lower Value", colour = viridis::viridis(2)[2]),
-          sliderInput(NS(id, "top_pct_slider"), label = "Top % Values", min = 10, max = 100, value = 100),
+          sliderInput(NS(id, "top_pct_slider"), label = "Top % Values", min = 10, max = 100, value = 100, step = 5),
           p("We used ", strong("Zonation5,"), "a robust conservation prioritization software, to calculate relative conservation values from the input layers visualized under the Species, Habitats, and People sections."),
           p("This can help decide which natural areas are most important for biodiversity, informing how efforts and resources should be used for maximum impact."),
           p("Note that these values are relative within Bowen Island. When compared to the rest of British Columbia, Bowen Island in general has very high biodiversity. Areas that appear low on this map may still have high biodiversity compared to other places outside of Bowen Island."),
