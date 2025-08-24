@@ -281,7 +281,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         raster_domain <- 1
         raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(
-          c("#FFFFCC"),
+          c("#A1DAB4"),
           raster_domain,
           na.color = "transparent"
         )
@@ -289,7 +289,7 @@ mod_habitats_server <- function(id, map_id, parent_session){
         output$specific_sidebarInfo <- renderUI({
           tagList(
             h3("Riparian Habitat of Bowen Island"),
-            util_ui_simple_legend(low_colour = '#00000000', high_colour = "#FFFFCC", low_label = "Not Present", high_label = "Present"),
+            util_ui_simple_legend(low_colour = '#00000000', high_colour = "#A1DAB4", low_label = "Not Present", high_label = "Present"),
             p("Riparian zones on Bowen Island—those lush, water‑adjacent strips of vegetation along creeks, streams, and lakes—are ecologically crucial because they stabilize stream banks, filter sediment and nutrients, moderate water temperatures, recharge groundwater, and provide high‑value habitat and movement corridors for fish, amphibians, birds, and terrestrial wildlife, playing a key role in watershed health and biodiversity.")
           )
         })
