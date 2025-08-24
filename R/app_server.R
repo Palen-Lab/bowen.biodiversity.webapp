@@ -60,15 +60,26 @@ app_server <- function(input, output, session) {
     sf::st_transform(crs = 4326)
   bowen_boundary_group <- "Admin Boundary"
 
+  maptiler_key <- "UznHc4ZNqi19zHP8eYLY"
   output$map <- leaflet::renderLeaflet({
     leaflet::leaflet(options = leaflet::leafletOptions(zoomControl = TRUE,
                                               zoomSnap = 0.25,
                                               zoomDelta = 0.25)
                      ) %>%
       leaflet::setView(-123.3698, 49.3738, zoom = 13) %>%
-      leaflet::addProviderTiles(leaflet::providers$CartoDB.Positron,
-                                options = leaflet::providerTileOptions(noWrap = TRUE, minZoom = 10, maxZoom = 18)
+      addTiles(
+        urlTemplate = paste0(
+          "https://api.maptiler.com/maps/backdrop/{z}/{x}/{y}.png?key=",
+          maptiler_key
+        ),
+        attribution = 'Map data © <a href="https://www.maptiler.com/">MapTiler</a>'
       ) %>%
+      # leaflet::addProviderTiles(leaflet::providers$MapTiler.Basic,
+      #                           options = leaflet::providerTileOptions(
+      #                             noWrap = TRUE, minZoom = 10, maxZoom = 18,
+      #                             access
+      #                           )
+      # ) %>%
       leaflet::addPolygons(data = bowen_boundary_4326,
                            group = bowen_boundary_group,
                            stroke = TRUE,
