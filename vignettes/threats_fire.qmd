@@ -53,17 +53,22 @@ ggplot(bowen_wui) +
 bowen_mask <- here("inst/extdata/bowen_mask.tif") %>% rast()
 
 # Assign values to vect to correctly be able to rasterize the levels later
+unique(bowen_wui$WUI_PSTA)
 d <- data.frame(
-  id = c(3, 0, 0, 1, 2),
-  cover = unique(bowen_wui$WUI_PSTA)
+  id = c(1, 2, 3, 4, 5),
+  WUI_PSTA = c("No Data (Private Land)_1-4", 
+            "Water_1-4",
+            "Low_1-4",
+            "Moderate_1-4",
+            "Moderate_5-6")
 )
 bowen_wui_vect <- bowen_wui %>% 
   vect() %>%
-  project(bowen_mask)
-levels(bowen_wui_vect) <- d
+  project(bowen_mask) %>%
+  merge(d, by = "WUI_PSTA")
 
 bowen_wui_rast <- bowen_wui_vect %>%
-  rasterize(bowen_mask, "WUI_PSTA", touches = T)
+  rasterize(bowen_mask, field = "id", touches = T) 
 ```
 
 ## Notes on threat due to fire from Tom Sisk
@@ -248,24 +253,44 @@ fuel_score <- mv_sei_mod %>%
 fire_index <- slope_score + aspect_score + fuel_score
 plot(fire_index)
 
-# Crop WUI out
-bowen_wui_rast_fi <- bowen_wui_vect %>%
+# Mask private land parcels on fire index layer 
+bowen_parcelmap_rast <- bowen_parcelmap %>% 
+  st_cast("MULTIPOLYGON") %>% # WKB type 12, curved polygons need to be recast
+  vect() %>%
   project(fire_index) %>%
-  rasterize(fire_index, "WUI_PSTA", touches = T)
+  rasterize(fire_index, field = 1)
+
+fire_index_m <- fire_index %>% 
+  mask(bowen_parcelmap_rast, inverse = T)
+
+# Crop WUI out
+# bowen_wui_rast_fi <- bowen_wui_vect %>%
+#   project(fire_index) %>%
+#   rasterize(fire_index, "WUI_PSTA", touches = T)
+# Decided to not do this, since the WUI overlaps so much with our fire index
+# Instead, present both WUI and our fire index layers in the web application
+# Tom to write clarifying text on difference between the two
+# Fire index descirbes vulnerability of biodiversity, rather than risk of fire
 
 # Save
 writeRaster(
-  fire_index, 
+  fire_index_m, 
   here("inst/extdata/6_threats/fire_index.tif"),
   overwrite = T
 )
 # Save simple for web app
-fire_index_simple <- fire_index %>%
+fire_index_simple <- fire_index_m %>%
   aggregate(fact = 20, fun = mean) %>%
   round()
 writeRaster(fire_index_simple, here("inst/extdata/6_threats/fire_index_40m.tif"),
             overwrite = T)
 
+# Save WUI rast at same res as fire_index
+bowen_wui_rast_m <- bowen_wui_vect %>%
+  project(fire_index_simple) %>%
+  rasterize(fire_index_simple, "id", touches = T)
+writeRaster(bowen_wui_rast_m, here("inst/extdata/6_threats/fire_wui_40m.tif"),
+            overwrite = T)
 ```
 
 ## Plotting 

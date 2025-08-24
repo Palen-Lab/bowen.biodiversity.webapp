@@ -68,11 +68,11 @@ mod_threats_server <- function(id, map_id, parent_session){
         # Update Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1("Freshwater Habitats"),
+            h1("Wildfire"),
             selectInput(session$ns("subselectGroup"),
-                        "Select specific habitat",
-                        c("Freshwater Richness", "Lakes", "Ponds", "Riparian", "Streams", "Wetlands"),
-                        selected = "Freshwater Richness")
+                        "Select wildfire layer",
+                        c("Fire Index", "Wildland Urban Interface"),
+                        selected = "Fire Index")
           )
         })
       }
@@ -84,8 +84,9 @@ mod_threats_server <- function(id, map_id, parent_session){
     # For pages without subselectGroups, need to put them before in the else-if
     observeEvent(list(input$subselectGroup, input$selectGroup), {
       #### SINGLE PAGE SELECT GROUPS ####
+      #### MULTIPLE PAGE SUBSELECT GROUPS ####
       # Wildfire
-      if(input$selectGroup == "wildfire") {
+      if(subselect() == "Fire Index") {
         # Update Leaflet Map Parameters
         raster_group <- "Relative Wildfire Vuln."
         fire_index_simple <- terra::rast(here::here("inst/extdata/6_threats/fire_index_40m.tif")) %>%
@@ -104,7 +105,7 @@ mod_threats_server <- function(id, map_id, parent_session){
           reverse = T
         )
         # Update Specific Sidebar
-        output$sidebarInfo <- renderUI({
+        output$specific_sidebarInfo <- renderUI({
           tagList(
             h1("Wildfire Vulnerability"),
             util_ui_simple_legend_element(label = "Higher Vulnerability", colour = "#5B177E"),
@@ -130,7 +131,53 @@ mod_threats_server <- function(id, map_id, parent_session){
             title = raster_group
           )
       }
-      #### MULTIPLE PAGE SUBSELECT GROUPS ####
+      else if(subselect() == "Wildland Urban Interface") {
+        # Update Leaflet Map Parameters
+        raster_group <- "WUI / PSTA"
+        fire_index_simple <- terra::rast(here::here("inst/extdata/6_threats/fire_wui_40m.tif")) %>%
+          terra::project("epsg:3857", method = "near")
+        terra::NAflag(fire_index_simple) <- 4294967296
+        select_raster(fire_index_simple)
+
+        raster_domain <- c(1, 2, 3, 4, 5)
+        raster_labels <- c("Private Land / 1-4", "Water / 1-4", "Low / 1-4", "Moderate / 1-4", "Moderate / 5-6")
+        raster_colours <- c("#a6cee3", "#abdda4", "#ffffbf", "#fdae61", "#d7191c")
+        raster_pal <- leaflet::colorFactor(
+          raster_colours,
+          raster_domain,
+          na.color = "transparent"
+        )
+        # Update Specific Sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            h1("Wildfire Vulnerability"),
+            foreach(i = 1:length(raster_labels)) %do% {
+              util_ui_simple_legend_element(
+                label = raster_labels[i],
+                colour = raster_colours[i]
+              )
+            },
+            p("This is a simple map to show how vulnerable different parts of Bowen Island are to biodiversity loss if a wildfire were to happen — not predicting fires, just showing where damage could be worst."),
+            p("We base this on three things: how steep the land is (fires spread faster uphill), which direction it faces (south-facing slopes tend to burn hotter), and what kind of habitat is there (some forests and sensitive ecosystems are more easily harmed by fire).")
+          )
+        })
+        # Update Leaflet Map
+        leaflet::leafletProxy(mapId = map_id,
+                              session = parent_session) %>%
+          leaflet::clearControls() %>%
+          leaflet::clearImages() %>%
+          leaflet::clearGroup(group = "clear_each_update") %>%
+          leaflet::addRasterImage(
+            x = select_raster(),
+            colors = raster_pal
+          ) %>%
+          leaflet::addLegend(
+            colors = raster_pal(raster_domain),
+            labels = raster_labels,
+            labFormat = labelFormat(),
+            title = raster_group
+          )
+      }
       # Development
       else if(subselect() == "Development") {
         # Update Leaflet Map Parameters
