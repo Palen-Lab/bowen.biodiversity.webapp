@@ -36,6 +36,7 @@ app_ui <- function(request) {
               "Start",
               icon = icon("play")
             ),
+            p("Inputs"),
             actionButton(
               "species_sidebar_btn",
               "Species",
@@ -51,6 +52,7 @@ app_ui <- function(request) {
               "People",
               icon = icon("person")
             ),
+            p("Analysis"),
             actionButton(
               "values_sidebar_btn",
               "Values",
@@ -61,10 +63,16 @@ app_ui <- function(request) {
               "Threats",
               icon = icon("triangle-exclamation")
             ),
+            p("Outputs"),
             actionButton(
               "action_sidebar_btn",
               "Action",
               icon = icon("handshake-simple")
+            ),
+            actionButton(
+              "protected_areas_sidebar_btn",
+              "Protect Areas",
+              icon = icon("seedling")
             ),
           ),
           # Main Content, with interactive information sidebar and map
@@ -102,6 +110,10 @@ app_ui <- function(request) {
                 tabPanel(
                   "action",
                   mod_action_ui("action_1")
+                ),
+                tabPanel(
+                  "protected_areas",
+                  mod_protected_areas_ui("protected_areas_1")
                 )
               )
             ),

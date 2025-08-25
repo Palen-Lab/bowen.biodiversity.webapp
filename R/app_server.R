@@ -5,6 +5,7 @@
 #' @import shiny
 #' @noRd
 app_server <- function(input, output, session) {
+  sf::sf_use_s2(FALSE)
   #### Active Panel ####
   r <- reactiveValues(active_panel = "start")
   observeEvent(input$start_sidebar_btn, {
@@ -49,6 +50,12 @@ app_server <- function(input, output, session) {
                       map_id = "map",
                       parent_session = session)
   })
+  observeEvent(input$protected_areas_sidebar_btn, {
+    r$active_panel <- "protected_areas"
+    mod_protected_areas_server("protected_areas_1",
+                      map_id = "map",
+                      parent_session = session)
+  })
   #### Update Active Panel ####
   observeEvent(r$active_panel, {
     updateTabsetPanel(inputId = "main_sidebar", selected = r$active_panel)
@@ -67,7 +74,7 @@ app_server <- function(input, output, session) {
                                               zoomDelta = 0.25)
                      ) %>%
       leaflet::setView(-123.3698, 49.3738, zoom = 13) %>%
-      addTiles(
+      leaflet::addTiles(
         urlTemplate = paste0(
           "https://api.maptiler.com/maps/backdrop/{z}/{x}/{y}.png?key=",
           maptiler_key

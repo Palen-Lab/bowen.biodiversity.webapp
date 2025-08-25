@@ -15,15 +15,16 @@ util_ui_simple_legend <- function(low_colour, high_colour, low_label, high_label
 #' util_ui_simple_legend_element
 #'
 #' @param colour Hex code for colour
+#' @param border_colour Hex code for border colour
 #' @param label Label for circle legend item
 #'
 #' @returns HTML
 #' @noRd
-util_ui_simple_legend_element <- function(colour, label) {
+util_ui_simple_legend_element <- function(colour, border_colour = "#555", label) {
   div(
     style = "display: inline-flex",
     div(
-      style = paste0("height: 24px; width: 24px; background-color: ", colour, "; border-radius: 50%; border-style: solid; border-color: #555;")
+      style = paste0("height: 24px; width: 24px; background-color: ", colour, "; border-radius: 50%; border-style: solid; border-color: ", border_colour, ";")
     ),
     strong(label, style = "margin-left: 5px;")
   )
