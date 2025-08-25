@@ -654,6 +654,7 @@ for(i in 1:length(penalties)) {
   s4 <- solve(p4, force = T)
   png(here(output_dir, "/boundary_penalty_check_03/", paste0(Sys.Date(), "_", i, "_boundary_penalty.png")), width = 800, height = 600)
   plot(s4, main = paste0("Solution with PA, Crown, and Boundary. Boundary Penalty = ", penalties[i]))
+  polys(bowen_pa_vect, col = "orange")
   dev.off()
 }
 ```
