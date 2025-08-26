@@ -20,7 +20,7 @@ util_ui_simple_legend <- function(low_colour, high_colour, low_label, high_label
 #'
 #' @returns HTML
 #' @noRd
-util_ui_simple_legend_element <- function(colour, border_colour = "#555", label) {
+util_ui_simple_legend_element <- function(colour, label, border_colour = "#555") {
   div(
     style = "display: inline-flex",
     div(
