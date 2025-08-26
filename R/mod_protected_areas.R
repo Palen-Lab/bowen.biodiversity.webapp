@@ -28,10 +28,10 @@ mod_protected_areas_ui <- function(id) {
       choices = selectGroupChoices,
       selected = selectGroupChoices[1]
     ),
-    actionButton(
-      NS(id, "next_button"),
-      "Next"
-    ),
+    # actionButton(
+    #   NS(id, "next_button"),
+    #   "Next"
+    # ),
     bslib::card(
       bslib::card_body(
         htmlOutput(NS(id, "sidebarInfo")),
@@ -48,6 +48,8 @@ mod_protected_areas_ui <- function(id) {
 mod_protected_areas_server <- function(id, map_id, parent_session){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
+    #### Tracking layers in map ####
+    layerList <- reactiveVal(character(0))
     #### Update raster when input changes ####
     select_raster <- reactiveVal({
       terra::rast(here::here("inst/extdata/bowen_mask.tif")) %>%
@@ -62,17 +64,18 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
       sf::st_read() %>%
       sf::st_transform(sf::st_crs(bowen_pa))
 
+    #### Manage page selection ####
     selectPage <- reactiveVal(selectGroupChoices[1])
+    nextCount <- reactiveVal(1)
     observeEvent(input$next_button, {
-      # input$next_button starts at 0 before any presses, each press increment by 1
-      # need to mod to length of list
-      i <- (input$next_button %% length(selectGroupChoices)) + 1
+      # Mod to length of list to continue Next button cycle
+      i <- (nextCount() %% length(selectGroupChoices)) + 1
       selectPage(selectGroupChoices[i])
+      # Increment for next button press
+      # Need to use this instead of just using the input$next_button value
+      # Creating a new button with each sidebar update, therefore the count is not maintained by the actionButton
+      nextCount(nextCount() + 1)
     })
-    # selectPage <- reactive({
-    #   req(input$selectGroup)
-    #   input$selectGroup
-    # })
 
     #### Update raster layer and specific_sidebarInfo on Leaflet ####
     # Triggered by changes in both selectGroup and subselectGroup inputs
@@ -88,6 +91,11 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
             util_ui_simple_legend_element(label = "Existing Protected Areas", colour = "#a1d76a", border_colour = "lightgrey"),
             util_ui_simple_legend_element(label = "Old Growth Management Areas", colour = "beige", border_colour = "lightgrey"),
             p("This is a simple map to show all existing protected areas on Bowen Island. This section will walk through the existing major protected areas and their significance."),
+          )
+        })
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            nextButton(session)
           )
         })
         # Update Leaflet Map Parameters
@@ -162,7 +170,14 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
-            expandProtectionUI(session),
+            expandProtectionUI(session)
+          )
+        })
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            if(input$new_protected_areas) {
+              nextButton(session)
+            }
           )
         })
         # Update Leaflet Map Parameters
@@ -182,7 +197,7 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
-            expandProtectionUI(session),
+            expandProtectionUI(session)
           )
         })
         # Update Leaflet Map Parameters
@@ -202,7 +217,7 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
-            expandProtectionUI(session),
+            expandProtectionUI(session)
           )
         })
         # Update Leaflet Map Parameters
@@ -229,7 +244,7 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
-            expandProtectionUI(session),
+            expandProtectionUI(session)
           )
         })
         # Update Leaflet Map
@@ -259,7 +274,7 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
           centerViewPolygon(selected_pa) %>%
-          addNewProtectedArea(selected_pa)
+          addNewProtectedArea(selected_pa, "mount_collins", layerList)
       }
       else if (selectPage() == "Full 30 by 30 Scenario") {
         # Update Specific Sidebar
@@ -269,6 +284,9 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
             # TODO: Add explanation
             p()
           )
+        })
+        output$specific_sidebarInfo <- renderUI({
+          nextButton(session, label = "Return to Start")
         })
         # Update Leaflet Map Parameters
         # Read / Prepare Map Layers
@@ -280,36 +298,69 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
           leaflet::flyTo(-123.370, 49.374, 13)
       }
     })
-    #### Define reactive value for Expand Protected Areas actionButton ####
+    #### Logic for Expand Protected Areas checkboxInput ####
     observeEvent(input$new_protected_areas, {
-      # for each existing protected area listed
-      if (selectPage() == "Fairy Fen Nature Reserve") {
-        selected_pa <- bowen_new_pa[bowen_new_pa$name == "Fairy Fen Nature Reserve Expansion",]
-        leaflet::leafletProxy(mapId = map_id,
-                              session = parent_session) %>%
-          addNewProtectedArea(selected_pa, "fairy_fen_expansion") %>%
-          highlightProtectedArea(selected_pa)
+      if(input$new_protected_areas) {
+        # for each new protected area
+        if (selectPage() == "Fairy Fen Nature Reserve") {
+          selected_pa <- bowen_new_pa[bowen_new_pa$name == "Fairy Fen Nature Reserve Expansion",]
+          leaflet::leafletProxy(mapId = map_id,
+                                session = parent_session) %>%
+            addNewProtectedArea(selected_pa, "fairy_fen_expansion", layerList) %>%
+            highlightProtectedArea(selected_pa)
+        }
+        else if (selectPage() == "Art Rennison Nature Park") {
+          selected_pa <- bowen_new_pa[bowen_new_pa$name == "Art Rennison Nature Park Expansion",]
+          leaflet::leafletProxy(mapId = map_id,
+                                session = parent_session) %>%
+            addNewProtectedArea(selected_pa, "art_rennison_expansion", layerList) %>%
+            highlightProtectedArea(selected_pa)
+        }
+        else if (selectPage() == "Bowen Island Ecological Reserve") {
+          selected_pa <- bowen_new_pa[bowen_new_pa$name == "Bowen Island Ecological Reserve Expansion",]
+          leaflet::leafletProxy(mapId = map_id,
+                                session = parent_session) %>%
+            addNewProtectedArea(selected_pa, "bowen_ecological_reserve_expansion", layerList) %>%
+            highlightProtectedArea(selected_pa)
+        }
+        else if (selectPage() == "Crippen Regional Park") {
+          selected_pa <- bowen_new_pa[bowen_new_pa$name == "Crippen Regional Park North Expansion" | bowen_new_pa$name == "Crippen Regional Park West Expansion",]
+          leaflet::leafletProxy(mapId = map_id,
+                                session = parent_session) %>%
+            addNewProtectedArea(selected_pa, "crippen_expansion", layerList) %>%
+            highlightProtectedArea(selected_pa)
+        }
       }
-      else if (selectPage() == "Art Rennison Nature Park") {
-        selected_pa <- bowen_new_pa[bowen_new_pa$name == "Art Rennison Nature Park Expansion",]
-        leaflet::leafletProxy(mapId = map_id,
-                              session = parent_session) %>%
-          addNewProtectedArea(selected_pa, "art_rennison_expansion") %>%
-          highlightProtectedArea(selected_pa)
-      }
-      else if (selectPage() == "Bowen Island Ecological Reserve") {
-        selected_pa <- bowen_new_pa[bowen_new_pa$name == "Bowen Island Ecological Reserve Expansion",]
-        leaflet::leafletProxy(mapId = map_id,
-                              session = parent_session) %>%
-          addNewProtectedArea(selected_pa, "bowen_ecological_reserve_expansion") %>%
-          highlightProtectedArea(selected_pa)
-      }
-      else if (selectPage() == "Crippen Regional Park") {
-        selected_pa <- bowen_new_pa[bowen_new_pa$name == "Crippen Regional Park North Expansion" | bowen_new_pa$name == "Crippen Regional Park West Expansion",]
-        leaflet::leafletProxy(mapId = map_id,
-                              session = parent_session) %>%
-          addNewProtectedArea(selected_pa, "crippen_expansion") %>%
-          highlightProtectedArea(selected_pa)
+      else {
+        # for each new protected area
+        if (selectPage() == "Fairy Fen Nature Reserve") {
+          selected_pa <- bowen_new_pa[bowen_new_pa$name == "Fairy Fen Nature Reserve Expansion",]
+          leaflet::leafletProxy(mapId = map_id,
+                                session = parent_session) %>%
+            removeNewProtectedArea("fairy_fen_expansion", layerList) %>%
+            leaflet::clearGroup("highlight_pa")
+        }
+        else if (selectPage() == "Art Rennison Nature Park") {
+          selected_pa <- bowen_new_pa[bowen_new_pa$name == "Art Rennison Nature Park Expansion",]
+          leaflet::leafletProxy(mapId = map_id,
+                                session = parent_session) %>%
+            removeNewProtectedArea("art_rennison_expansion", layerList) %>%
+            leaflet::clearGroup("highlight_pa")
+        }
+        else if (selectPage() == "Bowen Island Ecological Reserve") {
+          selected_pa <- bowen_new_pa[bowen_new_pa$name == "Bowen Island Ecological Reserve Expansion",]
+          leaflet::leafletProxy(mapId = map_id,
+                                session = parent_session) %>%
+            removeNewProtectedArea("bowen_ecological_reserve_expansion", layerList) %>%
+            leaflet::clearGroup("highlight_pa")
+        }
+        else if (selectPage() == "Crippen Regional Park") {
+          selected_pa <- bowen_new_pa[bowen_new_pa$name == "Crippen Regional Park North Expansion" | bowen_new_pa$name == "Crippen Regional Park West Expansion",]
+          leaflet::leafletProxy(mapId = map_id,
+                                session = parent_session) %>%
+            removeNewProtectedArea("crippen_expansion", layerList) %>%
+            leaflet::clearGroup("highlight_pa")
+        }
       }
     })
   })
@@ -338,7 +389,6 @@ centerViewPolygon <- function(map, data, zoom = 14.5) {
 #' Update Leaflet Map for each Existing Protected Area ####
 highlightProtectedArea <- function(map, data) {
   map %>%
-    # leaflet::flyTo(x_cent, y_cent, 14.5) %>%
     leaflet::clearGroup("highlight_pa") %>%
     leaflet::addPolygons(
       data = data,
@@ -351,13 +401,18 @@ highlightProtectedArea <- function(map, data) {
 }
 
 #' addNewProtectedArea applies consistent leaflet behaviour to each Expand button
-addNewProtectedArea <- function(map, data, layerId) {
-  # TODO: implement check for preventing multiple areas added on top with repeated clicks
-  # Maybe don't even need to once checkbox instead of actionButton trigger
+addNewProtectedArea <- function(map, data, layerId, layerList) {
+  if(!is.reactive(layerList)) {
+    stop("layerList is not reactive")
+  }
+  # Create new ids, handle multiple rows
+  ids <- lapply(seq_len(nrow(data)), function(x) {paste0(layerId, "_", x)})
+  # Append new ids to the reactiveVal layerList
+  layerList(c(layerList(), ids))
+  # Add new protected area to map
   map %>%
-    # leaflet::removeShape(layerId) %>%
     leaflet::addPolygons(
-      # layerId = layerId,
+      layerId = ids,
       group = "added_pa",
       data = data,
       fillColor = "orange",
@@ -374,11 +429,38 @@ addNewProtectedArea <- function(map, data, layerId) {
       )
     )
 }
+removeNewProtectedArea <- function(map, layerId, layerList) {
+  if(!is.reactive(layerList)) {
+    stop("layerList is not reactive")
+  }
+  # Find matching layerIds
+  ids <- layerList()
+  ids_to_remove <- ids[grepl(layerId, ids)]
+  # Remove matching
+  for (id in ids_to_remove) {
+    map %>% leaflet::removeShape(id)
+  }
+  # Update layerList
+  layerList(setdiff(ids, ids_to_remove))
+  # Return map
+  map
+}
 
-#' Action button
+#' Expand Protected Areas UI
 expandProtectionUI <- function(session) {
+  tagList(
+    checkboxInput(
+      session$ns("new_protected_areas"),
+      "Expand Protection",
+      value = F
+    ),
+  )
+}
+
+#' Next button
+nextButton <- function(session, label = "Next") {
   actionButton(
-    session$ns("new_protected_areas"),
-    "Expand Protection"
+    session$ns("next_button"),
+    label
   )
 }
