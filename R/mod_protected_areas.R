@@ -28,6 +28,10 @@ mod_protected_areas_ui <- function(id) {
       choices = selectGroupChoices,
       selected = selectGroupChoices[1]
     ),
+    actionButton(
+      NS(id, "next_button"),
+      "Next"
+    ),
     bslib::card(
       bslib::card_body(
         htmlOutput(NS(id, "sidebarInfo")),
@@ -58,15 +62,26 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
       sf::st_read() %>%
       sf::st_transform(sf::st_crs(bowen_pa))
 
+    selectPage <- reactiveVal(selectGroupChoices[1])
+    observeEvent(input$next_button, {
+      # input$next_button starts at 0 before any presses, each press increment by 1
+      # need to mod to length of list
+      i <- (input$next_button %% length(selectGroupChoices)) + 1
+      selectPage(selectGroupChoices[i])
+    })
+    # selectPage <- reactive({
+    #   req(input$selectGroup)
+    #   input$selectGroup
+    # })
+
     #### Update raster layer and specific_sidebarInfo on Leaflet ####
     # Triggered by changes in both selectGroup and subselectGroup inputs
     # For pages without subselectGroups, need to put them before in the else-if
-    observeEvent(input$selectGroup, {
-
+    observeEvent(selectPage(), {
       #### SINGLE PAGE SELECT GROUPS ####
       #### MULTIPLE PAGE SUBSELECT GROUPS ####
       # Existing
-      if (input$selectGroup == "All Existing") {
+      if (selectPage() == "All Existing") {
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
@@ -142,17 +157,17 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
             title = "OGMAs",
           )
       }
-      else if (input$selectGroup == "Fairy Fen Nature Reserve") {
+      else if (selectPage() == "Fairy Fen Nature Reserve") {
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1(input$selectGroup),
+            h1(selectPage()),
             expandProtectionUI(session),
           )
         })
         # Update Leaflet Map Parameters
         # Read / Prepare Map Layers
-        selected_pa <- (bowen_pa$name == input$selectGroup) %>%
+        selected_pa <- (bowen_pa$name == selectPage()) %>%
           lapply(., function(i) replace(i, is.na(i), FALSE)) %>%
           unlist() %>%
           bowen_pa[.,]
@@ -162,17 +177,17 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
           centerViewPolygon(selected_pa) %>%
           highlightProtectedArea(selected_pa)
       }
-      else if (input$selectGroup == "Bowen Island Ecological Reserve") {
+      else if (selectPage() == "Bowen Island Ecological Reserve") {
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1(input$selectGroup),
+            h1(selectPage()),
             expandProtectionUI(session),
           )
         })
         # Update Leaflet Map Parameters
         # Read / Prepare Map Layers
-        selected_pa <- (bowen_pa$name == input$selectGroup) %>%
+        selected_pa <- (bowen_pa$name == selectPage()) %>%
           lapply(., function(i) replace(i, is.na(i), FALSE)) %>%
           unlist() %>%
           bowen_pa[.,]
@@ -182,18 +197,18 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
           centerViewPolygon(selected_pa) %>%
           highlightProtectedArea(selected_pa)
       }
-      else if (input$selectGroup == "Art Rennison Nature Park") {
+      else if (selectPage() == "Art Rennison Nature Park") {
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1(input$selectGroup),
+            h1(selectPage()),
             expandProtectionUI(session),
           )
         })
         # Update Leaflet Map Parameters
         ## Read / Prepare Map Layers
         sf::sf_use_s2(FALSE)
-        selected_pa <- (bowen_pa$name == input$selectGroup) %>%
+        selected_pa <- (bowen_pa$name == selectPage()) %>%
           lapply(., function(i) replace(i, is.na(i), FALSE)) %>%
           unlist() %>%
           bowen_pa[.,]
@@ -206,19 +221,19 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
           centerViewPolygon(selected_pa) %>%
           highlightProtectedArea(selected_pa)
       }
-      else if (input$selectGroup == "Crippen Regional Park") {
+      else if (selectPage() == "Crippen Regional Park") {
         # Update Leaflet Map Parameters
         ## Read / Prepare Map Layers
         ## Symbology
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1(input$selectGroup),
+            h1(selectPage()),
             expandProtectionUI(session),
           )
         })
         # Update Leaflet Map
-        selected_pa <- (bowen_pa$name == input$selectGroup) %>%
+        selected_pa <- (bowen_pa$name == selectPage()) %>%
           lapply(., function(i) replace(i, is.na(i), FALSE)) %>%
           unlist() %>%
           bowen_pa[.,]
@@ -228,11 +243,11 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
           centerViewPolygon(selected_pa) %>%
           highlightProtectedArea(selected_pa)
       }
-      else if (input$selectGroup == "Proposed: Mount Collins Reserve") {
+      else if (selectPage() == "Proposed: Mount Collins Reserve") {
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1(input$selectGroup),
+            h1(selectPage()),
             # TODO: Add explanation to how Mount Collins was chosen
             p()
           )
@@ -246,11 +261,11 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
           centerViewPolygon(selected_pa) %>%
           addNewProtectedArea(selected_pa)
       }
-      else if (input$selectGroup == "Full 30 by 30 Scenario") {
+      else if (selectPage() == "Full 30 by 30 Scenario") {
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1(input$selectGroup),
+            h1(selectPage()),
             # TODO: Add explanation
             p()
           )
@@ -268,28 +283,28 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
     #### Define reactive value for Expand Protected Areas actionButton ####
     observeEvent(input$new_protected_areas, {
       # for each existing protected area listed
-      if (input$selectGroup == "Fairy Fen Nature Reserve") {
+      if (selectPage() == "Fairy Fen Nature Reserve") {
         selected_pa <- bowen_new_pa[bowen_new_pa$name == "Fairy Fen Nature Reserve Expansion",]
         leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
           addNewProtectedArea(selected_pa, "fairy_fen_expansion") %>%
           highlightProtectedArea(selected_pa)
       }
-      else if (input$selectGroup == "Art Rennison Nature Park") {
+      else if (selectPage() == "Art Rennison Nature Park") {
         selected_pa <- bowen_new_pa[bowen_new_pa$name == "Art Rennison Nature Park Expansion",]
         leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
           addNewProtectedArea(selected_pa, "art_rennison_expansion") %>%
           highlightProtectedArea(selected_pa)
       }
-      else if (input$selectGroup == "Bowen Island Ecological Reserve") {
+      else if (selectPage() == "Bowen Island Ecological Reserve") {
         selected_pa <- bowen_new_pa[bowen_new_pa$name == "Bowen Island Ecological Reserve Expansion",]
         leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
           addNewProtectedArea(selected_pa, "bowen_ecological_reserve_expansion") %>%
           highlightProtectedArea(selected_pa)
       }
-      else if (input$selectGroup == "Crippen Regional Park") {
+      else if (selectPage() == "Crippen Regional Park") {
         selected_pa <- bowen_new_pa[bowen_new_pa$name == "Crippen Regional Park North Expansion" | bowen_new_pa$name == "Crippen Regional Park West Expansion",]
         leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
