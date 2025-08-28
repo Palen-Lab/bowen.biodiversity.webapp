@@ -1,3 +1,7 @@
+if (interactive()) {
+  reactlog::reactlog_enable()
+}
+
 #' The application server-side
 #'
 #' @param input,output,session Internal parameters for {shiny}.
@@ -56,6 +60,12 @@ app_server <- function(input, output, session) {
                       map_id = "map",
                       parent_session = session)
   })
+  observeEvent(input$overlay_sidebar_btn, {
+    r$active_panel <- "overlay"
+    mod_overlay_server("overlay_1",
+                       map_id = "map",
+                       parent_session = session)
+  })
   #### Update Active Panel ####
   observeEvent(r$active_panel, {
     updateTabsetPanel(inputId = "main_sidebar", selected = r$active_panel)
@@ -81,12 +91,6 @@ app_server <- function(input, output, session) {
         ),
         attribution = 'Map data © <a href="https://www.maptiler.com/">MapTiler</a>'
       ) %>%
-      # leaflet::addProviderTiles(leaflet::providers$MapTiler.Basic,
-      #                           options = leaflet::providerTileOptions(
-      #                             noWrap = TRUE, minZoom = 10, maxZoom = 18,
-      #                             access
-      #                           )
-      # ) %>%
       leaflet::addPolygons(data = bowen_boundary_4326,
                            group = bowen_boundary_group,
                            stroke = TRUE,

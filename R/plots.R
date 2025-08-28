@@ -358,3 +358,19 @@ bowen_map_ggplot <- function(gg_func,
   output_plot
 }
 
+
+#' Hatch sf polygon
+#' @param poly_sf Polygon or MultiPolygon sf object
+#' @param density Density of lines
+#' @param pattern Line pattern
+#' @returns sf Multilinestring sf object
+hatched.sf <- function(poly_sf, density = 1, pattern = "right2left") {
+  all_union <- st_union(poly_sf)
+  hatched_all <- cartography::hatchedLayer(
+    all_union,
+    pattern = pattern,
+    density = density,
+    mode = "sfc"
+  )
+  return(hatched_all)
+}

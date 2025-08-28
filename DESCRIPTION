@@ -29,7 +29,8 @@ Imports:
     sf,
     shiny,
     stringr,
-    terra
+    terra,
+    cartography
 Suggests: 
     knitr,
     rmarkdown,

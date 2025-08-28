@@ -18,6 +18,6 @@ Time used in prioritization: 0s
 Number of iterations: 43
 Final convergence level: 0.00992021%
 Area under curve: 0.567340
-Total time used: 3s
+Total time used: 0s
 Number of errors: 0
 Number of warnings: 0

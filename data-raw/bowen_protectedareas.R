@@ -74,15 +74,26 @@ ecoreserve$type <-"Ecological Reserve"
 ecoreserve$filepath <- ecoreserve_path
 
 # Combine into one Protected Areas layer
-bowen_protectedareas <- rbind(alr, bowenmuniparks, conservancies, covenants, ecoreserve, mvparks, provparks)
-
+bowen_protectedareas <- rbind(alr, bowenmuniparks, conservancies, covenants, ecoreserve, mvparks, provparks) %>%
+  st_transform(project_crs) %>%
+  st_make_valid()
 usethis::use_data(bowen_protectedareas, overwrite = TRUE)
+
+# Dissolve protected areas to difference with the crown land
+# Turn into a single multipolygon, because don't want to have multiple difference with each row
+dissolved_protectedareas <- bowen_protectedareas %>%
+  summarise() %>%
+  st_cast() %>%
+  st_buffer(1)
+usethis::use_data(dissolved_protectedareas, overwrite = TRUE)
 
 # Old Growth Management Areas
 ogma_path <- "data-raw/bowen_protectedareas/Bowen-OGMAs-JD.gpkg"
 ogma <- here(ogma_path) %>%
   st_read() %>%
-  select(name = NAME)
+  st_transform(project_crs) %>%
+  select(name = NAME) %>%
+  st_make_valid()
 ogma <- ogma[!st_is_empty(ogma$geom),]
 ogma$type <-"Old Growth Management Area"
 ogma$filepath <- ogma_path
@@ -92,9 +103,27 @@ usethis::use_data(ogma, overwrite = TRUE)
 crown_path <- "data-raw/bowen_protectedareas/Crown-Land-JD.gpkg"
 crown <- here(crown_path) %>%
   st_read() %>%
+  st_transform(project_crs) %>%
   select(name = parkname)
-crown <- crown[!st_is_empty(crown$geom),]
+crown <- crown[!st_is_empty(crown$geom),] %>%
+  st_snap(x = ., y = ., tolerance = 0.1) %>%
+  st_make_valid()
 crown$type <-"Crown Land"
 crown$filepath <- crown_path
 usethis::use_data(crown, overwrite = TRUE)
+
+# Unprotected Crown Land
+
+# Difference with crown land and protected areas, get unprotected crown land
+unprotected_crown <- st_difference(crown, dissolved_protectedareas)
+
+# Manually check each crown land polygon
+for(i in 1:nrow(unprotected_crown)) {
+  plot(unprotected_crown[i,])
+}
+# Remove polygons that should not be included in notprotected areas
+# rowname 1 (Fairy Fen Natural Reserve), sliver
+# rowname 74 (Seymour Bay Park), wrong polygon in the first place
+unprotected_crown <- unprotected_crown[!rownames(unprotected_crown) %in% c("1","74"),]
+usethis::use_data(unprotected_crown, overwrite = TRUE)
 

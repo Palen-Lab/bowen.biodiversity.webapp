@@ -23,7 +23,7 @@ body {
   height: 40px;
 }
 
-#start_sidebar_btn, #species_sidebar_btn, #habitats_sidebar_btn, #people_sidebar_btn, #values_sidebar_btn, #threats_sidebar_btn, #action_sidebar_btn {
+#start_sidebar_btn, #species_sidebar_btn, #habitats_sidebar_btn, #people_sidebar_btn, #values_sidebar_btn, #threats_sidebar_btn, #action_sidebar_btn, #protected_areas_sidebar_btn, #overlay_sidebar_btn {
   display: grid;
   margin: 0;
   padding: 11px 0 10px 0;
@@ -34,5 +34,15 @@ body {
 
 #mini_sidebar i {
   font-size: 20px;
+}
+
+@keyframes blink {
+  0%   { stroke: orange; stroke-width: 4; }
+  50%  { stroke: white; stroke-width: 4; }
+  100% { stroke: orange; stroke-width: 4; }
+}
+
+.blink-outline {
+  animation: blink 1s infinite;
 }
 

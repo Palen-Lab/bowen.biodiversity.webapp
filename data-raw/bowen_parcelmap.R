@@ -1,6 +1,9 @@
 ## code to prepare `bowen_parcelmap` dataset goes here
 library(sf)
 library(here)
+library(dplyr)
+library(rmapshaper)
+sf_use_s2(FALSE)
 
 # The original layer used for private lands is the "ParcelMap BC Parcel Fabric - Parcel Fabric File Geodatabase (NAD83(CSRS) / BC Albers)".
 # Download Information:
@@ -19,5 +22,20 @@ if(!dir.exists(bc_parcelmap_path)) {
   st_write(bowen_parcelmap, here("data-raw/bowen_parcelmap/bowen_parcelmap.gpkg"))
 }
 
-bowen_parcelmap <- st_read(here("data-raw/bowen_parcelmap/bowen_parcelmap.gpkg"))
+bowen_parcelmap <- st_read(here("data-raw/bowen_parcelmap/bowen_parcelmap.gpkg")) %>%
+  st_transform(project_crs) %>%
+  st_cast("MULTIPOLYGON") # Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12
+
 usethis::use_data(bowen_parcelmap, overwrite = TRUE)
+
+bowen_parcelmap_union <- bowen_parcelmap %>%
+  dplyr::filter(OwnerType == "Private") %>%
+  st_make_valid() %>%
+  st_union() %>%
+  st_difference(dissolved_protectedareas) %>%
+  st_snap(x = ., y = ., tolerance = 0.1) %>%
+  st_buffer(5)
+privateland <- bowen_parcelmap_union %>%
+  ms_simplify(keep = 0.03, keep_shapes = FALSE)
+
+usethis::use_data(privateland, overwrite = TRUE)

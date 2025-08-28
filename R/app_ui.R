@@ -64,16 +64,21 @@ app_ui <- function(request) {
               icon = icon("triangle-exclamation")
             ),
             p("Outputs"),
-            actionButton(
-              "action_sidebar_btn",
-              "Action",
-              icon = icon("handshake-simple")
-            ),
+            # actionButton(
+            #   "action_sidebar_btn",
+            #   "Action",
+            #   icon = icon("handshake-simple")
+            # ),
             actionButton(
               "protected_areas_sidebar_btn",
               "Protect Areas",
               icon = icon("seedling")
             ),
+            actionButton(
+              "overlay_sidebar_btn",
+              "Overlay",
+              icon = icon("seedling")
+            )
           ),
           # Main Content, with interactive information sidebar and map
           bslib::layout_sidebar(
@@ -107,13 +112,17 @@ app_ui <- function(request) {
                   "threats",
                   mod_threats_ui("threats_1")
                 ),
-                tabPanel(
-                  "action",
-                  mod_action_ui("action_1")
-                ),
+                # tabPanel(
+                #   "action",
+                #   mod_action_ui("action_1")
+                # ),
                 tabPanel(
                   "protected_areas",
                   mod_protected_areas_ui("protected_areas_1")
+                ),
+                tabPanel(
+                  "overlay",
+                  mod_overlay_ui("overlay_1")
                 )
               )
             ),

@@ -145,13 +145,13 @@ bowen_rasterize <- function(sf) {
 #' @export
 remove_by_quantile <- function(x, prob, direction = "top") {
   val <- x %>%
-    values() %>%
+    terra::values() %>%
     quantile(probs = prob, na.rm = T)
   min_val <- x %>%
-    values() %>%
+    terra::values() %>%
     min(na.rm = T)
   max_val <- x %>%
-    values() %>%
+    terra::values() %>%
     max(na.rm = T)
   if(direction == "top") {
     m <- matrix(c(
@@ -165,6 +165,6 @@ remove_by_quantile <- function(x, prob, direction = "top") {
     ), ncol = 3, byrow = T)
   }
   mask_quantile <- x %>%
-    classify(m,, include.lowest = T)
+    terra::classify(m, include.lowest = T)
   mask_quantile * x
 }

@@ -22,12 +22,12 @@ mod_protected_areas_ui <- function(id) {
   ns <- NS(id)
   tabPanel(
     "action_panel",
-    selectInput(
-      NS(id, "selectGroup"),
-      "Select Layer:",
-      choices = selectGroupChoices,
-      selected = selectGroupChoices[1]
-    ),
+    # selectInput(
+    #   NS(id, "selectGroup"),
+    #   "Select Layer:",
+    #   choices = selectGroupChoices,
+    #   selected = selectGroupChoices[1]
+    # ),
     # actionButton(
     #   NS(id, "next_button"),
     #   "Next"
@@ -175,7 +175,7 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         })
         output$specific_sidebarInfo <- renderUI({
           tagList(
-            if(input$new_protected_areas) {
+            if(isTRUE(input$new_protected_areas)) {
               nextButton(session)
             }
           )
