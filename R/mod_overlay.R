@@ -14,13 +14,11 @@ mod_overlay_ui <- function(id) {
       bslib::card_body(
         tagList(
           h1("Overlay with Conservation Values"),
-          util_ui_simple_legend_element(label = "Relatively Higher Value", colour = viridis::viridis(2)[1]),
-          util_ui_simple_legend_element(label = "Relatively Lower Value", colour = viridis::viridis(2)[2]),
           sliderInput(NS(id, "top_pct_slider"), label = "Top % Values", min = 10, max = 100, value = 100, step = 5),
           selectInput(
             NS(id, "selectGroup"),
-            label = "Select Layer",
-            choices = c("Choose Layer", "Land Use", "Habitats", "Threats")
+            label = "Select Category",
+            choices = c("Choose Category", "Land Use", "Habitats", "Threats")
           ),
           htmlOutput(NS(id, "sidebarInfo")),
           DT::DTOutput(NS(id, "sidebarTable")),
@@ -44,6 +42,8 @@ mod_overlay_server <- function(id, map_id, parent_session){
     # For area queries, still need to use the project_crs with metres units.
     # Load Zonation Output Raster
     zonation_og <- terra::rast(here::here("inst/extdata/5_values/rankmap.tif"))
+
+    # Use just for visualizing, use zonation_og for calculations
     zonation <- zonation_og %>%
       terra::project("epsg:4326")
     # Load Private Land - vector
@@ -59,6 +59,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
     bowen_uc <- unprotected_crown %>%
       sf::st_transform(4326)
     # Load Freshwater Habitats - raster
+    bowen_fw <- terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif"))
     # Load Terrestrial Habitats - raster
     # Load Development Potential - vector
     # Load Wildfire - raster
@@ -104,17 +105,34 @@ mod_overlay_server <- function(id, map_id, parent_session){
         na.color = "transparent",
         reverse = TRUE
       )
-      map %>%
-        leaflet::clearImages() %>%
-        leaflet::addRasterImage(
-          x = zonation,
-          layerId = "zonation_raster",
-          colors = zonation_pal
-        )
 
-      if(input$selectGroup == "Choose Layer") {
-        output$sidebarInfo <- renderUI("Choose layer from the above selection.")
+      # Removing layers when navigating off the page
+      if(input$selectGroup != "Land Use") {
+        map %>%
+          leaflet::removeShape("bowen_pa") %>%
+          leaflet::removeShape("bowen_pa_hatch") %>%
+          leaflet::removeShape("bowen_pm") %>%
+          leaflet::removeShape("bowen_pm_hatch") %>%
+          leaflet::removeShape("bowen_uc") %>%
+          leaflet::removeShape("bowen_uc_hatch")
+      }
+      if(input$selectGroup != "Habitats") {
+        # Update Leaflet Map
+        map %>%
+          leaflet::removeShape("top_pct_zonation_vect")
+      }
+
+      if(input$selectGroup == "Choose Category") {
+        output$sidebarInfo <- renderUI("Choose category from the above selection.")
         output$sidebarTable <- DT::renderDT(NULL)
+        # Update Leaflet Map
+        map %>%
+          leaflet::clearImages() %>%
+          leaflet::addRasterImage(
+            x = zonation,
+            layerId = "zonation_raster",
+            colors = zonation_pal
+          )
       }
       else if(input$selectGroup == "Land Use") {
         # Disaggregate to get closer overlap area estimates later
@@ -182,6 +200,44 @@ mod_overlay_server <- function(id, map_id, parent_session){
           colnames = c("Overlap", "Area (ha)", "% of Top Values", "% of Bowen Island")
           )
         )
+
+        # Update Leaflet Map
+        map %>%
+          leaflet::clearImages() %>%
+          leaflet::addRasterImage(
+            x = zonation,
+            layerId = "zonation_raster",
+            colors = zonation_pal
+          )
+      }
+      else if(input$selectGroup == "Habitats") {
+        # Remove pixels below quantile, get mask
+        top_pct_zonation <- remove_by_quantile(zonation_og, (1-top_pct/100)) %>%
+          terra::not.na(falseNA=T)
+          # terra::is.na()
+        top_pct_zonation_vect <- terra::ifel(is.na(top_pct_zonation), 1, NA) %>%
+          terra::extend(c(1000, 1000, 1000, 1000), fill = 1) %>%
+          terra::as.polygons(dissolve = T) %>%
+          sf::st_as_sf() %>%
+          sf::st_transform(4326)
+        # Overlap between top % and freshwater habitats
+        # Overlap between top % and terrestrial habitats
+
+        # Update Leaflet Map
+        map %>%
+          leaflet::addPolygons(
+            layerId = "top_pct_zonation_vect",
+            group = "overlap_polygons",
+            data = top_pct_zonation_vect,
+            weight = 2,
+            color = "grey",
+            fillColor = "grey",
+            opacity = 0.8,
+            fillOpacity = 0.6
+          )
+      }
+      else if(input$selectGroup == "Threats") {
+
       }
 
       # TODO: Update overlap calculation for each selectGroup
@@ -195,7 +251,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
 
     #### Update map based on selectGroup ####
     observeEvent(input$selectGroup, {
-      if(input$selectGroup == "Choose Layer") {
+      if(input$selectGroup == "Choose Category") {
         map %>%
           leaflet::clearGroup(
             "overlay_polygons"
@@ -212,6 +268,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           ) %>%
           leaflet::addPolygons(
             data = bowen_pa,
+            layerId = "bowen_pa",
             group = "overlay_polygons",
             color = bowen_pa_col,
             fill = F,
@@ -220,6 +277,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           ) %>%
           leaflet::addPolylines(
             data = bowen_pa_hatch,
+            layerId = "bowen_pa_hatch",
             group = "overlay_polygons",
             color = bowen_pa_col,
             fill = F,
@@ -228,6 +286,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           ) %>%
           leaflet:: addPolygons(
             data = bowen_pm,
+            layerId = "bowen_pm",
             group = "overlay_polygons",
             color = bowen_pm_col,
             fill = F,
@@ -236,6 +295,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           ) %>%
           leaflet::addPolylines(
             data = bowen_pm_hatch,
+            layerId = "bowen_pm_hatch",
             group = "overlay_polygons",
             color = bowen_pm_col,
             fill = F,
@@ -244,6 +304,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           ) %>%
           leaflet::addPolygons(
             data = bowen_uc,
+            layerId = "bowen_uc",
             group = "overlay_polygons",
             color = bowen_uc_col,
             fill = F,
@@ -252,11 +313,37 @@ mod_overlay_server <- function(id, map_id, parent_session){
           ) %>%
           leaflet::addPolylines(
             data = bowen_uc_hatch,
+            layerId = "bowen_uc_hatch",
             group = "overlay_polygons",
             color = bowen_uc_col,
             fill = F,
             opacity = 1,
             weight = strokeWeight
+          )
+      }
+      else if(input$selectGroup == "Habitats") {
+        # Project raster to use with Leaflet
+        bowen_fw_p <- bowen_fw %>% terra::project("epsg:3857", method = "near")
+        # Leaflet parameters
+        raster_domain <- terra::values(bowen_fw_p) %>%
+          unique()
+        raster_labels <- raster_domain
+        raster_colour_ramp <- viridis::mako(5, end = 0.8, direction = -1)
+        raster_pal <- leaflet::colorNumeric(
+          raster_colour_ramp,
+          raster_domain,
+          na.color = "transparent"
+        )
+        # Update Leaflet
+        map %>%
+          leaflet::clearGroup(
+            "overlay_polygons"
+          ) %>%
+          leaflet::clearImages() %>%
+          leaflet::clearControls() %>%
+          leaflet::addRasterImage(
+            x = bowen_fw_p,
+            colors = raster_pal
           )
       }
     })
