@@ -23,6 +23,7 @@ mod_overlay_ui <- function(id) {
             choices = c("Choose Layer", "Land Use", "Habitats", "Threats")
           ),
           htmlOutput(NS(id, "sidebarInfo")),
+          DT::DTOutput(NS(id, "sidebarTable")),
           htmlOutput(NS(id, "specific_sidebarInfo"))
         )
       )
@@ -110,6 +111,12 @@ mod_overlay_server <- function(id, map_id, parent_session){
         # Remove pixels below quantile, get mask
         top_pct_zonation <- remove_by_quantile(zonation_og, (1-top_pct/100)) %>%
           terra::not.na(falseNA=T)
+
+        # Number of total cells with zonation vals
+        zonation_count <- zonation_og %>%
+          terra::not.na(falseNA=T) %>%
+          terra::values() %>%
+          sum(na.rm = T)
         # Number of total cells in top_pct
         top_pct_zonation_count <- top_pct_zonation %>%
           terra::values() %>%
@@ -122,14 +129,50 @@ mod_overlay_server <- function(id, map_id, parent_session){
           terra::mask(pa_vect) %>%
           terra::values() %>%
           sum(na.rm = T)
+        # Number of cells within unprotected crown land vector
+        uc_vect <- bowen_uc %>%
+          terra::vect() %>%
+          terra::project(top_pct_zonation)
+        top_pct_zonation_uc_count <- top_pct_zonation %>%
+          terra::mask(uc_vect) %>%
+          terra::values() %>%
+          sum(na.rm = T)
+        # Number of cells within private land vector
+        pm_vect <- bowen_pm %>%
+          terra::vect() %>%
+          terra::project(top_pct_zonation)
+        top_pct_zonation_pm_count <- top_pct_zonation %>%
+          terra::mask(pm_vect) %>%
+          terra::values() %>%
+          sum(na.rm = T)
 
-        top_pct_in_pa <-
-        output$sidebarInfo <- renderUI(
-          tagList(
-            p(top_pct),
-            p("Top Pixels Total: ", top_pct_zonation_count),
-            p("Top Pixels in Protected Areas: ", top_pct_zonation_pa_count)
+        # Create table to render
+        sidebarTable <- data.frame(type = paste0("Top ", top_pct,"%"), ncells = top_pct_zonation_count) %>%
+          rbind(data.frame(type = "Protected Area", ncells = top_pct_zonation_pa_count)) %>%
+          rbind(data.frame(type = "Unprotected Crown Land", ncells = top_pct_zonation_uc_count)) %>%
+          rbind(data.frame(type = "Private Land", ncells = top_pct_zonation_pm_count))
+
+        sidebarTable$area_ha <- sidebarTable$ncells / 100
+        sidebarTable$pct_prop <- round(sidebarTable$ncells / top_pct_zonation_count * 100, digits = 1)
+        sidebarTable$pct_total <- round(sidebarTable$ncells / zonation_count * 100, digits = 1)
+        # TODO: Implement table view of each category of Protected Area, Private Land, Crown Land
+        output$sidebarTable <- DT::renderDT(
+          DT::datatable(sidebarTable[, c("type", "area_ha", "pct_prop", "pct_total")], options = list(
+            paging = F,
+            searching = F,
+            ordering = F,
+            lengthChange = F,
+            info = F
+          ),
+          rownames = FALSE,
+          colnames = c("Overlap", "Area (ha)", "% of Top Values", "% of Bowen Island")
           )
+
+          # tagList(
+          #   p(top_pct),
+          #   p("Top Pixels Total: ", top_pct_zonation_count),
+          #   p("Top Pixels in Protected Areas: ", top_pct_zonation_pa_count)
+          # )
         )
       }
 
