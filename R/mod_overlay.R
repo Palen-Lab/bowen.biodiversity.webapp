@@ -64,8 +64,13 @@ mod_overlay_server <- function(id, map_id, parent_session){
     # Load Wildfire - raster
 
     # Initial Leaflet Map
-    zonation_colour_ramp <- viridis::viridis(100)[0:100]
-    # zonation_colour_ramp <- viridis::viridis(100)
+    # Generate Zonation palette
+    # zonation_colour_vect <- viridis::viridis(100) # Old colour scheme
+    # zonation_colour_func <- colorRampPalette(c('#ffffff','#f0f0f0','#d9d9d9','#bdbdbd','#969696','#737373','#525252','#252525','#000000'))
+    # zonation_colour_func <- colorRampPalette(c('#fff7fb','#ece2f0','#d0d1e6','#a6bddb','#67a9cf','#3690c0','#02818a','#016c59','#014636'))
+    zonation_colour_func <- colorRampPalette(c('#a1d99b'))
+    zonation_colour_vect <- zonation_colour_func(100) %>% rev()
+    zonation_colour_ramp <- zonation_colour_vect[0:100]
     zonation_pal <- leaflet::colorNumeric(
       palette = colorRamp(colors = zonation_colour_ramp),
       domain = c(0, 1),
@@ -91,7 +96,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
     #### Update map each time slider is updated ####
     observeEvent(list(input$top_pct_slider, input$selectGroup), {
       top_pct <- input$top_pct_slider
-      zonation_colour_ramp <- viridis::viridis(100)[0:top_pct]
+      zonation_colour_ramp <- zonation_colour_vect[0:top_pct]
       # zonation_colour_ramp <- viridis::viridis(100)
       zonation_pal <- leaflet::colorNumeric(
         palette = colorRamp(colors = zonation_colour_ramp),
@@ -107,16 +112,23 @@ mod_overlay_server <- function(id, map_id, parent_session){
           colors = zonation_pal
         )
 
-      if(input$selectGroup == "Land Use") {
+      if(input$selectGroup == "Choose Layer") {
+        output$sidebarInfo <- renderUI("Choose layer from the above selection.")
+        output$sidebarTable <- DT::renderDT(NULL)
+      }
+      else if(input$selectGroup == "Land Use") {
+        # Disaggregate to get closer overlap area estimates later
+        zonation_d <- zonation_og %>%
+          terra::disagg(2)
         # Remove pixels below quantile, get mask
-        top_pct_zonation <- remove_by_quantile(zonation_og, (1-top_pct/100)) %>%
+        top_pct_zonation <- remove_by_quantile(zonation_d, (1-top_pct/100)) %>%
           terra::not.na(falseNA=T)
-
         # Number of total cells with zonation vals
-        zonation_count <- zonation_og %>%
+        zonation_count <- zonation_d %>%
           terra::not.na(falseNA=T) %>%
           terra::values() %>%
           sum(na.rm = T)
+
         # Number of total cells in top_pct
         top_pct_zonation_count <- top_pct_zonation %>%
           terra::values() %>%
@@ -151,11 +163,13 @@ mod_overlay_server <- function(id, map_id, parent_session){
           rbind(data.frame(type = "Protected Area", ncells = top_pct_zonation_pa_count)) %>%
           rbind(data.frame(type = "Unprotected Crown Land", ncells = top_pct_zonation_uc_count)) %>%
           rbind(data.frame(type = "Private Land", ncells = top_pct_zonation_pm_count))
-
         sidebarTable$area_ha <- sidebarTable$ncells / 100
         sidebarTable$pct_prop <- round(sidebarTable$ncells / top_pct_zonation_count * 100, digits = 1)
         sidebarTable$pct_total <- round(sidebarTable$ncells / zonation_count * 100, digits = 1)
-        # TODO: Implement table view of each category of Protected Area, Private Land, Crown Land
+        # Render DT
+        output$sidebarInfo <- renderUI({
+          "The percentages may not add up exactly to the selected %, due to some top % not falling on lands in these categories."
+        })
         output$sidebarTable <- DT::renderDT(
           DT::datatable(sidebarTable[, c("type", "area_ha", "pct_prop", "pct_total")], options = list(
             paging = F,
@@ -167,12 +181,6 @@ mod_overlay_server <- function(id, map_id, parent_session){
           rownames = FALSE,
           colnames = c("Overlap", "Area (ha)", "% of Top Values", "% of Bowen Island")
           )
-
-          # tagList(
-          #   p(top_pct),
-          #   p("Top Pixels Total: ", top_pct_zonation_count),
-          #   p("Top Pixels in Protected Areas: ", top_pct_zonation_pa_count)
-          # )
         )
       }
 
@@ -195,6 +203,9 @@ mod_overlay_server <- function(id, map_id, parent_session){
       }
       else if (input$selectGroup == "Land Use") {
         strokeWeight <- 2
+        bowen_pa_col <- "#377eb8"
+        bowen_uc_col <- "#984ea3"
+        bowen_pm_col <- "#ff7f00"
         map %>%
           leaflet::clearGroup(
             "overlay_polygons"
@@ -202,7 +213,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           leaflet::addPolygons(
             data = bowen_pa,
             group = "overlay_polygons",
-            color = "#a1d76a",
+            color = bowen_pa_col,
             fill = F,
             opacity = 1,
             weight = strokeWeight
@@ -210,7 +221,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           leaflet::addPolylines(
             data = bowen_pa_hatch,
             group = "overlay_polygons",
-            color = "#a1d76a",
+            color = bowen_pa_col,
             fill = F,
             opacity = 1,
             weight = strokeWeight
@@ -218,7 +229,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           leaflet:: addPolygons(
             data = bowen_pm,
             group = "overlay_polygons",
-            color = "brown",
+            color = bowen_pm_col,
             fill = F,
             opacity = 1,
             weight = strokeWeight
@@ -226,7 +237,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           leaflet::addPolylines(
             data = bowen_pm_hatch,
             group = "overlay_polygons",
-            color = "brown",
+            color = bowen_pm_col,
             fill = F,
             opacity = 1,
             weight = strokeWeight
@@ -234,7 +245,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           leaflet::addPolygons(
             data = bowen_uc,
             group = "overlay_polygons",
-            color = "darkgreen",
+            color = bowen_uc_col,
             fill = F,
             opacity = 1,
             weight = strokeWeight
@@ -242,7 +253,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
           leaflet::addPolylines(
             data = bowen_uc_hatch,
             group = "overlay_polygons",
-            color = "darkgreen",
+            color = bowen_uc_col,
             fill = F,
             opacity = 1,
             weight = strokeWeight
