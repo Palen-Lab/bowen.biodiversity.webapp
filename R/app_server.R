@@ -99,7 +99,9 @@ app_server <- function(input, output, session) {
     # Clean up polygons
     leaflet::leafletProxy("map") %>%
       leaflet::clearControls() %>%
-      leaflet::clearGroup("overlap_polygons")
+      leaflet::clearGroup("overlap_polygons") %>%
+      leaflet::clearGroup("added_pa") %>%
+      leaflet::clearGroup("highlight_pa")
   })
   #### Start Button on First Page ####
   observeEvent(input$start_page_button, {
