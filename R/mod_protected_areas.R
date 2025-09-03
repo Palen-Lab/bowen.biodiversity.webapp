@@ -274,7 +274,8 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
           centerViewPolygon(selected_pa) %>%
-          addNewProtectedArea(selected_pa, "mount_collins", layerList)
+          addNewProtectedArea(selected_pa, "mount_collins", layerList) %>%
+          highlightProtectedArea(selected_pa)
       }
       else if (selectPage() == "Full 30 by 30 Scenario") {
         # Update Specific Sidebar
@@ -290,11 +291,13 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         })
         # Update Leaflet Map Parameters
         # Read / Prepare Map Layers
+
         # Update Leaflet Map
         leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
           # TODO: flow from All Existing to Full 30 by 30
           leaflet::clearGroup("highlight_pa") %>%
+          highlightProtectedArea(bowen_new_pa) %>%
           leaflet::flyTo(-123.370, 49.374, 13)
       }
     })
