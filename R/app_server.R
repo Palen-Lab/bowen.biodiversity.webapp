@@ -10,69 +10,100 @@ if (interactive()) {
 #' @noRd
 app_server <- function(input, output, session) {
   sf::sf_use_s2(FALSE)
-  #### Active Panel ####
+  #### Active Panel Trigger ####
+  active_panel_options <- c("start", "species", "habitats", "people", "values", "threats", "action", "protected_areas", "overlay")
   r <- reactiveValues(active_panel = "start")
   observeEvent(input$start_sidebar_btn, {
     r$active_panel <- "start"
-    mod_start_server("start_1",
-                     map_id = "map",
-                     parent_session = session)
   })
   observeEvent(input$species_sidebar_btn, {
     r$active_panel <- "species"
-    mod_species_server("species_1",
-                       map_id = "map",
-                       parent_session = session)
   })
   observeEvent(input$habitats_sidebar_btn, {
     r$active_panel <- "habitats"
-    mod_habitats_server("habitats_1",
-                        map_id = "map",
-                        parent_session = session)
   })
   observeEvent(input$people_sidebar_btn, {
     r$active_panel <- "people"
-    mod_people_server("people_1",
-                      map_id = "map",
-                      parent_session = session)
   })
   observeEvent(input$values_sidebar_btn, {
     r$active_panel <- "values"
-    mod_values_server("values_1",
-                      map_id = "map",
-                      parent_session = session)
   })
   observeEvent(input$threats_sidebar_btn, {
     r$active_panel <- "threats"
-    mod_threats_server("threats_1",
-                       map_id = "map",
-                       parent_session = session)
-  })
-  observeEvent(input$action_sidebar_btn, {
-    r$active_panel <- "action"
-    mod_action_server("action_1",
-                      map_id = "map",
-                      parent_session = session)
   })
   observeEvent(input$protected_areas_sidebar_btn, {
     r$active_panel <- "protected_areas"
-    mod_protected_areas_server("protected_areas_1",
-                      map_id = "map",
-                      parent_session = session)
   })
   observeEvent(input$overlay_sidebar_btn, {
     r$active_panel <- "overlay"
-    mod_overlay_server("overlay_1",
+  })
+  observeEvent(r$active_panel, {
+    if(r$active_panel == "start") {
+      mod_start_server("start_1",
                        map_id = "map",
                        parent_session = session)
+    }
+    else if (r$active_panel == "species") {
+      mod_species_server("species_1",
+                         map_id = "map",
+                         parent_session = session)
+    }
+    else if (r$active_panel == "habitats") {
+      mod_habitats_server("habitats_1",
+                          map_id = "map",
+                          parent_session = session)
+    }
+    else if (r$active_panel == "people") {
+      mod_people_server("people_1",
+                        map_id = "map",
+                        parent_session = session)
+    }
+    else if (r$active_panel == "values") {
+      mod_values_server("values_1",
+                        map_id = "map",
+                        parent_session = session)
+    }
+    else if (r$active_panel == "threats") {
+      mod_threats_server("threats_1",
+                         map_id = "map",
+                         parent_session = session)
+    }
+    else if (r$active_panel == "protected_areas") {
+      mod_protected_areas_server("protected_areas_1",
+                                 map_id = "map",
+                                 parent_session = session)
+    }
+    else if (r$active_panel == "overlay") {
+      mod_overlay_server("overlay_1",
+                         map_id = "map",
+                         parent_session = session)
+    }
   })
+  # observeEvent(input$action_sidebar_btn, {
+  #   r$active_panel <- "action"
+  #   mod_action_server("action_1",
+  #                     map_id = "map",
+  #                     parent_session = session)
+  # })
+
   #### Update Active Panel ####
   observeEvent(r$active_panel, {
+    # Clear mini sidebar button
+    for(active_panel in active_panel_options) {
+      shinyjs::removeCssClass(id = paste0(active_panel, "_sidebar_btn"), class = "mini_sidebar_btn_selected")
+    }
+    # Highlight mini sidebar button
+    shinyjs::addCssClass(id = paste0(r$active_panel, "_sidebar_btn"), class = "mini_sidebar_btn_selected")
+    # Change page
     updateTabsetPanel(inputId = "main_sidebar", selected = r$active_panel)
+    # Clean up polygons
     leaflet::leafletProxy("map") %>%
       leaflet::clearControls() %>%
-      leaflet::clearImages() %>%
-      leaflet::clearShapes()
+      leaflet::clearGroup("overlap_polygons")
+  })
+  #### Start Button on First Page ####
+  observeEvent(input$start_page_button, {
+    r$active_panel <- "species"
   })
 
   #### Init Main Map ####

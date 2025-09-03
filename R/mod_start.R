@@ -18,6 +18,11 @@ mod_start_ui <- function(id) {
         p("The existing information are used as inputs to generate Conservation Values across Bowen Island."),
         p("This Conservation Values is then overlaid with potential threats, identifying key locations for further attention."),
         p("Finally, based on the Conservation Values, we explore Action that could mitigate risk towards biodiversity."),
+        actionButton(
+          inputId = "start_page_button",
+          label = "START",
+          icon = icon("circle-play")
+        ),
         h2("Collaborators:"),
         img(src = "www/SFU_horizontal_logo_rgb.png",
             height = "100%",

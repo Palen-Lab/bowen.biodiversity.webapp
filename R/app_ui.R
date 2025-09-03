@@ -8,6 +8,8 @@ app_ui <- function(request) {
   tagList(
     # Leave this function for adding external resources
     golem_add_external_resources(),
+    # necessary for some interactive functions
+    shinyjs::useShinyjs(),
     # Your application UI logic
     bslib::page_navbar(
       title = div(
@@ -27,43 +29,49 @@ app_ui <- function(request) {
           # Simple small sidebar, for selecting different modules / groupings
           sidebar = bslib::sidebar(
             id = "mini_sidebar",
-            width = "60px",
+            width = "80px",
             padding = 0,
             gap = 0,
             open = "always",
             actionButton(
               "start_sidebar_btn",
               "Start",
-              icon = icon("play")
+              icon = icon("play"),
+              class = "mini_sidebar_btn"
             ),
-            p("Inputs"),
+            tags$p("Inputs", class = "mini_sidebar_heading"),
             actionButton(
               "species_sidebar_btn",
               "Species",
-              icon = icon("dove")
+              icon = icon("dove"),
+              class = "mini_sidebar_btn"
             ),
             actionButton(
               "habitats_sidebar_btn",
               "Habitats",
-              icon = icon("tree")
+              icon = icon("tree"),
+              class = "mini_sidebar_btn"
             ),
             actionButton(
               "people_sidebar_btn",
               "People",
-              icon = icon("person")
+              icon = icon("person"),
+              class = "mini_sidebar_btn"
             ),
-            p("Analysis"),
+            tags$p("Analysis", class = "mini_sidebar_heading"),
             actionButton(
               "values_sidebar_btn",
               "Values",
-              icon = icon("chart-simple")
+              icon = icon("chart-simple"),
+              class = "mini_sidebar_btn"
             ),
             actionButton(
               "threats_sidebar_btn",
               "Threats",
-              icon = icon("triangle-exclamation")
+              icon = icon("triangle-exclamation"),
+              class = "mini_sidebar_btn"
             ),
-            p("Outputs"),
+            tags$p("Outputs", class = c("mini_sidebar_heading")),
             # actionButton(
             #   "action_sidebar_btn",
             #   "Action",
@@ -71,13 +79,15 @@ app_ui <- function(request) {
             # ),
             actionButton(
               "protected_areas_sidebar_btn",
-              "Protect Areas",
-              icon = icon("seedling")
+              "Protected Areas",
+              icon = icon("seedling"),
+              class = "mini_sidebar_btn"
             ),
             actionButton(
               "overlay_sidebar_btn",
               "Overlay",
-              icon = icon("seedling")
+              icon = icon("seedling"),
+              class = "mini_sidebar_btn"
             )
           ),
           # Main Content, with interactive information sidebar and map
