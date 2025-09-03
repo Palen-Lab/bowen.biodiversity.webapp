@@ -69,6 +69,10 @@ app_server <- function(input, output, session) {
   #### Update Active Panel ####
   observeEvent(r$active_panel, {
     updateTabsetPanel(inputId = "main_sidebar", selected = r$active_panel)
+    leaflet::leafletProxy("map") %>%
+      leaflet::clearControls() %>%
+      leaflet::clearImages() %>%
+      leaflet::clearShapes()
   })
 
   #### Init Main Map ####

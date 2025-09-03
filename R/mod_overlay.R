@@ -160,12 +160,12 @@ mod_overlay_server <- function(id, map_id, parent_session){
           leaflet::removeShape("bowen_uc") %>%
           leaflet::removeShape("bowen_uc_hatch")
       }
-      if(input$selectGroup != "Habitats - Freshwater" | input$selectGroup != "Habitats - Terrestrial") {
-        # Update Leaflet Map
-        map %>%
-          leaflet::removeShape("top_pct_zonation_vect")
-        # Update sidebarInfo
-      }
+      # if(input$selectGroup != "Habitats - Freshwater" | input$selectGroup != "Habitats - Terrestrial") {
+      #   # Update Leaflet Map
+      #   map %>%
+      #     leaflet::removeShape("top_pct_zonation_vect")
+      #   # Update sidebarInfo
+      # }
 
       if(input$selectGroup == "Choose Category") {
         # Update sidebar
@@ -174,6 +174,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
         # Update Leaflet Map
         map %>%
           leaflet::clearImages() %>%
+          leaflet::removeShape("top_pct_zonation_vect") %>%
           leaflet::addRasterImage(
             x = zonation,
             layerId = "zonation_raster",
@@ -251,6 +252,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
         # Update Leaflet Map
         map %>%
           leaflet::clearImages() %>%
+          leaflet::removeShape("top_pct_zonation_vect") %>%
           leaflet::addRasterImage(
             x = zonation,
             layerId = "zonation_raster",
@@ -436,12 +438,6 @@ mod_overlay_server <- function(id, map_id, parent_session){
 
       # TODO: Update overlap calculation for each selectGroup
     })
-
-    # Create hatch
-    # TODO: may need to create these objects ahead of time, time consuming to generate
-    # bowen_pa_hatch <- hatched.sf(bowen_pa, density = 3)
-    # bowen_pm_hatch <- hatched.sf(bowen_pm, density = 3)
-    # bowen_uc_hatch <- hatched.sf(bowen_uc, density = 2)
 
     #### Update when selectGroup changes ####
     observeEvent(input$selectGroup, {
