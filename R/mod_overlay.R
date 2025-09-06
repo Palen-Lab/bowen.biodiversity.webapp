@@ -26,6 +26,7 @@ mod_overlay_ui <- function(id) {
               "Threats - Development",
               "Threats - Wildfire")
           ),
+          p("This tool is for overlaying various layers together, and getting summaries of what is inside and outside of the overlapping areas."),
           sliderInput(NS(id, "top_pct_slider"), label = "Top % Values", min = 10, max = 100, value = 100, step = 5),
           htmlOutput(NS(id, "sidebarInfo")),
           htmlOutput(NS(id, "specific_sidebarInfo")),
@@ -234,7 +235,10 @@ mod_overlay_server <- function(id, map_id, parent_session){
 
         # Update sidebar
         output$sidebarInfo <- renderUI({
-          "The percentages may not add up exactly to the selected %, due to some top % not falling on lands in these categories."
+          tagList(
+            h2("Land Use"),
+            p("The percentages may not add up exactly to the selected %, due to some top % not falling on lands in these categories.")
+          )
         })
         output$sidebarTable <- DT::renderDT(
           DT::datatable(sidebarTable[, c("type", "area_ha", "pct_prop", "pct_total")], options = list(
@@ -289,8 +293,10 @@ mod_overlay_server <- function(id, map_id, parent_session){
           medium = c(inside_medium_count, outside_medium_count),
           low = c(inside_low_count, outside_low_count)
         )
-        output$specific_sidebarInfo <- renderUI({
-          "Human Disturbance"
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h2("Human Disturbance")
+          )
         })
         output$sidebarTable <- DT::renderDT(
           DT::datatable(sidebarTable[,c("type", "high", "medium", "low")], options = list(
@@ -324,8 +330,10 @@ mod_overlay_server <- function(id, map_id, parent_session){
           dplyr::mutate(area_ha = ncells / 10) %>%
           dplyr::mutate(pct = round(ncells / total_sum * 100))
 
-        output$specific_sidebarInfo <- renderUI({
-          "Freshwater Habitat Richness"
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h2("Freshwater Habitat Richness")
+          )
         })
         output$sidebarTable <- DT::renderDT(
           DT::datatable(sidebarTable[,c("type", "area_ha", "pct")], options = list(
@@ -355,8 +363,10 @@ mod_overlay_server <- function(id, map_id, parent_session){
           type = c("Inside", "Outside"),
           mean = c(round(inside_mean, 2), round(outside_mean, 2))
         )
-        output$specific_sidebarInfo <- renderUI({
-          "Habitat Richness"
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h2("Habitat Richness")
+          )
         })
         output$sidebarTable <- DT::renderDT(
           DT::datatable(sidebarTable[,c("type", "mean")], options = list(
@@ -386,8 +396,10 @@ mod_overlay_server <- function(id, map_id, parent_session){
           type = c("Inside", "Outside"),
           mean = c(round(inside_mean, 2), round(outside_mean, 2))
         )
-        output$specific_sidebarInfo <- renderUI({
-          "Development Potential"
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h2("Development Potential")
+          )
         })
         output$sidebarTable <- DT::renderDT(
           DT::datatable(sidebarTable[,c("type", "mean")], options = list(
@@ -419,8 +431,10 @@ mod_overlay_server <- function(id, map_id, parent_session){
           type = c("Inside", "Outside"),
           mean = c(round(inside_mean, 2), round(outside_mean, 2))
         )
-        output$specific_sidebarInfo <- renderUI({
-          "Vulnerability Fire Index"
+        output$sidebarInfo <- renderUI({
+          tagList(
+            h2("Vulnerability Fire Index")
+          )
         })
         output$sidebarTable <- DT::renderDT(
           DT::datatable(sidebarTable[,c("type", "mean")], options = list(
