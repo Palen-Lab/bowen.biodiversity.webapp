@@ -34,7 +34,6 @@ mod_protected_areas_ui <- function(id) {
     # ),
     bslib::card(
       bslib::card_body(
-        htmlOutput(NS(id, "nextCount")),
         htmlOutput(NS(id, "sidebarInfo")),
         htmlOutput(NS(id, "specific_sidebarInfo"))
       )
