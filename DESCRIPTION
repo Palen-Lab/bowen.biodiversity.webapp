@@ -30,7 +30,8 @@ Imports:
     shiny,
     stringr,
     terra,
-    cartography
+    cartography,
+    shinyjs
 Suggests: 
     knitr,
     rmarkdown,
