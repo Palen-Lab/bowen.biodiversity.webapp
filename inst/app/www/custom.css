@@ -23,7 +23,7 @@ body {
   height: 40px;
 }
 
-#start_sidebar_btn, #species_sidebar_btn, #habitats_sidebar_btn, #people_sidebar_btn, #values_sidebar_btn, #threats_sidebar_btn, #action_sidebar_btn, #protected_areas_sidebar_btn, #overlay_sidebar_btn {
+.mini_sidebar_btn {
   display: grid;
   margin: 0;
   padding: 11px 0 10px 0;
@@ -32,8 +32,35 @@ body {
   border-color: lightgrey;
 }
 
+.mini_sidebar_btn_selected {
+  background: #345729;
+  color: beige;
+}
+
 #mini_sidebar i {
   font-size: 20px;
+}
+
+#mini_sidebar {
+  text-align: center;
+}
+
+.mini_sidebar_heading {
+  font-weight: bold;
+  padding: 6px 0px 6px 0px;
+  background: darkgrey;
+  color: beige;
+}
+
+#start_page_button {
+  background: #345729;
+  color: beige;
+  font-size: 1.3em;
+}
+#start_page_button:hover {
+  background: beige;
+  color: #345729;
+  border-color: #345729;
 }
 
 @keyframes blink {

@@ -152,27 +152,48 @@ mod_species_server <- function(id, map_id, parent_session){
           tagList(
             h1("All Species"),
             tags$figure(
-              img(
-                src = "www/pileated-woodpecker-close-up.jpg",
-                width = "100%",
-                alt = "This photo displays the Pileated Woodpecker as an example of a species present on Bowen Island.",
-                title = "The Pileated Woodpecker is an example of a species present on Bowen Island."
+              a(
+                img(
+                  src = "https://upload.wikimedia.org/wikipedia/commons/thumb/5/50/Dryocopus_pileatus_%28Pileated_Woodpecker%29_35.jpg/512px-Dryocopus_pileatus_%28Pileated_Woodpecker%29_35.jpg?20210211204234",
+                  width = "100%",
+                  alt = "Dryocopus pileatus (Pileated Woodpecker) 35",
+                  title = "The Pileated Woodpecker is an example of a species present on Bowen Island."
+                ),
+                target = "_blank",
+                href = "https://commons.wikimedia.org/wiki/File:Dryocopus_pileatus_(Pileated_Woodpecker)_35.jpg"
               ),
               tags$figcaption(
-                em("Pileated Woodpecker"),
+                p("Pileated Woodpecker (", em("Dryocopus pileatus"), ")"),
                 class = "text-center"
               ),
               class = "p-0 m-0"
             ),
             simple_legend,
             p("This map shows the Species Richness by 100m resolution cell or pixel on Bowen Island."),
-            p("Based on probability of occurrence in Species Distribution Models. There are 193 of these species present on Bowen Island with species distribution models available.")
+            p("Presence in each pixel is based on the species' probability of occurrence in Species Distribution Models (SDM). The inclusion of a species into our analyses is dependent on the availability of SDM and confirmation of their presence on Bowen Island from other data sources with direct observation. There are 193 of these species present on Bowen Island with species distribution models available.")
           )
         })
       } else if (input$selectSpeciesGroup == "threatened") {
         output$sidebarInfo <- renderUI({
           tagList(
             h1("Threatened Species"),
+            tags$figure(
+              a(
+                img(
+                  src = "https://upload.wikimedia.org/wikipedia/commons/thumb/4/41/Little_brown_bat_face_closeup.jpg/512px-Little_brown_bat_face_closeup.jpg?20181204040912",
+                  width = "100%",
+                  alt = "Little brown bat face closeup",
+                  title = "USFWS/Ann Froschauer, Public domain, via Wikimedia Commons"
+                ),
+                target = "_blank",
+                href = "https://commons.wikimedia.org/wiki/File:Little_brown_bat_face_closeup.jpg"
+              ),
+              tags$figcaption(
+                p("Little brown bat (", em("Myotis lucifugus"), ")"),
+                class = "text-center"
+              ),
+              class = "p-0 m-0"
+            ),
             simple_legend,
             p("This map shows the Species Richness by 100m resolution cell or pixel on Bowen Island."),
             p("Based on probability of occurrence in Species Distribution Models. Species that are listed under the Red or Blue Lists according to the British Columbia Conservation Data Centre are included in this map. There are 24 of these species present on Bowen Island with species distribution models available.")
@@ -182,16 +203,52 @@ mod_species_server <- function(id, map_id, parent_session){
         output$sidebarInfo <- renderUI({
           tagList(
             h1("Bird Species"),
+            tags$figure(
+              a(
+                img(
+                  src = "https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Trumpeter_swan_%2891399%29.jpg/512px-Trumpeter_swan_%2891399%29.jpg?20231114145551",
+                  width = "100%",
+                  alt = "Trumpeter swan at Sunnyside Beach, Toronto",
+                  title = "Rhododendrites, CC BY-SA 4.0 &lt;https://creativecommons.org/licenses/by-sa/4.0&gt;, via Wikimedia Commons"
+                ),
+                target = "_blank",
+                href = "https://commons.wikimedia.org/wiki/File:Trumpeter_swan_(91399).jpg"
+              ),
+              tags$figcaption(
+                p("Trumpeter Swan (", em("Cygnus buccinator"), ")"),
+                class = "text-center"
+              ),
+              class = "p-0 m-0"
+            ),
             simple_legend,
             p("This map shows the Species Richness of Birds by 100m resolution cell or pixel on Bowen Island."),
+            p("Based on probability of occurrence in Species Distribution Models. The species included have a SDM available and have confirmed observations in eBird citizen science databases. There are 176 of these species present on Bowen Island based on this criteria.")
           )
         })
       } else if (input$selectSpeciesGroup == "other_species") {
         output$sidebarInfo <- renderUI({
           tagList(
             h1("Other Species"),
+            tags$figure(
+              a(
+                img(
+                  src = "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Rana_aurora_6227.JPG/512px-Rana_aurora_6227.JPG?20090503182920",
+                  width = "100%",
+                  alt = "Rana aurora",
+                  title = "Walter Siegmund, CC BY-SA 3.0 &lt;https://creativecommons.org/licenses/by-sa/3.0&gt;, via Wikimedia Commons"
+                ),
+                target = "_blank",
+                href = "https://commons.wikimedia.org/wiki/File:Rana_aurora_6227.JPG"
+              ),
+              tags$figcaption(
+                p("Red-legged Frog (", em("Rana aurora"), ")"),
+                class = "text-center"
+              ),
+              class = "p-0 m-0"
+            ),
             simple_legend,
             p("This map shows the Species Richness of other species, including reptiles, amphibians, and small mammals, by 100m resolution cell or pixel on Bowen Island."),
+            p("Based on probability of occurrence in Species Distribution Models. The species included have a SDM available and have confirmed observations in iNaturalist citizen science databases or previous environmental reports. There are 17 of these species present on Bowen Island based on this criteria.")
           )
         })
       }
