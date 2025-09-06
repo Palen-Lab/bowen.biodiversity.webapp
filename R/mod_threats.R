@@ -157,8 +157,13 @@ mod_threats_server <- function(id, map_id, parent_session){
                 colour = raster_colours[i]
               )
             },
-            p("This is a simple map to show how vulnerable different parts of Bowen Island are to biodiversity loss if a wildfire were to happen — not predicting fires, just showing where damage could be worst."),
-            p("We base this on three things: how steep the land is (fires spread faster uphill), which direction it faces (south-facing slopes tend to burn hotter), and what kind of habitat is there (some forests and sensitive ecosystems are more easily harmed by fire).")
+            p("This is a simple map showing a rasterized version of the Wildland Urban Interface (WUI) risk class maps produced by the BC Wildfire Service."),
+            p("These maps describe wildfire risk in the Wildland Urban Interface by combining the likelihood of a wildfire occurring with the potential consequences for communities and high-value resources. It classifies areas into relative risk levels, which helps prioritize mitigation efforts, fuel management, and community resiliency planning."),
+            a(icon("up-right-from-square"), "About Wildland Urban Interface Maps",
+              href = "https://www2.gov.bc.ca/gov/content/safety/wildfire-status/prevention/fire-fuel-management/wui-risk-class-maps",
+              target = "_blank",
+              class = c("btn", "btn-primary"))
+
           )
         })
         # Update Leaflet Map
