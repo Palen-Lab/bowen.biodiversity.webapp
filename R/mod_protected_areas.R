@@ -34,6 +34,7 @@ mod_protected_areas_ui <- function(id) {
     # ),
     bslib::card(
       bslib::card_body(
+        htmlOutput(NS(id, "nextCount")),
         htmlOutput(NS(id, "sidebarInfo")),
         htmlOutput(NS(id, "specific_sidebarInfo"))
       )
@@ -76,6 +77,7 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
       # Creating a new button with each sidebar update, therefore the count is not maintained by the actionButton
       nextCount(nextCount() + 1)
     })
+    output$nextCount <- renderText(nextCount())
 
     #### Update raster layer and specific_sidebarInfo on Leaflet ####
     # Triggered by changes in both selectGroup and subselectGroup inputs
@@ -85,12 +87,15 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
       #### MULTIPLE PAGE SUBSELECT GROUPS ####
       # Existing
       if (selectPage() == "All Existing") {
+        # Reset reactiveVals
+        nextCount(1)
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
+            h1("Expanding Protected Areas on Bowen Island"),
             util_ui_simple_legend_element(label = "Existing Protected Areas", colour = "#a1d76a", border_colour = "lightgrey"),
             util_ui_simple_legend_element(label = "Old Growth Management Areas", colour = "beige", border_colour = "lightgrey"),
-            p("This is a simple map to show all existing protected areas on Bowen Island. This section will walk through the existing major protected areas and their significance."),
+            p("This is a simple map to show all existing protected areas on Bowen Island. This part of this website will walk through the existing major protected areas, their significance, and where to expand them based on the results of our Conservation Values analyses."),
           )
         })
         output$specific_sidebarInfo <- renderUI({
@@ -103,7 +108,7 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         ## Symbology
 
         # Update Leaflet Map
-        leaflet::leafletProxy(mapId = map_id,
+        map <- leaflet::leafletProxy(mapId = map_id,
                               session = parent_session) %>%
           leaflet::clearControls() %>%
           leaflet::clearImages() %>%
@@ -164,19 +169,42 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
             labels = "Present",
             title = "OGMAs",
           )
+
+        # Clear layerList
+        lapply(layerList(), function(map, x, layerList) {
+          removeNewProtectedArea(map, x, layerList)
+        }, map = map, layerList = layerList)
       }
       else if (selectPage() == "Fairy Fen Nature Reserve") {
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
+            tags$figure(
+              a(
+                img(
+                  src = "https://bowenislandconservancy.org/wp-content/uploads/2016/04/IMG_2872-640x480.jpg",
+                  width = "100%",
+                  alt = "Fairy Fen–View from the south side. Photo courtesy of Alan Whitehead",
+                  title = "Fairy Fen–View from the south side. Photo courtesy of Alan Whitehead"
+                ),
+                target = "_blank",
+                href = "https://bowenislandconservancy.org/our-work/fairy-fen-nature-reserve/"
+              ),
+              tags$figcaption(
+                p("Fairy Fen–View from the south side. Photo courtesy of Alan Whitehead"),
+                class = "text-center"
+              ),
+              class = "p-0 m-0"
+            ),
+            p("Fairy Fen is a rare, biologically diverse wetland on Bowen Island that supports unique plants, wildlife, and ancient peat deposits dating back over 4,000 years. Protecting the area as part of the “Cove to Cape Greenway” helps prevent logging and development while reducing ecological damage through managed trail use."),
             expandProtectionUI(session)
           )
         })
         output$specific_sidebarInfo <- renderUI({
           tagList(
             if(isTRUE(input$new_protected_areas)) {
-              nextButton(session)
+              nextButton(session, "Next")
             }
           )
         })
@@ -193,11 +221,37 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
           highlightProtectedArea(selected_pa)
       }
       else if (selectPage() == "Bowen Island Ecological Reserve") {
-        # Update Specific Sidebar
+        # Update sidebar
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
+            tags$figure(
+              a(
+                img(
+                  src = "https://static.inaturalist.org/projects/34875-cover.JPG?1639182079",
+                  width = "100%",
+                  alt = "Bowen Island Ecological Reserve. Photo by ecoreserves.bc.ca",
+                  title = "Bowen Island Ecological Reserve. Photo by ecoreserves.bc.ca"
+                ),
+                target = "_blank",
+                href = "https://inaturalist.ca/projects/bowen-island-ecological-reserve"
+              ),
+              tags$figcaption(
+                p("Bowen Island Ecological Reserve. Photo by ecoreserves.bc.ca"),
+                class = "text-center"
+              ),
+              class = "p-0 m-0"
+            ),
+            p("The Bowen Island Ecological Reserve was created to preserve dry subzone forest ecosystems in the Coastal Western Hemlock Zone and provide a convenient site for research. While ecological reserves primarily support conservation, research, and education rather than recreation, this reserve allows low-impact activities such as hiking, wildlife observation, and photography."),
             expandProtectionUI(session)
+          )
+        })
+        # Update specific sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            if(isTRUE(input$new_protected_areas)) {
+              nextButton(session, "Next")
+            }
           )
         })
         # Update Leaflet Map Parameters
@@ -213,11 +267,37 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
           highlightProtectedArea(selected_pa)
       }
       else if (selectPage() == "Art Rennison Nature Park") {
-        # Update Specific Sidebar
+        # Update Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
+            tags$figure(
+              a(
+                img(
+                  src = "https://i0.wp.com/bowenislandmunicipality.ca/wp-content/uploads/2025/08/Grafton-Lake-scaled.jpeg?resize=1024%2C768&ssl=1",
+                  width = "100%",
+                  alt = "Grafton Lake – Photo by Raf Izdebski",
+                  title = "Grafton Lake – Photo by Raf Izdebski"
+                ),
+                target = "_blank",
+                href = "https://bowenislandmunicipality.ca/2025/08/05/new-water-quality-study-highlights-need-for-ongoing-protection-of-grafton-lake/"
+              ),
+              tags$figcaption(
+                p("Grafton Lake – Photo by Raf Izdebski"),
+                class = "text-center"
+              ),
+              class = "p-0 m-0"
+            ),
+            p("The Art Rennison Nature Park will permanently protect 230 acres of land around Grafton Lake, safeguarding Bowen Island’s largest drinking water reservoir while offering recreational opportunities through an improved trail system. As part of a larger greenway connecting Mount Gardner to the Ecological Reserve, the park’s wetlands and wildlife corridors play a vital role in conserving native ecosystems and habitats."),
             expandProtectionUI(session)
+          )
+        })
+        # Update specific sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            if(isTRUE(input$new_protected_areas)) {
+              nextButton(session, "Next")
+            }
           )
         })
         # Update Leaflet Map Parameters
@@ -240,11 +320,37 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         ## Read / Prepare Map Layers
         ## Symbology
-        # Update Specific Sidebar
+        # Update Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
+            tags$figure(
+              a(
+                img(
+                  src = "https://metrovancouver.org/services/regional-parks/ParkPhotos/Crippen-photo1.jpg",
+                  width = "100%",
+                  alt = "Mist on Killarney Lake in Crippen Regional Park",
+                  title = "Mist on Killarney Lake in Crippen Regional Park"
+                ),
+                target = "_blank",
+                href = "https://metrovancouver.org/services/regional-parks/park/crippen-regional-park"
+              ),
+              tags$figcaption(
+                p("Mist on Killarney Lake in Crippen Regional Park"),
+                class = "text-center"
+              ),
+              class = "p-0 m-0"
+            ),
+            p("Crippen Regional Park on Bowen Island features a rich mix of forested trails, lakeside boardwalks, wildlife viewing opportunities, and historic sites—all easily accessible from Snug Cove. With amenities including picnic areas, an operating salmon hatchery, and clear trail guidelines, the park balances conservation and recreation for a rewarding day-trip experience."),
             expandProtectionUI(session)
+          )
+        })
+        # Update specific sidebar
+        output$specific_sidebarInfo <- renderUI({
+          tagList(
+            if(isTRUE(input$new_protected_areas)) {
+              nextButton(session, "Next")
+            }
           )
         })
         # Update Leaflet Map
@@ -263,8 +369,24 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         output$sidebarInfo <- renderUI({
           tagList(
             h1(selectPage()),
-            # TODO: Add explanation to how Mount Collins was chosen
-            p()
+            # tags$figure(
+            #   a(
+            #     img(
+            #       src = "https://metrovancouver.org/services/regional-parks/ParkPhotos/Crippen-photo1.jpg",
+            #       width = "100%",
+            #       alt = "Mist on Killarney Lake in Crippen Regional Park",
+            #       title = "Mist on Killarney Lake in Crippen Regional Park"
+            #     ),
+            #     target = "_blank",
+            #     href = "https://metrovancouver.org/services/regional-parks/park/crippen-regional-park"
+            #   ),
+            #   tags$figcaption(
+            #     p("Mist on Killarney Lake in Crippen Regional Park"),
+            #     class = "text-center"
+            #   ),
+            #   class = "p-0 m-0"
+            # ),
+            p("According to our analyses, this area around Mount Collins has a high conservation value. This is due to the diversity of freshwater and terrestrial habitats that are suitable for many of the species in our analyses. These habitats include a mix of streams, ponds, wetlands, and forests of mixed ages.")
           )
         })
         # Update Leaflet Map Parameters
@@ -281,9 +403,11 @@ mod_protected_areas_server <- function(id, map_id, parent_session){
         # Update Specific Sidebar
         output$sidebarInfo <- renderUI({
           tagList(
-            h1(selectPage()),
-            # TODO: Add explanation
-            p()
+            h1("30x30 Targets"),
+            p("Canada’s 30 by 30 target commits to protecting 30% of the country’s lands and waters by 2030, a goal aimed at conserving biodiversity, mitigating climate change, and safeguarding ecosystem services."),
+            p("This proposed expansion would increase the coverage of Protected Areas across Bowen Island to 30% of total land area."),
+            p("For Bowen Island, contributing to this target by expanding and connecting protected areas, such as ecological reserves and parks, would provide multiple benefits. It would help preserve rare ecosystems like fens and wetlands, maintain wildlife corridors essential for species movement, and protect forests and watersheds that regulate drinking water and reduce wildfire risk."),
+            p("Meeting the 30 by 30 goals locally would also strengthen Bowen Island’s resilience to climate impacts, enhance opportunities for recreation and education, and position the community as a leader in conservation stewardship within the region.")
           )
         })
         output$specific_sidebarInfo <- renderUI({
