@@ -130,21 +130,15 @@ mod_people_server <- function(id, map_id, parent_session){
             util_ui_simple_legend_element(label = "Medium", colour = colours_vect[ceiling(length(colours_vect)/2)]),
             util_ui_simple_legend_element(label = "Fewer Observations per Cell", colour = colours_vect[1]),
             p("iNaturalist is a community science platform where people can record and share observations of plants, animals, and other organisms, with identifications aided by experts and AI. It’s useful for learning about biodiversity, contributing to scientific research, and supporting conservation efforts through real-world species data."),
-            p("While useful, iNaturalist is subject to observer bias - where the expectations, beliefs, preferences, and limitations influence how the observer records, interprets, or measures information. We have the most observations available in places that are easy for people to get to, but not necessarily where organisms prefer to live.")
+            p("While useful, iNaturalist is subject to observer bias - where the expectations, beliefs, preferences, and limitations influence how the observer records, interprets, or measures information. We have the most observations available in places that are easy for people to get to, but not necessarily where organisms prefer to live."),
+            a(icon("up-right-from-square"), "iNaturalist Observations on Bowen Island",
+              href = "https://www.inaturalist.org/observations?place_id=53787",
+              target = "_blank",
+              class = c("btn", "btn-primary"))
           )
         })
       }
     })
-
-
-
-
-
-
-
-
-
-
   })
 }
 
