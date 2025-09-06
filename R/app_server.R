@@ -135,42 +135,46 @@ app_server <- function(input, output, session) {
                            fill = FALSE)
   })
 
-  # #### Add Bowen Admin Boundary ####
-  # bowen_boundary <- sf::st_read(here::here("inst/extdata/bowen_boundary")) %>%
-  #   sf::st_transform(crs = 4326)
-  # bowen_boundary_group <- "Admin Boundary"
-  # leaflet::leafletProxy("map") %>%
-  #   leaflet::addPolygons(data = bowen_boundary,
-  #                        group = bowen_boundary_group,
-  #                        stroke = TRUE,
-  #                        color = "darkgrey",
-  #                        fill = FALSE)
-  # groups <- append(groups, bowen_boundary_group)
-  # #### Add Bowen Island Roads ####
-  # bowen_roads <- sf::st_read(here::here("inst/extdata/bowen_roads")) %>%
-  #   sf::st_transform(crs = 4326)
-  # # addPolylines can't handle multilinestrings for some reason, need to convert to LINESTRINGS
-  # bowen_roads_ls <- sf::st_cast(bowen_roads, "LINESTRING")
-  # bowen_roads_group <- "Roads"
-  # leaflet::leafletProxy("map") %>%
-  #   leaflet::addPolylines(data = bowen_roads_ls,
-  #                         group = bowen_roads_group,
-  #                         stroke = T,
-  #                         weight = 3,
-  #                         color = "grey",
-  #                         opacity = 1.0)
-  # groups <- append(groups, bowen_roads_group)
-  # #### Add Bowen Island Trails ####
-  # bowen_trails <- sf::st_read(here::here("inst/extdata/bowen_trails")) %>%
-  #   sf::st_transform(crs = 4326)
-  # bowen_trails_group <- "Trails"
-  # leaflet::leafletProxy("map") %>%
-  #   leaflet::addPolylines(data = bowen_trails,
-  #                         group = bowen_trails_group,
-  #                         stroke = T,
-  #                         weight = 2,
-  #                         color = "brown",
-  #                         opacity = 1.0)
-  # groups <- append(groups, bowen_trails_group)
+  #### Add Bowen Admin Boundary ####
+  bowen_boundary <- bowen_boundary %>%
+    sf::st_transform(crs = 4326)
+  #### Add Bowen Island Roads ####
+  bowen_roads <- bowen_roads %>%
+    sf::st_transform(crs = 4326)
+  # addPolylines can't handle multilinestrings for some reason, need to convert to LINESTRINGS
+  bowen_roads_ls <- sf::st_cast(bowen_roads, "LINESTRING")
+  bowen_roads_group <- "Roads"
+
+  #### Add Bowen Island Trails ####
+  bowen_trails <- bowen_trails %>%
+    sf::st_transform(crs = 4326)
+  bowen_trails_group <- "Trails"
+
+
+  bowen_boundary_group <- "Admin Boundary"
+  leaflet::leafletProxy("map") %>%
+    leaflet::addMapPane("roads", 500) %>%
+    leaflet::addMapPane("trails", 499) %>%
+    leaflet::addPolygons(data = bowen_boundary,
+                         stroke = TRUE,
+                         color = "darkgrey",
+                         fill = FALSE) %>%
+    leaflet::addPolylines(data = bowen_roads_ls,
+                          group = "Roads",
+                          stroke = T,
+                          weight = 3,
+                          color = "grey",
+                          opacity = 1.0,
+                          options = leaflet::pathOptions(pane = "roads")) %>%
+    leaflet::addPolylines(data = bowen_trails,
+                          group = "Trails",
+                          stroke = T,
+                          weight = 2,
+                          color = "brown",
+                          opacity = 1.0,
+                          options = leaflet::pathOptions(pane = "trails")) %>%
+    leaflet::addLayersControl(
+      overlayGroups = c("Roads", "Trails")
+    )
 
 }
