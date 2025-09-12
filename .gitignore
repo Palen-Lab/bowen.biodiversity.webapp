@@ -11,6 +11,7 @@ vignettes/rsconnect/
 .rscignore
 
 /.quarto/
+/_site/
 data-raw/bowen_heron_watch/bowen_heron_watch.gpkg-shm data-raw/bowen_heron_watch/bowen_heron_watch.gpkg-wal
 *.gpkg-*
 vignettes/zonation/
