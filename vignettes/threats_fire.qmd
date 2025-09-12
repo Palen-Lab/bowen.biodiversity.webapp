@@ -5,9 +5,6 @@ date: "2025/09/12"
 format:
   html:
     code-fold: true
-notebook-view:
-  - notebook: lidar_dem.qmd
-    title: "Creating DEM from LiDAR Data"
 ---
 
 ```{r setup, message=F}
@@ -214,7 +211,7 @@ above scoring tables.
 
 See [Bowen Island DTM](lidar_dem.qmd) for more details.
 
-#### Input Data 2: Metro Vancouver Sensitive Ecosystem Inventory (MVSEI) 
+#### Input Data 2: Metro Vancouver Sensitive Ecosystem Inventory (MVSEI)
 
 The Metro Vancouver Sensitive Ecosystem Inventory (MVSEI) provides
 almost full coverage of habitat types across Bowen Island. The locations
