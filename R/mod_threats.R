@@ -116,11 +116,12 @@ mod_threats_server <- function(id, map_id, parent_session){
         # Update Specific Sidebar
         output$specific_sidebarInfo <- renderUI({
           tagList(
-            h1("Wildfire Vulnerability"),
+            h1("Wildfire Vulnerability Index (WVI)"),
             util_ui_simple_legend_element(label = "Higher Vulnerability", colour = "#5B177E"),
             util_ui_simple_legend_element(label = "Lower Vulnerability", colour = "#FEB078"),
             p("This is a simple map to show how vulnerable different parts of Bowen Island are to biodiversity loss if a wildfire were to happen — not predicting fires, just showing where damage could be worst."),
-            p("We base this on three things: how steep the land is (fires spread faster uphill), which direction it faces (south-facing slopes tend to burn hotter), and what kind of habitat is there (some forests and sensitive ecosystems are more easily harmed by fire).")
+            p("We base this on three things: how steep the land is (fires spread faster uphill), which direction it faces (south-facing slopes tend to burn hotter), and what kind of habitat is there (some forests and sensitive ecosystems are more easily harmed by fire)."),
+            p("Private lands are masked in this map, so we can only see the WVI for public lands on this web app.")
           )
         })
         # Update Leaflet Map
