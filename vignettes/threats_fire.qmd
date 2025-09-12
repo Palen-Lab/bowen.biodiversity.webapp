@@ -1,38 +1,82 @@
 ---
 title: "Threats: Fire"
 author: "Jay Matsushiba"
-date: "2025/04/25"
+date: "2025/09/12"
 format:
   html:
     code-fold: true
+notebook-view:
+  - notebook: lidar_dem.qmd
+    title: "Creating DEM from LiDAR Data"
 ---
 
 ```{r setup, message=F}
+# This repository, access to data objects created for this project 
 library(bowen.biodiversity.webapp)
-library(here)
+
+# Spatial data packages
 library(sf)
+library(terra)
+
+# Visualization 
 library(ggplot2)
 library(leaflet)
+library(tidyterra)
+
+# Utilities 
+library(here)
 library(tidyverse)
-library(terra)
 ```
 
-# Bowen Wildland Urban Interfaces (WUI)
+# Threats: Wildfire
 
-Exploring the Wildland Urban Interfaces maps (WUI), produced by the Province of British Columbia, with the intention of using this information to assess the threats towards biodiversity during wildfires. These maps take into consideration the fuel load, climate conditions, and human development at the interface between urban and wildland areas. This would work well for our purposes, if it didn't take in human development. For our purposes, we just want to look at biodiversity impacts and not human development. We don't have access to the input layers directly, or some way to subtract the human development from the WUI maps. Therefore, we have chosen not to use the WUI data. 
+One major potential threat for biodiversity on Bowen Island is wildfire.
+We wanted to analyze the spatial overlap between Conservation Values
+output we generated and wildfire impacts. With this, we could understand
+where on Bowen Island would be relatively more affected if/when a
+wildfire occurs.
 
-![Bowen WUI](images/bowen_wui.png) Previous to this step, the KMZ files
-were loaded into QGIS and clipped to
+## Existing Data Sources
+
+Rather than creating our own wildfire index, we first explored what
+datasets existed. This section describes the data that we are aware of,
+and their strengths and limitations.
+
+### Bowen Wildland Urban Interfaces (WUI)
+
+![Bowen Island WIldland Urban Interface
+Map](images/clipboard-1378344876.png)
+
+The Province of British Columbia produces the Wildland Urban Interface
+(WUI) maps, with their intention being to use these maps to inform the
+relative impact of wildfires on human development. These maps take into
+consideration three key variables - fuel load, climate conditons, and
+human development at the interface between urban and wildland areas. The
+intended use case for these maps are to inform wildfire prevention and
+response in British Columbia.
+
+The WUI seems to be rigourous in their modelling of fuel load and
+climate conditions, but because these values are not provided separately
+from the final WUI map, we are not able to use these layers for our
+purposes. For our purposes, we want to look at how wildfires would
+impact biodiversity, and would need to remove the human development
+variable. Therefore, after exploring the data, we have elected not to
+use the WUI map to estimate the vulnerability of biodiversity to
+wildfires.
+
+Sources: [BC Wildfire Service:
+WUI](https://www2.gov.bc.ca/gov/content/safety/wildfire-status/prevention/fire-fuel-management/wui-risk-class-maps)
+
+#### Preparing WUI Downloaded Layers
+
+The original WUI maps are provided as a KMZ file. The KMZ files were
+first loaded into QGIS and clipped to
 `data-raw/bowen_boundary/Bowen_boundary.shp`. This clipped KMZ was saved
 as `data-raw/bowen_wui.gpkg`.
 
-Sources:
-https://www2.gov.bc.ca/gov/content/safety/wildfire-status/prevention/fire-fuel-management/wui-risk-class-maps/wui-downloads
-https://www.for.gov.bc.ca/ftp/HPR/external/!publish/WUI_RiskClass/Maps/Coast/WUI_RiskClass_36x48L_92G_SW.pdf
-
 ```{r plots}
 bowen_wui <- here("data-raw/bowen_wui.gpkg") %>% 
-  st_read() %>%
+  st_read(quiet = T) %>%
   select(Name, PSTA) %>%
   rename(WUI = Name) %>%
   mutate(WUI_PSTA = paste0(WUI, "_", PSTA))
@@ -47,13 +91,18 @@ ggplot(bowen_wui) +
   geom_sf(aes(fill = WUI_PSTA))
 ```
 
-## Convert to raster matching the resolution and extent of Zonation inputs
+#### Rasterizing WUI Maps
 
-```{r}
+In case we would like to overlap the WUI risk classification with the
+Conservation Values raster, we need to rasterize the vector WUI layer.
+
+```{r raster_wui}
+#| echo: false
+# Same raster cell res, extent, and CRS as Conservation Values raster
 bowen_mask <- here("inst/extdata/bowen_mask.tif") %>% rast()
-
 # Assign values to vect to correctly be able to rasterize the levels later
 unique(bowen_wui$WUI_PSTA)
+# Create factor levels
 d <- data.frame(
   id = c(1, 2, 3, 4, 5),
   WUI_PSTA = c("No Data (Private Land)_1-4", 
@@ -62,42 +111,49 @@ d <- data.frame(
             "Moderate_1-4",
             "Moderate_5-6")
 )
+# sf to SpatVector
 bowen_wui_vect <- bowen_wui %>% 
   vect() %>%
   project(bowen_mask) %>%
   merge(d, by = "WUI_PSTA")
-
+# SpatVector to SpatRaster
 bowen_wui_rast <- bowen_wui_vect %>%
   rasterize(bowen_mask, field = "id", touches = T) 
 ```
 
-## Notes on threat due to fire from Tom Sisk
+## Wildfire Vulnerability Index
 
-Objective: Index of Vulnerability to Fire. We are not trying to assess
-the probability of fire nor how hot it might burn or its behavior.
-Instead, we want to know the relative vulnerability to biodiversity loss
-due to fire, if habitats were to burn.
+Since the existing data sources that we could identify do not suit our
+use case, we decided to create our own Wildfire Vulnerability Index. To
+clarify, this index does not assess the probability, severity, or
+behaviour of wildfire. Instead, we want to know the relative
+vulnerability to biodiversity loss due to fire, given a wildfire
+situation.
 
 Three major components of vulnerability:
 
 1.  Slope. Fires spread more quickly when they move uphill. Relative
     ranking might look like this:
 
-    1 0-10 degree slopes: lower vulnerability
-    2 10-30 degrees: moderate vulnerability
-    3 Above 30 degrees: higher vulnerability
+| Slope Description                       | Score |
+|-----------------------------------------|-------|
+| 0-10 degree slopes: lower vulnerability | 1     |
+| 10-30 degrees: moderate vulnerability   | 2     |
+| Above 30 degrees: higher vulnerability  | 3     |
 
 2.  Aspect. Southerly exposures burn hotter, fire spreads more quickly,
     effects more uniform and destructive than on northern exposures, all
-    else being equal. Might consider this as a first approximation: 
-    1 0-45: Low vulnerability because fires unlikely to spread as fast or burn as hot 
-    2 45-90: moderately low 
-    4 90-135: moderately high 
-    6 135-225: southerly exposures burn hotter, spread quickly and more
-    uniformly 
-    4 225-270: Moderately high 
-    2 270-315 Moderately low 
-    1 315-360: Low vulnerability
+    else being equal. Might consider this as a first approximation:
+
+| Aspect Description | Score |
+|------------------------------------|------------------------------------|
+| 0-45: Low vulnerability because fires unlikely to spread as fast or burn as hot | 1 |
+| 45-90: moderately low | 2 |
+| 90-135: moderately high | 4 |
+| 135-225: southerly exposures burn hotter, spread quickly and more uniformly | 6 |
+| 225-270: Moderately high | 4 |
+| 270-315 Moderately low | 2 |
+| 315-360: Low vulnerability | 1 |
 
 3.  Fuels. On Bowen, the main differences in fuel loads have to do with
     whether a location is forested or not forested. Forested areas burn
@@ -112,46 +168,66 @@ Three major components of vulnerability:
     rank habitats based on the differential effects of forest fuels
     present, as well as the difference in flora and fauna that make
     those locations more or less vulnerable in terms of biodiversity
-    loss. 
-    First Cut Ranking Scheme: 
-    14 Forest, large/old trees 
-    10 Forest, mature second growth 
-    6 Forest, young regrowth 
-    6 Shrublands 
-    2 Grasslands: often burn and effects are modest, even positive in some
-    cases 
-    4 Riparian: seldom burns, but if it burns biodiversity effects
-    may be very negative 
-    2 Wetlands: seldom burn, more often they create fire breaks 
-    0 Water: does not burn, but is vulnerable to ash deposition 
-    NA Built environment: NA (default to WUI map when talking about the built environment
+    loss.
 
-I suggest that we think about these basic ideas:
+First Cut Ranking Scheme:
 
-1. We pursue an index of vulnerability, rather than a more
-sophisticated approach to modeling fire or adapting an index that was
-developed for other purposes (i.e. WUI).
+| Habitat Description | Score |
+|------------------------------------|------------------------------------|
+| Forest, large/old trees | 14 |
+| Forest, mature second growth | 10 |
+| Forest, young regrowth | 6 |
+| Shrublands | 6 |
+| Grasslands: often burn and effects are modest, even positive in some cases | 2 |
+| Riparian: seldom burns, but if it burns biodiversity effects may be very negative | 4 |
+| Wetlands: seldom burn, more often they create fire breaks | 2 |
+| Water: does not burn, but is vulnerable to ash deposition | 0 |
+| Built environment (default to WUI map when talking about the built environment) | NA |
 
-2. We create a simple index that allows us to compare the relative
-vulnerability of all locations on Bowen (with the exception of the built
-environment).
+We conducted our further work around these basic ideas:
 
-3. We consider slope, aspect, and fuels by habitat as the three
-components of an index.
+1.  We pursue an index of vulnerability, rather than a more
+    sophisticated approach to modeling fire or adapting an index that
+    was developed for other purposes (i.e. WUI).
 
-4. We determine the relative ranks within each of the three components
+2.  We create a simple index that allows us to compare the relative
+    vulnerability of all locations on Bowen (with the exception of the
+    built environment).
 
-5. Integrate the scores into an index that produces an aggregate
-vulnerability index score for each pixel. As a first approximation, this
-should be the additive (sum) of the three components – and then let’s
-see how that performs.
+3.  We consider slope, aspect, and fuels by habitat as the three
+    components of an index.
 
+4.  We determine the relative ranks within each of the three components
 
-- Rationale for score scaling from Tom 
-- Calculating rasters from the LiDAR data directly 
-- Add together the three components raster
+5.  Integrate the scores into an index that produces an aggregate
+    vulnerability index score for each pixel. As a first approximation,
+    this should be the additive (sum) of the three components – and then
+    let’s see how that performs.
 
-```{r}
+### Generate Wildfire Vulnerability Index Raster
+
+#### Input Data 1: LiDAR
+
+We prepared the slope and aspect rasters from the LiDAR data provided by
+BC LiDAR. We then assigned the scores to these rasters according to the
+above scoring tables.
+
+See [Bowen Island DTM](lidar_dem.qmd) for more details.
+
+#### Input Data 2: Metro Vancouver Sensitive Ecosystem Inventory (MVSEI) 
+
+The Metro Vancouver Sensitive Ecosystem Inventory (MVSEI) provides
+almost full coverage of habitat types across Bowen Island. The locations
+that do not have habitat type data from the MVSEI are those that have
+been subject to human development, and are no longer considered to be
+habitat. The more general classifications of the MVSEI make it easier to
+assign the scores, compared to using the Terrestrial Ecosystem Mapping
+(TEM) products.
+
+```{r raw_wildfire_index}
+#| warning: false
+#| message: false
+
 # Slope Score
 ## Create slope raster from LiDAR data
 slope <- rast(here("data/bowen_slope.tif"))
@@ -167,6 +243,7 @@ slope_m <- matrix(c(
 ## Classify original slope raster to slope score 
 slope_score <- slope %>%
   classify(slope_m)
+plot(slope_score, main = "Slope Score")
 
 # Aspect Score
 ## Create aspect raster from LiDAR data
@@ -191,10 +268,12 @@ aspect_m <- matrix(c(
 ## Classify original aspect raster to aspect score 
 aspect_score <- aspect %>%
   classify(aspect_m)
+plot(aspect_score, main = "Aspect Score")
 
 # Fuel Score
 ## Get habitat classes from combination of WUI, MVSEI, TEM, AW layers 
-mv_sei <- st_read(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg")) %>%
+mv_sei <- st_read(here("data-raw/metrovancouver_sensitive_ecosystem_inventory/Sensitive_Ecosystem_Inventory_for_Metro_Vancouver__2020__-5580727563910851507.gpkg"),
+                  quiet = T) %>%
   st_transform(project_crs) %>%
   st_crop(bowen_boundary) 
 
@@ -248,10 +327,44 @@ fuel_score <- mv_sei_mod %>%
   vect() %>%
   project(aspect_score) %>%
   rasterize(aspect_score, field = "fuel_score") 
-
+plot(fuel_score, main = "Fuel Score")
 # Cumulative Fire Vulnerability Index
 fire_index <- slope_score + aspect_score + fuel_score
-plot(fire_index)
+plot(fire_index, main = "Wildfire Vulnerability Index")
+```
+
+### Further Cleaning / Preparing Wildfire Vulnerability Index
+
+We decided to further clean up the Wildfire Vulnerability Index raster
+based on our intended use case.
+
+#### Mask WUI Area in Wildfire Vulnerability Index
+
+We investigated masking the Wildfire Vulnerability Index (WVI) with the
+WUI map, so that our WVI is only in locations without a WUI risk
+classification. However, we decided ultimately not to do this as the WUI
+overlaps almost entirely with our WVI. Additionally, this would be
+flawed for assessing vulnerability of biodiversity as the WUI focuses on
+human developments.
+
+#### Mask Private Lands in Wildfire Vulnerabilty Index
+
+We decided to mask the Private Lands from the WVI, in order to prevent
+misconstruing of the WVI as a wildfire risk map and unnecessarily
+alerting private property owners. This index does not make any
+assessment of risk, severity, or behaviour of wildfire. This index does
+attempt to quantify the impact that a given wildfire could have on
+biodiversity.
+
+```{r mask_wildfire_index}
+# Crop WUI out
+# bowen_wui_rast_fi <- bowen_wui_vect %>%
+#   project(fire_index) %>%
+#   rasterize(fire_index, "WUI_PSTA", touches = T)
+# Decided to not do this, since the WUI overlaps so much with our fire index
+# Instead, present both WUI and our fire index layers in the web application
+# Tom to write clarifying text on difference between the two
+# Fire index descirbes vulnerability of biodiversity, rather than risk of fire
 
 # Mask private land parcels on fire index layer 
 bowen_parcelmap_rast <- bowen_parcelmap %>% 
@@ -262,15 +375,6 @@ bowen_parcelmap_rast <- bowen_parcelmap %>%
 
 fire_index_m <- fire_index %>% 
   mask(bowen_parcelmap_rast, inverse = T)
-
-# Crop WUI out
-# bowen_wui_rast_fi <- bowen_wui_vect %>%
-#   project(fire_index) %>%
-#   rasterize(fire_index, "WUI_PSTA", touches = T)
-# Decided to not do this, since the WUI overlaps so much with our fire index
-# Instead, present both WUI and our fire index layers in the web application
-# Tom to write clarifying text on difference between the two
-# Fire index descirbes vulnerability of biodiversity, rather than risk of fire
 
 # Save
 writeRaster(
@@ -293,11 +397,21 @@ writeRaster(bowen_wui_rast_m, here("inst/extdata/6_threats/fire_wui_40m.tif"),
             overwrite = T)
 ```
 
-## Plotting 
+### Plotting
+
 ```{r}
+#| message: false
+#| warning: false
+#| fig-width: 9
+#| fig-height: 12
+#| fig-dpi: 300
+
+fire_index_mp <- fire_index_m %>%
+  project("EPSG: 3857")
+
 fire_gg <- function() {
   list(
-    geom_spatraster(data = fire_index),
+    geom_spatraster(data = fire_index_mp),
     scale_fill_viridis_c(option = "inferno", na.value = NA, name = "Fire Vul. Index"),
     ggnewscale::new_scale_fill(),
     ggnewscale::new_scale_colour()
@@ -306,7 +420,7 @@ fire_gg <- function() {
 fire_ggplot <- bowen_map_ggplot(fire_gg,
                  title = "Fire Vulnerability Index",
                  subtitle = "Index of Vulnerability to Fire. This is not an assessment of the probability or behaviour of the fire. The intention of this index is to describe the relative vulnerability to biodiversity loss due to fire, under a scenario where the habitats burn. The three major components of this vulnerability index are slope, aspect, and fuel.",
-                 caption = caption)
+                 caption = "Created by Jay Matsushiba (jmatsush@sfu.ca).")
 output_dir <- here("vignettes/figures/threats_fire")
 if(!dir.exists(output_dir)) {
   dir.create(output_dir)
@@ -317,5 +431,6 @@ ggplot2::ggsave(
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
-```
 
+fire_ggplot
+```
