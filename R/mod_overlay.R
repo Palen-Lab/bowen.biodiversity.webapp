@@ -34,7 +34,7 @@ mod_overlay_ui <- function(id) {
         )
       )
     ),
-    docs_link
+    docs_link()
   )
 }
 

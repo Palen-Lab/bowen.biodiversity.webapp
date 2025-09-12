@@ -269,17 +269,24 @@ bowen_map_ggplot <- function(gg_func,
     st_transform(3857) %>%
     st_buffer(1000)
   # Shoreline
-  bowen_shoreline <- st_read(here("data-raw/bowen_island_shoreline_w_hutt.gpkg"), layer = "bowen_island_shoreline_w_hutt__bowen_islands") %>%
+  bowen_shoreline <- st_read(
+    here("data-raw/bowen_island_shoreline_w_hutt.gpkg"),
+    layer = "bowen_island_shoreline_w_hutt__bowen_islands",
+    quiet = T
+  ) %>%
     st_transform(3857)
   # Create ocean polygon, need this to reduce appearance of jagged edges from raster along coastline
   bowen_ocean_sf <- st_difference(st_union(bowen_mask_sf), st_union(bowen_shoreline))
   bowen_ocean_linewidth <- 0.5
   bowen_ocean_colour <- "#dbdbdc"
   # Create basemap
-  basemap_for_plot <- basemaps::basemap_terra(ext = bowen_mask,
-                                              map_service = "maptiler",
-                                              map_type = "backdrop",
-                                              map_token = "baL4WLstSFqSHP2fnYrE")
+  basemap_for_plot <- basemaps::basemap_terra(
+    ext = bowen_mask,
+    map_service = "maptiler",
+    map_type = "backdrop",
+    map_token = "baL4WLstSFqSHP2fnYrE",
+    verbose = F
+  )
 
   #### OUTPUT GGPLOT ####
   output_plot <- ggplot2::ggplot() +

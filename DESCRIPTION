@@ -1,6 +1,6 @@
 Package: bowen.biodiversity.webapp
 Title: Bowen Biodiversity Web App
-Version: 0.0.0.9000
+Version: 0.0.0.1
 Authors@R: 
     person("Jay", "Matsushiba", , "hello@jmatsushiba.com", role = c("aut", "cre"))
 Description: This pacakge is for a web application being built for the
@@ -31,7 +31,8 @@ Imports:
     stringr,
     terra,
     cartography,
-    shinyjs
+    shinyjs,
+    viridis
 Suggests: 
     knitr,
     rmarkdown,

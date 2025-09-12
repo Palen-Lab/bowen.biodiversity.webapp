@@ -24,7 +24,7 @@ mod_values_ui <- function(id) {
         )
       )
     ),
-    docs_link
+    docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/2025_05_02_output_zonation.html")
   )
 }
 

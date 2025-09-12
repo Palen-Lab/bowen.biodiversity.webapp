@@ -10,22 +10,22 @@
 mod_threats_ui <- function(id) {
   tabPanel(
     "threats_panel",
-    selectInput(
-      NS(id, "selectGroup"),
-      "Select Threat:",
-      choices = c(
-        "Development" = "development",
-        "Wildfire" = "wildfire"
-      ),
-      selected = "development"
-    ),
     bslib::card(
       bslib::card_body(
+        selectInput(
+          NS(id, "selectGroup"),
+          "Select Threat:",
+          choices = c(
+            "Development" = "development",
+            "Wildfire" = "wildfire"
+          ),
+          selected = "development"
+        ),
         htmlOutput(NS(id, "sidebarInfo")),
         htmlOutput(NS(id, "specific_sidebarInfo"))
       )
     ),
-    docs_link
+    htmlOutput(NS(id, "docs_link"))
   )
 }
 
@@ -62,6 +62,11 @@ mod_threats_server <- function(id, map_id, parent_session){
                         selected = "Development")
           )
         })
+        # Update docs_link
+        output$docs_link <- renderUI({
+          docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/threats_development.html")
+        })
+
       }
       # Wildfire Category Selection
       else if (input$selectGroup == "wildfire") {
@@ -74,6 +79,10 @@ mod_threats_server <- function(id, map_id, parent_session){
                         c("Fire Index", "Wildland Urban Interface"),
                         selected = "Fire Index")
           )
+        })
+        # Update docs_link
+        output$docs_link <- renderUI({
+          docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/threats_fire.html")
         })
       }
     })

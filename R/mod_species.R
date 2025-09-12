@@ -29,7 +29,7 @@ mod_species_ui <- function(id) {
         htmlOutput(NS(id, "sidebarInfo")),
       )
     ),
-    docs_link
+    docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/input_sdm.html")
   )
 }
 
