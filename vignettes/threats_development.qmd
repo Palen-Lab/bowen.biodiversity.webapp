@@ -165,9 +165,32 @@ ocp_subdivision_parcelmap <- merge(ocp_subdivision, bowen_parcelmap, by.x = "pid
   st_as_sf() %>%
   st_transform(project_crs)
 
-ggplot(ocp_subdivision_parcelmap) +
+ocp_subdivision_parcelmap_f <- ocp_subdivision_parcelmap %>%
+  mutate(
+    pid = as.numeric(pid)
+  )
+
+# Removing duplicated columns
+unique(ocp_subdivision_parcelmap_f$pid == ocp_subdivision_parcelmap_f$PID) # TRUE
+unique(ocp_subdivision_parcelmap_f$parcelclass == toupper(ocp_subdivision_parcelmap_f$ParcelClass)) # TRUE
+unique(ocp_subdivision_parcelmap_f$ownertype == toupper(ocp_subdivision_parcelmap_f$OwnerType)) # FALSE
+which(ocp_subdivision_parcelmap_f$ownertype != toupper(ocp_subdivision_parcelmap_f$OwnerType)) # 1763
+# turns out its UNCLASS and Unclassified, so the same 
+ocp_subdivision_parcelmap_fd <- ocp_subdivision_parcelmap_f %>%
+  select(!c(
+    ParcelClass, OwnerType, PID
+  )) 
+
+# Remove outlier and duplicate PID
+unique(ocp_subdivision_parcelmap_fd$pid) %>% length() # 1778, so one fewer than than nrows
+ocp_subdivision_parcelmap_fdr <- ocp_subdivision_parcelmap_fd %>%
+  filter(`Can Subdivide?` != 46)
+
+write_sf(ocp_subdivision_parcelmap_fdr, here("data-raw/bowen_development_potential_danielmartin/ocp_subdivision_parcelmap.gpkg"), delete_layer = TRUE)
+
+ggplot(ocp_subdivision_parcelmap_fdr) +
   geom_sf(aes(fill = `subdividable`, geometry = geom), color = NA) 
-ggplot(ocp_subdivision_parcelmap) +
+ggplot(ocp_subdivision_parcelmap_fdr) +
   geom_sf(aes(fill = `Can Subdivide?`, geometry = geom), color = NA) +
   scale_fill_viridis_c(direction = -1,
                        breaks = c(0, 10, 20, 40),
@@ -182,7 +205,7 @@ subdivide_tf_plot <- bowen_map(raster_layer = empty_rast,
                                subtitle = subtitle,
                                caption = caption,
                                legend_label = "Subdividable?") +
-  geom_sf(data = ocp_subdivision_parcelmap,
+  geom_sf(data = ocp_subdivision_parcelmap_fdr,
           aes(fill = `subdividable`, geometry = geom), color = NA
   ) +
   geom_sf(data = bowen_ocean_sf,
@@ -232,9 +255,7 @@ subdivide_cont_plot <- bowen_map(raster_layer = empty_rast,
                                caption = caption,
                                legend_label = "Subdividable?") +
   geom_sf(data = ocp_subdivision_parcelmap, aes(fill = `Can Subdivide?`, geometry = geom), color = NA) +
-  scale_fill_viridis_c(direction = -1,
-                       breaks = c(0, 10, 20, 40),
-                       trans = scales::pseudo_log_trans(sigma = 1)) +
+  scale_fill_viridis_c(direction = -1) +
   geom_sf(data = bowen_ocean_sf,
           linewidth = bowen_ocean_linewidth,
           fill = bowen_ocean_colour
@@ -283,7 +304,7 @@ ggplot2::ggsave(
 zonation <- terra::rast(here("inst/extdata/output_zonation/2025-05-05/rankmap.tif"))
 
 # Weighted sum of biodiversity value per parcel
-sum_bioval_weighted <- ocp_subdivision_parcelmap %>%
+sum_bioval_weighted <- ocp_subdivision_parcelmap_fdr %>%
   select(num_subdivide = `Can Subdivide?`,
          geometry = geom) %>%
   st_cast("MULTIPOLYGON") %>%
