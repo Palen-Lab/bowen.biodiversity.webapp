@@ -37,16 +37,18 @@ library(gurobi)
 library(prioritizr)
 
 caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+
+output_dir <- here("vignettes/figures/protected_areas")
+if(!dir.exists(output_dir)) {
+  dir.create(output_dir)
+}
 ```
 
 ## Input layers
 ```{r}
 sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
 habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
-output_dir <- here("vignettes/figures/protected_areas")
-if(!dir.exists(output_dir)) {
-  dir.create(output_dir)
-}
+
 
 #### Zonation Raster Layers ####
 # Load Zonation Output / Conservation Values
@@ -877,20 +879,77 @@ bowen_pa <- bowen_protectedareas[bowen_protectedareas$type != "Covenants",] %>%
   vect() %>%
   project("EPSG:4326")
 writeVector(bowen_pa, here("inst/extdata/7_action/existing_protected_areas.gpkg"), overwrite = T)
+# 
+# # gg
+# crown_poten_ggfunc <- function() {
+#   protected_colour <- "#b3e2cd"
+#   parcels_colour <-  "#fdcdac"
+#   output <- list(
+#     geom_spatraster(data = imp_clean, na.rm = T),
+#     scale_fill_viridis_c(na.value = NA, name = "Protected Area Potential"),
+#     ggnewscale::new_scale_fill(),
+#     geom_sf(data = notprotected_publiclands, aes(fill = parcels_colour)),
+#     geom_sf(data = bowen_protectedareas_valid, aes(fill = protected_colour)),
+#     scale_fill_identity(name = "",
+#                           breaks = c(protected_colour, parcels_colour),
+#                           labels = c("Protected", "Parcels"),
+#                           guide = "legend"
+#     ),
+#     ggnewscale::new_scale_fill(),
+#     ggnewscale::new_scale_colour()
+#   )
+#   return(output)
+# }
+# crown_poten_ggplot <- bowen_map_ggplot(
+#   crown_poten_ggfunc,
+#   title = "Top Locations for Protected Areas (30x30)",
+#   subtitle = "Mapping optimal Crown land for reaching 30x30 targets, using the conservation values analysis and existing protected areas. This output considers connectivity by applying boundary penalties, which prioritizes shorter boundaries relative to area. Currently, about 20% of Bowen Island is under some protection.",
+#   caption = paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+# )
+# ggplot2::ggsave(
+#   here(output_dir, "/", paste0(Sys.Date(), "_crown_potential.png")),
+#   crown_poten_ggplot,
+#   device = ragg::agg_png,
+#   width = 9, height = 12, units = "in", res = 300
+# )
+# 
+# protected_colour <- "#b3e2cd"
+# parcels_colour <-  "#fdcdac"
+# ggplot() +
+#   geom_spatraster(data = imp_clean) +
+#   scale_fill_viridis_c(na.value = NA, name = "Protected Area Potential") +
+#   ggnewscale::new_scale_fill() +
+#   geom_sf(data = parcels, aes(fill = parcels_colour)) +
+#   geom_sf(data = bowen_protectedareas_valid, aes(fill = protected_colour)) +
+#   scale_fill_identity(name = "",
+#                       breaks = c(protected_colour, parcels_colour),
+#                       labels = c("Protected", "Parcels"),
+#                       guide = "legend"
+#   ) +
+#   ggnewscale::new_scale_fill() +
+#   ggnewscale::new_scale_colour()
+
+#### Load vector layers ####
+bowen_pa <- here::here("inst/extdata/7_protected_areas/existing_protected_areas.gpkg") %>%
+  sf::st_read()
+bowen_ogma <- ogma %>%
+  sf::st_transform(sf::st_crs(bowen_pa))
+bowen_new_pa <- here::here("inst/extdata/7_protected_areas/new_protected_areas.gpkg") %>%
+  sf::st_read() %>%
+  sf::st_transform(sf::st_crs(bowen_pa))
 
 # gg
-crown_poten_ggfunc <- function() {
-  protected_colour <- "#b3e2cd"
-  parcels_colour <-  "#fdcdac"
+protect_gg <- function() {
+  protected_colour <- "#a1d76a"
+  ogma_colour <- "beige"
+  new_colour <- "orange"
   output <- list(
-    geom_spatraster(data = imp_clean, na.rm = T),
-    scale_fill_viridis_c(na.value = NA, name = "Protected Area Potential"),
-    ggnewscale::new_scale_fill(),
-    geom_sf(data = notprotected_publiclands, aes(fill = parcels_colour)),
-    geom_sf(data = bowen_protectedareas_valid, aes(fill = protected_colour)),
+    geom_sf(data = bowen_pa, aes(fill = protected_colour), alpha = 0.5),
+    geom_sf(data = bowen_ogma, aes(fill = ogma_colour), alpha = 0.5),
+    geom_sf(data = bowen_new_pa, aes(fill = new_colour), alpha = 0.5),
     scale_fill_identity(name = "",
-                          breaks = c(protected_colour, parcels_colour),
-                          labels = c("Protected", "Parcels"),
+                          breaks = c(protected_colour, ogma_colour, new_colour),
+                          labels = c("Current Protected", "Old Growth Management Areas", "Proposed Protected"),
                           guide = "legend"
     ),
     ggnewscale::new_scale_fill(),
@@ -898,34 +957,20 @@ crown_poten_ggfunc <- function() {
   )
   return(output)
 }
-crown_poten_ggplot <- bowen_map_ggplot(
-  crown_poten_ggfunc,
+
+protect_ggplot <- bowen_map_ggplot(
+  protect_gg,
   title = "Top Locations for Protected Areas (30x30)",
   subtitle = "Mapping optimal Crown land for reaching 30x30 targets, using the conservation values analysis and existing protected areas. This output considers connectivity by applying boundary penalties, which prioritizes shorter boundaries relative to area. Currently, about 20% of Bowen Island is under some protection.",
   caption = paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
 )
+
 ggplot2::ggsave(
-  here(output_dir, "/", paste0(Sys.Date(), "_crown_potential.png")),
-  crown_poten_ggplot,
+  here(output_dir, "/", paste0(Sys.Date(), "_protect_ggplot.png")),
+  protect_ggplot,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
-
-protected_colour <- "#b3e2cd"
-parcels_colour <-  "#fdcdac"
-ggplot() +
-  geom_spatraster(data = imp_clean) +
-  scale_fill_viridis_c(na.value = NA, name = "Protected Area Potential") +
-  ggnewscale::new_scale_fill() +
-  geom_sf(data = parcels, aes(fill = parcels_colour)) +
-  geom_sf(data = bowen_protectedareas_valid, aes(fill = protected_colour)) +
-  scale_fill_identity(name = "",
-                      breaks = c(protected_colour, parcels_colour),
-                      labels = c("Protected", "Parcels"),
-                      guide = "legend"
-  ) +
-  ggnewscale::new_scale_fill() +
-  ggnewscale::new_scale_colour()
 
 ```
 
