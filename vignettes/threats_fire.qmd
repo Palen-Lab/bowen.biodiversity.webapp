@@ -353,6 +353,10 @@ assessment of risk, severity, or behaviour of wildfire. This index does
 attempt to quantify the impact that a given wildfire could have on
 biodiversity.
 
+09/22/2025: We received feedback that pointed us towards using the full
+extent of the Wildfire Vulnerability Index, rather than masking out the
+private lands.
+
 ```{r mask_wildfire_index}
 # Crop WUI out
 # bowen_wui_rast_fi <- bowen_wui_vect %>%
@@ -364,23 +368,23 @@ biodiversity.
 # Fire index descirbes vulnerability of biodiversity, rather than risk of fire
 
 # Mask private land parcels on fire index layer 
-bowen_parcelmap_rast <- bowen_parcelmap %>% 
-  st_cast("MULTIPOLYGON") %>% # WKB type 12, curved polygons need to be recast
-  vect() %>%
-  project(fire_index) %>%
-  rasterize(fire_index, field = 1)
+# bowen_parcelmap_rast <- bowen_parcelmap %>% 
+#   st_cast("MULTIPOLYGON") %>% # WKB type 12, curved polygons need to be recast
+#   vect() %>%
+#   project(fire_index) %>%
+#   rasterize(fire_index, field = 1)
 
-fire_index_m <- fire_index %>% 
-  mask(bowen_parcelmap_rast, inverse = T)
+# fire_index_m <- fire_index %>% 
+#   mask(bowen_parcelmap_rast, inverse = T)
 
 # Save
 writeRaster(
-  fire_index_m, 
+  fire_index, 
   here("inst/extdata/6_threats/fire_index.tif"),
   overwrite = T
 )
 # Save simple for web app
-fire_index_simple <- fire_index_m %>%
+fire_index_simple <- fire_index %>%
   aggregate(fact = 20, fun = mean) %>%
   round()
 writeRaster(fire_index_simple, here("inst/extdata/6_threats/fire_index_40m.tif"),
@@ -431,3 +435,4 @@ ggplot2::ggsave(
 
 fire_ggplot
 ```
+
