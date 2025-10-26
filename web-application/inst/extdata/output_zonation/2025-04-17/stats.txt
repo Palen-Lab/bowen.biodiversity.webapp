@@ -1,0 +1,23 @@
+Arguments given: -a --mode=CAZ2 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5 /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/output
+Settings filename: /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/settings.z5
+Feature list filename: /home/jay/Programming_Projects/bowen.biodiversity.webapp/vignettes/zonation/features.txt
+Map dimensions (width * height): 96*108
+Number of grid cells in map (width * height): 10368
+Number of grid cells in map with data: 5408
+Input feature layer count: 228
+Feature layer count: 228
+Positive weight feature count: 228
+Negative weight feature count: 0
+Zero weight feature count: 0
+Total number of pixels with data across features: 1066882
+Mean feature extent across study area: 100.00%
+Memory usage of feature data: 1.12MB
+Mean quantization error: 0.00218962%
+Time used to read and preprocess layer data: 0s
+Time used in prioritization: 0s
+Number of iterations: 31
+Final convergence level: 0.00928717%
+Area under curve: 0.565734
+Total time used: 0s
+Number of errors: 0
+Number of warnings: 0

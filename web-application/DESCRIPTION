@@ -1,0 +1,49 @@
+Package: bowen.biodiversity.webapp
+Title: Bowen Biodiversity Web App
+Version: 0.0.0.1
+Authors@R: 
+    person("Jay", "Matsushiba", , "hello@jmatsushiba.com", role = c("aut", "cre"))
+Description: This pacakge is for a web application being built for the
+    Bowen Island Community Plan process, in order to incorporate
+    biodiversity information.
+License: MIT + file LICENSE
+URL: https://github.com/Palen-Lab/bowen.biodiversity.webapp.git
+BugReports: 
+    https://github.com/Palen-Lab/bowen.biodiversity.webapp.git/issues
+Imports: 
+    basemaps,
+    bslib,
+    colorspace,
+    config,
+    dplyr,
+    DT,
+    foreach,
+    ggplot2,
+    ggtext,
+    golem,
+    googlesheets4,
+    here,
+    leaflet,
+    magrittr,
+    pkgload,
+    sf,
+    shiny,
+    stringr,
+    terra,
+    cartography,
+    shinyjs,
+    viridis
+Suggests:
+    knitr,
+    rmarkdown,
+    shinytest2,
+    spelling,
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-US
+LazyData: true
+RoxygenNote: 7.3.2
+VignetteBuilder: knitr
+Depends: 
+    R (>= 3.5)
