@@ -1,6 +1,3 @@
-
-<!-- README.md is generated from README.Rmd. Please edit that file -->
-
 # `bowen.biodiversity.webapp`
 
 This repository contains the analysis code, some data, and documentation
