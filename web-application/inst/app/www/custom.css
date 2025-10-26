@@ -1,0 +1,75 @@
+.sidebar .card.bslib-value-box,
+.sidebar .card-body,
+.sidebar .card {
+  overflow: visible;
+  position: relative;
+}
+
+.selectize-dropdown {
+  z-index: 10000;
+}
+
+.modal {z-index: 1150;}
+
+.navbar-brand {
+  margin-right: 0px;
+}
+
+body {
+  background-color: #F5F5F5;
+}
+
+#website_logo {
+  height: 40px;
+}
+
+.mini_sidebar_btn {
+  display: grid;
+  margin: 0;
+  padding: 11px 0 10px 0;
+  font-size: 0.8rem;
+  border-radius: 0;
+  border-color: lightgrey;
+}
+
+.mini_sidebar_btn_selected {
+  background: #345729;
+  color: beige;
+}
+
+#mini_sidebar i {
+  font-size: 20px;
+}
+
+#mini_sidebar {
+  text-align: center;
+}
+
+.mini_sidebar_heading {
+  font-weight: bold;
+  padding: 6px 0px 6px 0px;
+  background: darkgrey;
+  color: beige;
+}
+
+#start_page_button {
+  background: #345729;
+  color: beige;
+  font-size: 1.3em;
+}
+#start_page_button:hover {
+  background: beige;
+  color: #345729;
+  border-color: #345729;
+}
+
+@keyframes blink {
+  0%   { stroke: orange; stroke-width: 4; }
+  50%  { stroke: white; stroke-width: 4; }
+  100% { stroke: orange; stroke-width: 4; }
+}
+
+.blink-outline {
+  animation: blink 1s infinite;
+}
+
