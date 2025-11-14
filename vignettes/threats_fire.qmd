@@ -71,7 +71,7 @@ first loaded into QGIS and clipped to
 `data-raw/bowen_boundary/Bowen_boundary.shp`. This clipped KMZ was saved
 as `data-raw/bowen_wui.gpkg`.
 
-```{r plots}
+```{r explore_wui}
 bowen_wui <- here("data-raw/bowen_wui.gpkg") %>% 
   st_read(quiet = T) %>%
   select(Name, PSTA) %>%
@@ -400,7 +400,7 @@ writeRaster(bowen_wui_rast_m, here("inst/extdata/6_threats/fire_wui_40m.tif"),
 
 ### Plotting
 
-```{r}
+```{r wildfire_index_plot}
 #| message: false
 #| warning: false
 #| fig-width: 9
@@ -436,3 +436,47 @@ ggplot2::ggsave(
 fire_ggplot
 ```
 
+
+
+```{r wui_plot}
+#| message: false
+#| warning: false
+#| fig-width: 9
+#| fig-height: 12
+#| fig-dpi: 300
+
+
+wui_factor_lvls <- c("No Data (Private Land)_1-4", "Water_1-4", "Low_1-4", "Moderate_1-4", "Moderate_5-6")
+wui_factor <- bowen_wui %>%
+  mutate(
+    WUI_PSTA = factor(WUI_PSTA, levels = wui_factor_lvls)
+  )
+
+wui_factor_cols <- c("grey", "lightblue", "#fff7bc", "#fec44f", "#d95f0e")
+names(wui_factor_cols) <- wui_factor_lvls
+fire_gg <- function() {
+  list(
+    geom_sf(data = bowen_wui, aes(fill = WUI_PSTA), colour = NA),
+    scale_fill_manual(values = wui_factor_cols, aesthetics = c("colour", "fill")),
+    # scale_fill_viridis_d(option = "inferno", na.value = NA, name = "WUI_PSTA"),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+}
+fire_ggplot <- bowen_map_ggplot(fire_gg,
+                 title = "Wildland Urban Interface",
+                 subtitle = "The Province of British Columbia produces the Wildland Urban Interface (WUI) maps, with their intention being to use these maps to inform the relative impact of wildfires on human development. These maps take into consideration three key variables - fuel load, climate conditons, and human development at the interface between urban and wildland areas. This map shows the combinations of WUI Classification and Provincial Strategic Threat Analysis (PSTA) Threat Rating.",
+                 caption = "Created by Jay Matsushiba (jmatsush@sfu.ca).")
+output_dir <- here("vignettes/figures/threats_fire")
+if(!dir.exists(output_dir)) {
+  dir.create(output_dir)
+}
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_wui.png")),
+  fire_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+
+fire_ggplot
+```

@@ -1002,8 +1002,7 @@ combined_biodiversity_plot <- bowen_map(raster_layer = rankmap,
                         title = "Biodiversity Value: Species & Habitats Combined",
                         subtitle = "Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33) and species layers (n = 195).",
                         caption = caption,
-                        legend_label = "Priority",
-                        pal = "Viridis") +
+                        legend_label = "Priority") +
   geom_sf(data = bowen_ocean_sf,
           linewidth = bowen_ocean_linewidth,
           fill = bowen_ocean_colour
