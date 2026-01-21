@@ -2,18 +2,18 @@ project:
   type: website
   render:
     - index.qmd
-    - vignettes/2025_05_02_output_zonation.qmd
-    - vignettes/input_sdm.qmd
-    - vignettes/input_habitats.qmd
-    - vignettes/threats_development.qmd
-    - vignettes/threats_fire.qmd
-    - vignettes/threats_invasive_species.qmd
-    - vignettes/threats_logging.qmd
-    - vignettes/species_richness.qmd
-    - vignettes/tree_density_from_lidar.qmd
-    - vignettes/inaturalist.qmd
-    - vignettes/protected_areas.qmd
-    - vignettes/downloads.qmd
+    - analyses/01_input_foundation.qmd
+    - analyses/02_input_species.qmd
+    - analyses/03_input_habitats.qmd
+    - analyses/04_conservation_values.qmd
+    - analyses/05_threats_development.qmd
+    - analyses/06_threats_fire.qmd
+    - analyses/07_protected_areas.qmd
+    - analyses/08_data_atlas.qmd
+    - analyses/supplementary/species_richness.qmd
+    - analyses/supplementary/tree_density.qmd
+    - analyses/supplementary/inaturalist.qmd
+    - analyses/downloads.qmd
 
 execute:
   freeze: true
@@ -28,24 +28,28 @@ website:
     contents:
       - href: index.qmd
         text: Home
-      - vignettes/input_sdm.qmd
-      - vignettes/input_habitats.qmd
-      - vignettes/2025_05_02_output_zonation.qmd
+      - section: "Pipeline Steps"
+        contents:
+          - analyses/01_input_foundation.qmd
+          - analyses/02_input_species.qmd
+          - analyses/03_input_habitats.qmd
+          - analyses/04_conservation_values.qmd
       - section: "Threats"
         contents:
-          - vignettes/threats_development.qmd
-          - vignettes/threats_fire.qmd
-          - vignettes/threats_invasive_species.qmd
-          - vignettes/threats_logging.qmd
+          - analyses/05_threats_development.qmd
+          - analyses/06_threats_fire.qmd
       - section: "Action"
         contents:
-          - vignettes/protected_areas.qmd
+          - analyses/07_protected_areas.qmd
+      - section: "Outputs"
+        contents:
+          - analyses/08_data_atlas.qmd
       - section: "Supplementary"
         contents:
-          - vignettes/species_richness.qmd
-          - vignettes/tree_density_from_lidar.qmd
-          - vignettes/inaturalist.qmd
-      - vignettes/downloads.qmd
+          - analyses/supplementary/species_richness.qmd
+          - analyses/supplementary/tree_density.qmd
+          - analyses/supplementary/inaturalist.qmd
+      - analyses/downloads.qmd
 
 format:
   html:

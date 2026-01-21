@@ -68,17 +68,19 @@ message("========================================\n")
 # -----------------------------------------------------------------------------
 if(config$run_setup) {
   message("\n=== PHASE 1: Setup ===")
-  message("Creating foundation layers: CRS, boundary, analysis mask...")
+  message("Creating base layers: CRS, boundary, mask, roads, trails, shoreline...")
 
   tryCatch({
-    source(here("data-raw/scripts/01_setup/01_project_crs.R"))
-    message("✓ Project CRS defined")
+    scripts <- list.files(here("data-raw/scripts/01_setup"),
+                          pattern = "\\.R$", full.names = TRUE)
+    scripts <- sort(scripts)  # Ensure numbered order
 
-    source(here("data-raw/scripts/01_setup/02_bowen_boundary.R"))
-    message("✓ Bowen Island boundary loaded")
-
-    source(here("data-raw/scripts/01_setup/03_bowen_mask.R"))
-    message("✓ Analysis mask created")
+    for(script in scripts) {
+      script_name <- basename(script)
+      message("Running: ", script_name)
+      source(script)
+      message("✓ ", script_name, " complete")
+    }
 
   }, error = function(e) {
     message("✗ ERROR in Setup phase:")
@@ -93,7 +95,7 @@ if(config$run_setup) {
 # -----------------------------------------------------------------------------
 if(config$run_foundation) {
   message("\n=== PHASE 2: Foundation Data ===")
-  message("Processing base layers: roads, trails, parcels, protected areas...")
+  message("Processing context layers: parcels, protected areas, zoning, wetlands, fish streams...")
 
   tryCatch({
     scripts <- list.files(here("data-raw/scripts/02_foundation"),

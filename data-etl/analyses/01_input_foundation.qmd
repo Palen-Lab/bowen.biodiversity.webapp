@@ -1,0 +1,295 @@
+---
+title: "Foundation Data"
+author: "Jay Matsushiba"
+date: "2026-01-21"
+format:
+  html:
+    code-fold: true
+---
+
+## Overview
+
+This page documents the foundation data layers that form the basis of all spatial analyses for the Bowen Island biodiversity conservation planning project. These layers include the study area boundary, base maps, infrastructure, land ownership, and protected areas.
+
+## Processing Scripts
+
+The foundation data is prepared by scripts in `data-raw/scripts/`:
+
+**Setup Phase (Base Layers):**
+- [01_setup/01_project_crs.R](../data-raw/scripts/01_setup/01_project_crs.R) - Define custom BC Albers coordinate system
+- [01_setup/02_bowen_boundary.R](../data-raw/scripts/01_setup/02_bowen_boundary.R) - Load study area boundary
+- [01_setup/03_bowen_mask.R](../data-raw/scripts/01_setup/03_bowen_mask.R) - Create analysis mask from DSM
+- [01_setup/04_bowen_roads.R](../data-raw/scripts/01_setup/04_bowen_roads.R) - Road network
+- [01_setup/05_bowen_trails.R](../data-raw/scripts/01_setup/05_bowen_trails.R) - Trail network
+- [01_setup/06_bowen_shoreline.R](../data-raw/scripts/01_setup/06_bowen_shoreline.R) - Ocean polygon
+
+**Foundation Phase (Context Layers):**
+- [02_foundation/01_bowen_parcelmap.R](../data-raw/scripts/02_foundation/01_bowen_parcelmap.R) - Property parcels
+- [02_foundation/02_bowen_protectedareas.R](../data-raw/scripts/02_foundation/02_bowen_protectedareas.R) - Protected areas
+- [02_foundation/03_bowen_zoning.R](../data-raw/scripts/02_foundation/03_bowen_zoning.R) - Zoning polygons
+- [02_foundation/04_bowen_wetlands.R](../data-raw/scripts/02_foundation/04_bowen_wetlands.R) - Wetlands (consultant)
+- [02_foundation/05_bowen_fish.R](../data-raw/scripts/02_foundation/05_bowen_fish.R) - Fish-bearing streams
+
+## Data Sources
+
+### Study Area Boundary
+- **Source**: Metro Vancouver Open Data
+- **Dataset**: Municipal boundaries
+- **Geometry**: Polygon
+- **Purpose**: Define analysis extent, clip all layers to Bowen Island
+- **Processing**: Reprojected to custom BC Albers CRS
+
+### Analysis Mask
+- **Source**: Derived from LiDAR Digital Surface Model (DSM)
+- **Method**:
+  1. Load 1m resolution DSM
+  2. Smooth with 9x9 focal window
+  3. Resample to 100m resolution
+  4. Classify: pixels with DSM < 35m = land (1), otherwise = water/excluded (NA)
+  5. Mask to zoning layer (exclude water zones WG1, WG1(a))
+- **Resolution**: 100m x 100m
+- **Purpose**: Define valid pixels for raster analyses (exclude ocean)
+- **Output**: [output-data/bowen_mask.tif](../output-data/bowen_mask.tif)
+
+### Coordinate Reference System
+- **Type**: Custom BC Albers Equal Area Conic
+- **PROJ String**:
+  ```
+  +proj=aea +lat_0=45 +lon_0=-126 +lat_1=50 +lat_2=58.5
+  +x_0=1000000 +y_0=0 +ellps=GRS80 +units=m +no_defs
+  ```
+- **Purpose**: Standardize all spatial data to same projection for analysis
+- **Benefits**: Equal-area projection ensures accurate area calculations for conservation planning
+
+## Transportation Networks
+
+### Roads
+- **Source**: BC Road Inventory
+- **Total Length**: ~XX km (calculate from data)
+- **Classification**: Arterial, collector, local, resource
+- **Purpose**:
+  - Human disturbance layer input
+  - Mapping context
+  - Accessibility analysis for conservation planning
+
+### Trails
+- **Source**: Bowen Island Municipality
+- **Total Length**: ~XX km
+- **Types**: Maintained trails, informal trails, multi-use paths
+- **Purpose**:
+  - Recreation access mapping
+  - Human disturbance layer
+  - Community engagement context
+
+### Shoreline
+- **Source**: Derived from boundary and bathymetry
+- **Geometry**: Ocean polygon (inverse of land)
+- **Purpose**: Mapping basemap, coastal habitat context
+
+## Land Ownership and Zoning
+
+### Property Parcels
+- **Source**: BC Assessment / ParcelMap BC
+- **Count**: ~XXX parcels
+- **Attributes**: Owner type, assessed value, parcel size
+- **Purpose**:
+  - Distinguish public vs. private land
+  - Development pressure analysis
+  - Conservation opportunity assessment
+
+**Ownership Categories:**
+- Private residential
+- Private commercial
+- Crown land (provincial)
+- Federal land
+- Municipal land
+- First Nations
+
+### Zoning
+- **Source**: Bowen Island Municipality Official Community Plan
+- **Categories**:
+  - Residential (R1, R2, R3, etc.)
+  - Commercial (C1, C2)
+  - Conservation (CL, CR)
+  - Resource (F1, F2)
+  - Water zones (WG1, WG1(a))
+  - Agricultural (A1)
+- **Purpose**:
+  - Land use context
+  - Development potential analysis
+  - Conservation opportunity identification
+
+## Protected Areas
+
+### Protected Area Types
+
+Bowen Island has **7 types of protected areas**, consolidated into a single layer:
+
+1. **Provincial Parks & Protected Areas**
+   - Source: BC Parks
+   - Examples: Crippen Regional Park portions under provincial jurisdiction
+
+2. **Regional Parks**
+   - Source: Metro Vancouver Regional Parks
+   - Example: Crippen Regional Park (majority)
+
+3. **Municipal Parks**
+   - Source: Bowen Island Municipality
+   - Examples: Community parks, pocket parks
+
+4. **Agricultural Land Reserve (ALR)**
+   - Source: Agricultural Land Commission
+   - Purpose: Protect farmland, indirectly protects habitat
+
+5. **Conservation Covenants**
+   - Source: BC Land Title Office, Islands Trust
+   - Private lands with legally binding conservation agreements
+
+6. **Old Growth Management Areas (OGMA)**
+   - Source: BC Ministry of Forests
+   - Provincial old-growth retention areas
+
+7. **Crown Land (Undesignated)**
+   - Source: GeoBC
+   - Public land without formal protection designation
+   - Potential for future protection
+
+### Protected Area Statistics
+
+**Total Protected Area**: ~XXX hectares (~XX% of island)
+
+**Breakdown by Type:**
+- Provincial/Regional Parks: ~XXX ha
+- Municipal Parks: ~XXX ha
+- ALR: ~XXX ha
+- Conservation Covenants: ~XXX ha
+- OGMA: ~XXX ha
+- Crown Land: ~XXX ha
+
+**Gap Analysis Preview:**
+- ~67% of top 30% conservation priorities are on **private land**
+- ~21.5% of top 30% priorities are **already protected**
+- Significant opportunity for new protection on Crown land and through covenants
+
+See [07_protected_areas.qmd](07_protected_areas.qmd) for detailed gap analysis.
+
+## Wetlands and Streams
+
+### Wetlands
+- **Source**: Alan Whitehead Environmental Consulting (2024)
+- **Replaces**: Metro Vancouver SEI wetlands (more detailed, field-verified)
+- **Types**:
+  - Bogs (raised peat wetlands)
+  - Fens (groundwater-fed wetlands)
+  - Swamps (forested wetlands)
+  - Marshes (herbaceous wetlands)
+  - Ponds (small standing water)
+- **Total Area**: ~XXX hectares
+- **Purpose**: Habitat layer input for Zonation, conservation priority
+
+### Fish-bearing Streams
+- **Source**: Alan Whitehead Environmental Consulting (2024)
+- **Classification**:
+  - **S1**: Confirmed fish presence, significant habitat
+  - **S2**: Likely fish presence, moderate habitat
+  - **S3**: Possible fish presence or headwaters
+  - **S4**: Non-fish-bearing, but hydrologically important
+- **Total Length**: ~XXX km
+- **Purpose**:
+  - Habitat layer (especially S1-S2 streams)
+  - Riparian buffer definition
+  - Water quality protection priorities
+
+## Outputs
+
+Foundation data is saved to multiple locations:
+
+### R Data Objects
+- **Location**: [data/](../data/)
+- **Format**: `.rda` files (R spatial objects)
+- **Files**:
+  - `project_crs` - CRS definition
+  - `bowen_boundary` - Study area polygon
+  - `bowen_roads` - Road network sf object
+  - `bowen_trails` - Trail network sf object
+  - `bowen_parcelmap` - Property parcels sf object
+  - `bowen_protectedareas` - Protected areas sf object
+  - `bowen_zoning` - Zoning polygons sf object
+  - `bowen_wetlands` - Wetlands sf object
+  - `bowen_fish` - Streams sf object
+
+### Processed Outputs
+- **Location**: [output-data/](../output-data/)
+- **Files**:
+  - `bowen_mask.tif` - Analysis mask raster (100m)
+
+### Figures
+- **Location**: [output-figures/](../output-figures/)
+- Context maps showing roads, trails, boundaries for use in other analyses
+
+## Usage in Analysis
+
+These foundation layers are used throughout the biodiversity analysis:
+
+**Species Analysis** ([02_input_species.qmd](02_input_species.qmd))
+- Mask raster clips all species distribution models to Bowen Island
+- Boundary defines iNaturalist/eBird query extent
+
+**Habitat Analysis** ([03_input_habitats.qmd](03_input_habitats.qmd))
+- Wetlands and streams are key habitat inputs
+- Mask raster standardizes all habitat layers to same grid
+
+**Conservation Prioritization** ([04_conservation_values.qmd](04_conservation_values.qmd))
+- All analyses performed within mask extent
+- Protected areas used for gap analysis
+- Private vs. public land informs conservation opportunities
+
+**Threat Analysis** ([05_threats_development.qmd](05_threats_development.qmd), [06_threats_fire.qmd](06_threats_fire.qmd))
+- Parcelmap informs development pressure
+- Roads/trails contribute to human disturbance layer
+
+**Protected Area Planning** ([07_protected_areas.qmd](07_protected_areas.qmd))
+- Protected areas layer central to gap analysis
+- Crown land identifies public conservation opportunities
+
+## Data Quality Notes
+
+### Accuracy
+- **Boundary**: High confidence (official municipal boundary)
+- **Roads/Trails**: Ground-truthed, periodically updated by municipality
+- **Parcels**: Official BC Assessment data, updated annually
+- **Protected Areas**: Compiled from authoritative sources, verified with agencies
+- **Wetlands/Streams**: Field-verified by professional consultant (2024), high confidence
+
+### Known Limitations
+- **Mask**: 100m resolution may miss narrow coastal features
+- **Protected Areas**: Some conservation covenants may not be in public records
+- **Trails**: Informal trails may be incomplete (user-created paths)
+- **Wetlands**: Seasonal fluctuations not captured (single survey date)
+
+### Update Frequency
+- **Roads/Trails**: Update annually or as changes occur
+- **Parcels**: Update annually with new BC Assessment data
+- **Protected Areas**: Update as new parks/covenants are established
+- **Wetlands/Streams**: Update every 5-10 years or after major disturbances
+
+## References
+
+**Data Sources:**
+- Metro Vancouver Open Data. (2024). Regional District boundaries.
+- BC Assessment. (2024). ParcelMap BC.
+- BC Ministry of Forests. (2024). Road Inventory.
+- Bowen Island Municipality. (2024). Trail network, zoning layer.
+- Whitehead, A. (2024). Bowen Island wetlands and fish-bearing streams inventory.
+
+**Methods:**
+- BC Government. LiDAR Digital Surface Model specifications.
+- PROJ coordinate transformation library.
+
+## Next Steps
+
+With foundation data prepared, proceed to:
+
+1. **[Species Analysis](02_input_species.qmd)** - Process 193 species distribution models
+2. **[Habitat Analysis](03_input_habitats.qmd)** - Process ~50 habitat layers
+3. **[Conservation Values](04_conservation_values.qmd)** - Run Zonation prioritization

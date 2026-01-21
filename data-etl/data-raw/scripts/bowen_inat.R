@@ -6,10 +6,10 @@ library(tidyverse)
 #### Creating sf object from all iNaturalist observations on Bowen Island ####
 # Updated as of 2025/09/02
 # Unzip records exported from iNaturalist
-unzip("data-raw/observations-610962.csv.zip", exdir = "data-raw/")
-file.remove("data-raw/observations-610962.csv.zip")
+unzip("data-raw/datasets/inat/observations-610962.csv.zip", exdir = "data-raw/")
+file.remove("data-raw/datasets/inat/observations-610962.csv.zip")
 # Load records
-bowen_inat_raw <- st_read("data-raw/observations-610962.csv", options=c("X_POSSIBLE_NAMES=longitude","Y_POSSIBLE_NAMES=latitude"))
+bowen_inat_raw <- st_read("data-raw/datasets/inat/observations-610962.csv", options=c("X_POSSIBLE_NAMES=longitude","Y_POSSIBLE_NAMES=latitude"))
 bowen_inat <- bowen_inat_raw %>%
   st_set_crs(4326) %>%
   dplyr::select(!c("private_longitude", "private_latitude"))

@@ -69,14 +69,14 @@ The pipeline follows a sequential workflow:
 
 ### Phase 1: Setup (2-5 minutes)
 ```r
-source("data-raw/scripts/01_setup/01_project_crs.R")      # Define coordinate system
-source("data-raw/scripts/01_setup/02_bowen_boundary.R")   # Load study area
-source("data-raw/scripts/01_setup/03_bowen_mask.R")       # Create analysis mask
+# Base layers: CRS, boundary, mask, roads, trails, shoreline
+scripts <- list.files("data-raw/scripts/01_setup", pattern = "\\.R$", full.names = TRUE)
+for(script in scripts) source(script)
 ```
 
 ### Phase 2: Foundation Data (5-10 minutes)
 ```r
-# Process base layers: roads, trails, parcels, protected areas, etc.
+# Context layers: parcels, protected areas, zoning, wetlands, fish streams
 scripts <- list.files("data-raw/scripts/02_foundation", pattern = "\\.R$", full.names = TRUE)
 for(script in scripts) source(script)
 ```

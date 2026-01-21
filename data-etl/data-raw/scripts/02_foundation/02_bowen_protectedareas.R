@@ -6,11 +6,11 @@ library(here)
 library(magrittr)
 # Bowen Protected Areas originally prepared and provided by John Dowler:
 # https://drive.google.com/drive/folders/1uO5FjvHfCnixZyF6UHcI4YUp1V2tv2kg
-dir <- here("data-raw/bowen_protectedareas")
+dir <- here("data-raw/datasets/protectedareas")
 files <- list.files(dir, full.names = T)
 
 # Covenants
-covenants_path <- "data-raw/bowen_protectedareas/BI-Covenant-Catalogue-Layer 1.3.2.gpkg"
+covenants_path <- "data-raw/datasets/protectedareas/BI-Covenant-Catalogue-Layer 1.3.2.gpkg"
 covenants <- here(covenants_path) %>%
   sf::st_read() %>%
   dplyr::select(name = Document.No.)
@@ -19,7 +19,7 @@ covenants$type <- "Covenants"
 covenants$filepath <- covenants_path
 
 # Agricultural Land Reserve
-alr_path <- "data-raw/bowen_protectedareas/Bowen-ALR-Lands-JD.gpkg"
+alr_path <- "data-raw/datasets/protectedareas/Bowen-ALR-Lands-JD.gpkg"
 alr <- here(alr_path) %>%
   sf::st_read() %>%
   dplyr::select() %>%
@@ -29,7 +29,7 @@ alr$type <- "Agricultural Land Reserve"
 alr$filepath <- alr_path
 
 # Conservancies
-conservancies_path <- "data-raw/bowen_protectedareas/Bowen-Conservancies-JD.gpkg"
+conservancies_path <- "data-raw/datasets/protectedareas/Bowen-Conservancies-JD.gpkg"
 conservancies <- here(conservancies_path) %>%
   sf::st_read() %>%
   select(name = NAME)
@@ -38,7 +38,7 @@ conservancies$type <- "Conservancies"
 conservancies$filepath <- conservancies_path
 
 # Metro Vancouver Parks
-mvparks_path <- "data-raw/bowen_protectedareas/Bowen-Metro-Parks-JD.gpkg"
+mvparks_path <- "data-raw/datasets/protectedareas/Bowen-Metro-Parks-JD.gpkg"
 mvparks <- here(mvparks_path) %>%
   st_read() %>%
   select(name = NAME)
@@ -47,7 +47,7 @@ mvparks$type <-"MetroVancouver Park"
 mvparks$filepath <- mvparks_path
 
 # Municipal Parks
-bowenmuniparks_path <- "data-raw/bowen_protectedareas/Bowen-Muni-Parks-JD.gpkg"
+bowenmuniparks_path <- "data-raw/datasets/protectedareas/Bowen-Muni-Parks-JD.gpkg"
 bowenmuniparks <- here(bowenmuniparks_path) %>%
   st_read() %>%
   select(name = NAME)
@@ -56,7 +56,7 @@ bowenmuniparks$type <-"Bowen Island Municipality Park"
 bowenmuniparks$filepath <- bowenmuniparks_path
 
 # Provincial Parks
-provparks_path <- "data-raw/bowen_protectedareas/Bowen-Prov-Parks-JD.gpkg"
+provparks_path <- "data-raw/datasets/protectedareas/Bowen-Prov-Parks-JD.gpkg"
 provparks <- here(provparks_path) %>%
   st_read() %>%
   dplyr::select(name = parkname)
@@ -65,7 +65,7 @@ provparks$type <-"Provincial Park"
 provparks$filepath <- provparks_path
 
 # Ecological Reserves
-ecoreserve_path <- "data-raw/bowen_protectedareas/Eco-Reserve-JD.gpkg"
+ecoreserve_path <- "data-raw/datasets/protectedareas/Eco-Reserve-JD.gpkg"
 ecoreserve <- here(ecoreserve_path) %>%
   st_read() %>%
   select(name = parkname)
@@ -88,7 +88,7 @@ dissolved_protectedareas <- bowen_protectedareas %>%
 usethis::use_data(dissolved_protectedareas, overwrite = TRUE)
 
 # Old Growth Management Areas
-ogma_path <- "data-raw/bowen_protectedareas/Bowen-OGMAs-JD.gpkg"
+ogma_path <- "data-raw/datasets/protectedareas/Bowen-OGMAs-JD.gpkg"
 ogma <- here(ogma_path) %>%
   st_read() %>%
   st_transform(project_crs) %>%
@@ -100,7 +100,7 @@ ogma$filepath <- ogma_path
 usethis::use_data(ogma, overwrite = TRUE)
 
 # Crown Land
-crown_path <- "data-raw/bowen_protectedareas/Crown-Land-JD.gpkg"
+crown_path <- "data-raw/datasets/protectedareas/Crown-Land-JD.gpkg"
 crown <- here(crown_path) %>%
   st_read() %>%
   st_transform(project_crs) %>%

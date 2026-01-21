@@ -14,7 +14,18 @@ data-raw/
 │   ├── 05_zonation/        # Conservation prioritization
 │   └── 06_threats/         # Threat analysis
 │
-└── [data folders]/         # Raw data organized by source (listed below)
+├── datasets/               # Raw data organized by source (listed below)
+│   ├── boundary/
+│   ├── roads/
+│   ├── trails/
+│   ├── parcelmap/
+│   ├── protectedareas/
+│   ├── TEM/
+│   ├── inat/
+│   ├── ebird/
+│   └── [and more...]
+│
+└── README.md               # This file
 ```
 
 ## Data Sources
@@ -22,7 +33,7 @@ data-raw/
 ### Administrative Boundaries
 
 #### Bowen Island Boundary
-- **Folder**: `bowen_boundary/`
+- **Folder**: `datasets/boundary/`
 - **Source**: Metro Vancouver Open Data
 - **URL**: https://www.metrovancouver.org/data
 - **Format**: Shapefile
@@ -32,14 +43,14 @@ data-raw/
 ### Transportation Networks
 
 #### Roads
-- **Folder**: `bowen_roads/`
+- **Folder**: `datasets/roads/`
 - **Source**: BC Road Inventory
 - **Format**: Shapefile
 - **Notes**: Includes road classification, surface type
 - **Script**: `scripts/02_foundation/01_bowen_roads.R`
 
 #### Trails
-- **Folder**: `bowen_trails/`
+- **Folder**: `datasets/trails/`
 - **Source**: Bowen Island Municipality
 - **Format**: Shapefile
 - **Notes**: Hiking trails, maintained and informal
@@ -48,7 +59,7 @@ data-raw/
 ### Land Ownership and Zoning
 
 #### Property Parcels
-- **Folder**: `bowen_parcelmap/`, `bc_parcelmap/`
+- **Folder**: `datasets/parcelmap/`, `datasets/bc_parcelmap/`
 - **Source**: BC Assessment / ParcelMap BC
 - **URL**: https://www.bcassessment.ca/
 - **Format**: Shapefile
@@ -56,7 +67,7 @@ data-raw/
 - **Script**: `scripts/02_foundation/04_bowen_parcelmap.R`
 
 #### Zoning
-- **Folder**: `bowen_zoning/`
+- **Folder**: `datasets/zoning/`
 - **Source**: Bowen Island Municipality
 - **Format**: Shapefile
 - **Notes**: Land use zones (residential, commercial, conservation, etc.)
@@ -65,7 +76,7 @@ data-raw/
 ### Protected Areas
 
 #### Multiple Protected Area Types
-- **Folder**: `bowen_protectedareas/`
+- **Folder**: `datasets/protectedareas/`
 - **Source**: Multiple (BC Parks, Agricultural Land Reserve, Conservation Covenants, etc.)
 - **Includes**:
   - Parks and protected areas (BC Parks)
@@ -93,7 +104,7 @@ data-raw/
 - **Script**: `scripts/03_species/01_process_sdm.R`
 
 #### iNaturalist Observations
-- **Folder**: `bowen_inat/`
+- **Folder**: `datasets/inat/`
 - **Source**: iNaturalist API
 - **URL**: https://www.inaturalist.org/
 - **Access**: Public API (rate-limited, 3 sec/request)
@@ -102,7 +113,7 @@ data-raw/
 - **Script**: `scripts/03_species/02_inat_ebird.R`
 
 #### eBird Observations
-- **Folder**: `bowen_ebird/`
+- **Folder**: `datasets/ebird/`
 - **Source**: eBird / Nature Counts
 - **URL**: https://ebird.org/
 - **Access**: Public API (requires key)
@@ -111,13 +122,13 @@ data-raw/
 - **Script**: `scripts/03_species/02_inat_ebird.R`
 
 #### Christmas Bird Count
-- **Folder**: `bowen_christmas_bird_count/`
+- **Folder**: `datasets/christmas_bird_count/`
 - **Source**: Audubon Society / Bowen Island community
 - **Format**: CSV/Shapefile
 - **Notes**: Annual bird survey data
 
 #### Heron and Raptor Nests
-- **Folder**: `bowen_heron_watch/`
+- **Folder**: `datasets/heron_watch/`
 - **Source**: Bowen Heron Watch (community monitoring)
 - **Format**: Shapefile (point locations)
 - **Notes**: Great Blue Heron colonies, raptor nests
@@ -126,7 +137,7 @@ data-raw/
 ### Habitat Data
 
 #### Terrestrial Ecosystem Mapping (TEM)
-- **Folder**: `bowen_TEM/`
+- **Folder**: `datasets/TEM/`
 - **Source**: BC Government
 - **URL**: https://catalogue.data.gov.bc.ca/
 - **Format**: Shapefile (polygons)
@@ -134,21 +145,21 @@ data-raw/
 - **Script**: `scripts/04_habitats/01_process_tem.R`
 
 #### Sensitive Ecosystem Inventory (SEI)
-- **Folder**: `metrovancouver_sensitive_ecosystem_inventory/`
+- **Folder**: `datasets/metrovancouver_sensitive_ecosystem_inventory/`
 - **Source**: Metro Vancouver
 - **Format**: Shapefile (polygons)
 - **Notes**: Forest age classes, riparian zones, coastal habitats
 - **Script**: `scripts/04_habitats/02_process_sei.R`
 
 #### Wetlands (Alan Whitehead Consultants)
-- **Folder**: `bowen_wetlands_whitehead_consultants/`
+- **Folder**: `datasets/wetlands_whitehead_consultants/`
 - **Source**: Alan Whitehead Environmental Consulting
 - **Format**: Shapefile (polygons)
 - **Notes**: Replaces MVSEI wetlands (more accurate/detailed)
 - **Script**: `scripts/02_foundation/07_bowen_wetlands.R`
 
 #### Fish-bearing Streams (Alan Whitehead Consultants)
-- **Folder**: `bowen_fish_whitehead_consultants/`
+- **Folder**: `datasets/fish_whitehead_consultants/`
 - **Source**: Alan Whitehead Environmental Consulting
 - **Format**: Shapefile (lines)
 - **Notes**: Stream classification, fish presence
@@ -157,7 +168,7 @@ data-raw/
 ### LiDAR and Elevation
 
 #### Digital Surface Model (DSM)
-- **Folder**: `bowen_dsm/`
+- **Folder**: `datasets/dsm/`
 - **Source**: BC LiDAR Program
 - **URL**: https://www2.gov.bc.ca/gov/content/data/geographic-data-services/lidar
 - **Format**: GeoTIFF
@@ -170,7 +181,7 @@ data-raw/
 ### Land Cover
 
 #### Metro Vancouver Land Cover
-- **Folder**: `metrovancouver_landcover_raster/`
+- **Folder**: `datasets/metrovancouver_landcover_raster/`
 - **Source**: Metro Vancouver
 - **Format**: GeoTIFF raster
 - **Classes**: Forest, developed, agriculture, water, etc.
@@ -188,7 +199,7 @@ data-raw/
 ### Threat Data
 
 #### Wildland-Urban Interface (WUI)
-- **Folder**: `bc_wui/`
+- **Folder**: `datasets/bc_wui/`
 - **Source**: BC Wildfire Service
 - **URL**: https://catalogue.data.gov.bc.ca/
 - **Format**: Shapefile
@@ -196,7 +207,7 @@ data-raw/
 - **Script**: `scripts/06_threats/02_fire.R`
 
 #### Development Potential
-- **Folder**: `bowen_development_potential_danielmartin/`
+- **Folder**: `datasets/development_potential_danielmartin/`
 - **Source**: Daniel Martin (consultant analysis)
 - **Format**: Shapefile
 - **Notes**: Developable land analysis
@@ -205,7 +216,7 @@ data-raw/
 ### Historical Data
 
 #### Pottinger Report (2005)
-- **Folder**: `pottinger_report/`
+- **Folder**: `datasets/pottinger_report/`
 - **Source**: Environmental Inventory for Bowen Island (2005)
 - **Format**: PDF report, some spatial data
 - **Notes**: Historical baseline, species lists (especially mammals)
@@ -221,7 +232,7 @@ data-raw/
 The following folders are excluded from version control due to size:
 
 - `species_distribution_models/` - 341 raster files (~2GB)
-- `bowen_dsm/` - High-resolution LiDAR (~500MB)
+- `datasets/dsm/` - High-resolution LiDAR (~500MB)
 - `archive/` - Old/deprecated data versions
 
 To reproduce the analysis, you must manually acquire these datasets.
@@ -254,7 +265,7 @@ To reproduce the analysis, you must manually acquire these datasets.
 ### Updating Observations
 1. iNaturalist/eBird data is queried fresh each run
 2. To use cached observations, modify scripts to skip API calls
-3. Archive old observation CSVs to `bowen_inat/archive/` or `bowen_ebird/archive/`
+3. Archive old observation CSVs to `datasets/inat/archive/` or `datasets/ebird/archive/`
 
 ### Updating Protected Areas
 1. Check BC Parks, ALR for boundary updates

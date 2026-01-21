@@ -5,14 +5,29 @@
 .DS_Store
 .quarto
 inst/doc
-vignettes/rsconnect/
+analyses/rsconnect/
 .Renviron
 .Rbuildignore
 .rscignore
 
 /.quarto/
 /_site/
-data-raw/bowen_heron_watch/bowen_heron_watch.gpkg-shm data-raw/bowen_heron_watch/bowen_heron_watch.gpkg-wal
+data-raw/datasets/heron_watch/bowen_heron_watch.gpkg-shm data-raw/datasets/heron_watch/bowen_heron_watch.gpkg-wal
 *.gpkg-*
-vignettes/zonation/
+analyses/zonation/
 R/scratch.R
+
+# Output directories (keep README.md only)
+output-data/*
+!output-data/README.md
+output-figures/*
+!output-figures/README.md
+!output-figures/*/
+output-documents/*
+!output-documents/README.md
+!output-documents/*/
+
+# Large raw data files
+data-raw/datasets/species_distribution_models/
+data-raw/datasets/dsm/
+data-raw/datasets/archive/

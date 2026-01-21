@@ -13,7 +13,7 @@ bowen_mask_sf <- as.polygons(bowen_mask, extent=T) %>%
   st_buffer(10000)
 # Shoreline
 bowen_shoreline <- st_read(
-  here("data-raw/bowen_island_shoreline_w_hutt.gpkg"),
+  here("data-raw/datasets/island_shoreline_w_hutt.gpkg"),
   layer = "bowen_island_shoreline_w_hutt__bowen_islands",
   quiet = T
 ) %>%
