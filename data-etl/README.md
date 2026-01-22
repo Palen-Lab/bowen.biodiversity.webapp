@@ -52,7 +52,7 @@ This project deviates from standard R package structure for clarity:
 
 ```
 data-etl/
-├── data-raw/           # Raw data + processing scripts
+├── data-raw/           # Raw data and processing scripts
 │   ├── scripts/        # ETL scripts organized by phase
 │   └── [data folders]  # Raw spatial data
 ├── analyses/           # Analysis documentation (Quarto docs)
@@ -60,7 +60,7 @@ data-etl/
 ├── output-figures/     # Generated maps and visualizations
 ├── output-documents/   # Final reports and deliverables
 ├── R/                  # Reusable R functions (plotting utilities)
-└── data/               # R data objects (.rda files)
+└── data/               # Data objects for use within analyses
 ```
 
 ## Pipeline Execution Order
@@ -169,37 +169,6 @@ Complete citations and acquisition instructions: [data-raw/README.md](data-raw/R
 - Workshop materials
 - Technical reports
 
-## Troubleshooting
-
-### Common Issues
-
-**Issue**: `Error: cannot open file 'data-raw/species_distribution_models/...'`
-- **Solution**: SDM data must be manually downloaded (contact Wendy Palen at SFU)
-
-**Issue**: `Error: Zonation executable not found`
-- **Solution**: Install Zonation5 from [https://github.com/cbig/zonation-core](https://github.com/cbig/zonation-core)
-
-**Issue**: iNaturalist/eBird API rate limiting errors
-- **Solution**: This is expected. Script includes delays to respect rate limits (3 sec/request)
-
-**Issue**: `Error: cannot open the connection` when rendering Quarto
-- **Solution**: Ensure all figure paths use `../output-figures/` relative paths
-
-### Performance Tips
-
-- **Skip species processing**: If SDMs already processed, set `run_species = FALSE` in `00_run_all.R`
-- **Parallel processing**: Some scripts support parallel execution (see script headers)
-- **Incremental runs**: Run individual phase scripts rather than full pipeline
-
-## Version Control
-
-### Git Tags
-- `pre-refactor` - State before major reorganization (2026-01-21)
-- Use tags to track significant pipeline versions
-
-### Large Files
-SDM rasters and some outputs are excluded from git (.gitignore). Use external storage or data repositories for sharing.
-
 ## Contributors
 
 ### Analysts
@@ -222,7 +191,7 @@ If using this pipeline or data:
 
 ```
 Matsushiba, J., Tylo, M., Palen, W., & Sisk, T. (2025).
-Bowen Island Biodiversity Conservation Planning Pipeline.
+Bowen Island Biodiversity Conservation Planning.
 Bowen Island Municipality. https://github.com/Palen-Lab/bowen.biodiversity.webapp
 ```
 
