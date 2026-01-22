@@ -5,7 +5,7 @@
 #
 # Inputs:
 #   - data-raw/datasets/dsm/chm.tif (Digital Surface Model)
-#   - data/bowen_zoning.rda (from 02_foundation/03_bowen_zoning.R)
+#   - data/bowen_shoreline.rda (from 01_setup/03_bowen_shoreline.R)
 #   - Sample SDM for template raster (from species_distribution_models/)
 #
 # Outputs:
@@ -31,7 +31,7 @@ sample_sdm <- rast(here(sdm_folder, sdm_folder_tif_NAs[1])) %>%
   terra::disagg(fact = 4)
 
 # Exclude water zones from analysis
-bowen_land <- bowen_zoning[!bowen_zoning$ZONE_CODE %in% c("WG1", "WG1(a)"),] %>%
+bowen_land <- bowen_shoreline %>%
   vect()
 
 # Load and process Digital Surface Model
@@ -49,8 +49,6 @@ bowen_mask <- dsm_smooth %>%
   as.int()
 
 # Save mask to output-data/
-writeRaster(bowen_mask,
-            here("output-data/bowen_mask.tif"),
-            overwrite = TRUE)
+writeRaster(bowen_mask, here("data/bowen_mask.tif"), overwrite = TRUE)
 
-message("✓ Analysis mask created: output-data/bowen_mask.tif")
+message("✓ Analysis mask created: data/bowen_mask.tif")
