@@ -1,0 +1,112 @@
+---
+title: "Bowen Island Biodiversity Plan"
+format: html
+author: "Jay Matsushiba"
+---
+
+# Introduction
+
+The purpose of this website is to capture and share the analyses for conducting spatial prioritization of conservation areas on Bowen Island. This is part of a greater effort to inform the decision-making and community planning for the Bowen Island Municipality. 
+
+This work should go hand-in-hand with professional environmental consulting on a site-by-site basis to verify our analyses. This analysis extensively uses existing data products provided by academic, government, NGO, and individual contributors. As a result, this work should be verified by professionals at the on-the-ground level when making site specific decisions.
+
+This documentation website summarizes the work conducted by the team from September 2024 to date. 
+
+## Overview
+
+The analyses follow a sequential pipeline from raw data to conservation priorities to action planning. This website documents the complete workflow with numbered steps showing the analysis sequence.
+
+## Quick Start
+
+To run the complete pipeline:
+
+```r
+# See README.md for prerequisites (R 4.4+, Zonation5, raw data)
+source("00_run_all.R")
+```
+
+Full documentation available in [README.md](README.md)
+
+## Pipeline Structure
+
+This project uses a **non-standard R package structure** optimized for clarity and reproducibility:
+
+```
+data-etl/
+├── data-raw/scripts/    → Numbered ETL scripts (01_setup → 06_threats)
+├── analyses/            → Documentation (this website)
+├── output-data/         → Processed datasets
+├── output-figures/      → Generated maps
+└── output-documents/    → Final reports and atlases
+```
+
+## Analysis Workflow
+
+### Pipeline Steps
+
+The main analysis follows this numbered sequence:
+
+**01. [Foundation Data](analyses/01_input_foundation.qmd)**
+Prepare base layers: study area boundary, analysis mask, roads, trails, parcels, protected areas, zoning, wetlands, and fish-bearing streams. Define coordinate system for all analyses.
+
+**02. [Species](analyses/02_input_species.qmd)**
+Prepare 193 species distribution models from 341 available SDMs. Validate species presence using iNaturalist and eBird observations. Assign conservation status weights (Red/Blue list).
+
+**03. [Habitats](analyses/03_input_habitats.qmd)**
+Process ~50 habitat layers from TEM, SEI, and consultant data. Include wetlands, streams, forest age classes, and special features (heron colonies). Create human disturbance layer.
+
+**04. [Conservation Values](analyses/04_conservation_values.qmd)**
+Run Zonation5 conservation prioritization using 193 species + ~50 habitats. Identify top 10%, 20%, 30% priority areas. Analyze overlap with protected areas and private land.
+
+### Threats
+
+Assess threats to biodiversity and overlay with conservation priorities:
+
+**05. [Development](analyses/05_threats_development.qmd)**
+Analyze development pressure using BC Assessment data and parcel analysis. Identify high-value areas at risk.
+
+**06. [Fire](analyses/06_threats_fire.qmd)**
+Assess wildfire vulnerability using WUI (Wildland-Urban Interface) data.
+
+### Action
+
+**07. [Protected Areas](analyses/07_protected_areas.qmd)**
+Conduct gap analysis: ~18% of island is protected, but 67% of top 30% priorities are on private land. Recommend locations for new protected areas on public land.
+
+### Outputs
+
+**08. [Data Atlas](analyses/08_data_atlas.qmd)**
+Comprehensive atlas integrating all analyses with publication-quality maps.
+
+### Supplementary
+
+Additional analyses:
+- [Species Richness](analyses/supplementary/species_richness.qmd) - Richness by taxon and threat status
+- [Tree Density](analyses/supplementary/tree_density.qmd) - LiDAR-derived canopy analysis
+- [iNaturalist](analyses/supplementary/inaturalist.qmd) - Observation data exploration 
+
+## Contributors
+
+### Analysts
+
+Jay Matsushiba
+
+Michael Tylo
+
+Wendy Palen
+
+Tom Sisk
+
+### Workshop Facilitators
+
+Maya Persam
+
+Kyra Rolfe
+
+Valerie Kwok
+
+### Caring4Nature Group
+
+-   [ ] Add workshop participants
+
+### Data Contributors

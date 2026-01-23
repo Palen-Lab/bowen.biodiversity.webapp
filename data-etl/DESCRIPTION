@@ -1,0 +1,35 @@
+Package: bowen.biodiversity.data
+Title: Data Processing for Bowen Island Biodiversity
+Version: 0.0.0.1
+Authors@R:
+    person("Jay", "Matsushiba", , "hello@jmatsushiba.com", role = c("aut", "cre"))
+Description: Data ETL pipeline for processing biodiversity data for
+    Bowen Island conservation planning and spatial prioritization analysis.
+    This package prepares species distribution models, habitat richness maps,
+    and threat assessments to inform conservation decision-making for the
+    Bowen Island Municipality.
+License: MIT + file LICENSE
+URL: https://github.com/Palen-Lab/bowen.biodiversity.webapp
+BugReports: https://github.com/Palen-Lab/bowen.biodiversity.webapp/issues
+Imports:
+    dplyr,
+    ggplot2,
+    here,
+    sf,
+    terra,
+    stringr,
+    magrittr
+Suggests:
+    knitr,
+    quarto,
+    rmarkdown,
+    testthat (>= 3.0.0),
+    usethis
+Config/testthat/edition: 3
+Encoding: UTF-8
+Language: en-US
+LazyData: true
+RoxygenNote: 7.3.2
+VignetteBuilder: quarto
+Depends:
+    R (>= 4.4)

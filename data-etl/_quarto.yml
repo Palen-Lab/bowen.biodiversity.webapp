@@ -1,0 +1,58 @@
+project:
+  type: website
+  render:
+    - index.qmd
+    - analyses/01_input_foundation.qmd
+    - analyses/02_input_species.qmd
+    - analyses/03_input_habitats.qmd
+    - analyses/04_conservation_values.qmd
+    - analyses/05_threats_development.qmd
+    - analyses/06_threats_fire.qmd
+    - analyses/07_protected_areas.qmd
+    - analyses/08_data_atlas.qmd
+    - analyses/supplementary/species_richness.qmd
+    - analyses/supplementary/tree_density.qmd
+    - analyses/supplementary/inaturalist.qmd
+    - analyses/downloads.qmd
+
+execute:
+  freeze: true
+
+website:
+  title: "Bowen Island Biodiversity Plan"
+  repo-url: https://github.com/Palen-Lab/bowen.biodiversity.webapp
+  repo-actions: [edit, source, issue]
+  sidebar:
+    style: "docked"
+    search: true
+    contents:
+      - href: index.qmd
+        text: Home
+      - section: "Pipeline Steps"
+        contents:
+          - analyses/01_input_foundation.qmd
+          - analyses/02_input_species.qmd
+          - analyses/03_input_habitats.qmd
+          - analyses/04_conservation_values.qmd
+      - section: "Threats"
+        contents:
+          - analyses/05_threats_development.qmd
+          - analyses/06_threats_fire.qmd
+      - section: "Action"
+        contents:
+          - analyses/07_protected_areas.qmd
+      - section: "Outputs"
+        contents:
+          - analyses/08_data_atlas.qmd
+      - section: "Supplementary"
+        contents:
+          - analyses/supplementary/species_richness.qmd
+          - analyses/supplementary/tree_density.qmd
+          - analyses/supplementary/inaturalist.qmd
+      - analyses/downloads.qmd
+
+format:
+  html:
+    theme: cosmo
+    css: styles.css
+    toc: true
