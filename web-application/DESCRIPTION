@@ -3,7 +3,7 @@ Title: Bowen Biodiversity Web App
 Version: 0.0.0.1
 Authors@R: 
     person("Jay", "Matsushiba", , "hello@jmatsushiba.com", role = c("aut", "cre"))
-Description: This pacakge is for a web application being built for the
+Description: This package is for a web application being built for the
     Bowen Island Community Plan process, in order to incorporate
     biodiversity information.
 License: MIT + file LICENSE
