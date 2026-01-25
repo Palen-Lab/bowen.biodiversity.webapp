@@ -9,13 +9,6 @@ format:
       - "header.tex"
     toc: true
     documentclass: report
-  docx:
-    number-sections: true
-    toc: true
-    toc-depth: 3
-    fig-width: 8
-    fig-height: 6
-    reference-doc: reference.docx
 ---
 
 ```{r global-options, include=FALSE}
@@ -25,14 +18,162 @@ knitr::opts_chunk$set(
   message = FALSE, # Don't show messages
   results = 'hide', # Hide text output
   fig.show = 'asis', # Show plots
-  fig.width = 8, # Figure width in inches
-  fig.height = 6, # Figure height in inches
-  out.width = "100%" # Scale to full page width (works for both PDF and Word)
+  fig.width = 6, # Figure width in inches
+  fig.height = 7.5, # Figure height in inches
+  out.width = "\\linewidth" # Scale to full width
 )
 ```
 
+```{r setup, echo=F}
+devtools::load_all()
+# library(bowen.biodiversity.data, quietly = T)
+#### Utilities ####
+library(here, quietly = T)
+library(dplyr, quietly = T)
+library(magrittr, quietly = T)
+library(stringr, quietly = T)
+library(glue, quietly = T)
+#### Loops ####
+library(foreach, quietly = T)
+library(doParallel, quietly = T)
+#### Spatial ####
+library(sf, quietly = T)
+library(terra, quietly = T)
+library(tidyterra, quietly = T)
+#### Tabular Data ####
+library(readxl)
+library(googlesheets4)
+#### Plotting ####
+library(ggplot2, quietly = T)
+library(ggnewscale, quietly = T)
+library(RColorBrewer, quietly = T)
+library(randomcoloR, quietly = T)
+
+#### Use planar coordinates ####
+sf_use_s2(FALSE)
+
+#### Define plot extent ####
+bowen_mask <- rast(here("data/bowen_mask.tif")) %>%
+  project('epsg:3857') # Project to Web Mercator for basemap
+bowen_mask_ext <- bowen_mask %>%
+  ext()
+
+#### Base map for plots ####
+# basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
+basemap_for_plot <- basemaps::basemap_terra(
+  ext = bowen_mask,
+  map_service = "maptiler",
+  map_type = "backdrop",
+  map_token = "baL4WLstSFqSHP2fnYrE"
+)
+
+#### Consistent elements for plots ####
+bowen_ocean_linewidth <- 0.5
+bowen_ocean_colour <- "#dbdbdc"
+trails_colour <- "brown"
+roads_colour <- "darkgrey"
+caption <- glue(
+  "Map created: {date()}. Palen Lab."
+)
+
+template_plot <- ggplot2::ggplot() +
+  ggplot2::theme_bw() +
+  tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
+  ggplot2::scale_x_continuous(
+    expand = c(0, 0),
+    limits = c(bowen_mask_ext[1], bowen_mask_ext[2])
+  ) +
+  ggplot2::scale_y_continuous(
+    expand = c(0, 0),
+    limits = c(bowen_mask_ext[3], bowen_mask_ext[4])
+  ) +
+  # ggplot2::labs(
+  #   # title = "Transportation Network, Bowen Island",
+  #   # subtitle = "Base Bowen Island map with hillshade, roads, and trails.",
+  #   caption = caption
+  # ) +
+  ggplot2::theme(
+    # plot.title = ggtext::element_textbox_simple(
+    #   size = 20,
+    #   margin = ggplot2::margin(0, 0, 20, 0)
+    # ),
+    # plot.subtitle = ggtext::element_textbox_simple(
+    #   lineheight = 1.5,
+    #   margin = ggplot2::margin(0, 0, 10, 0)
+    # ),
+    axis.text.y = ggplot2::element_text(
+      angle = 90,
+      vjust = 1,
+      hjust = 0.5
+    ),
+    legend.position = "bottom",
+    legend.title = ggplot2::element_text(size = 10),
+    legend.key.height = ggplot2::unit(0.5, "cm"),
+    legend.key.width = ggplot2::unit(1.5, "cm"),
+    legend.direction = "horizontal",
+    legend.box = "horizontal",
+    legend.box.margin = margin(1, 1, 1, 1),
+    plot.margin = unit(c(0.5, 0, 0, 1), "cm")
+  ) +
+  # ggspatial::annotation_scale(
+  #   location = "br",
+  #   bar_cols = c("grey60", "white")
+  # ) +
+  # ggspatial::annotation_north_arrow(
+  #   location = "br", which_north = "true",
+  #   pad_x = unit(0.2, "in"), pad_y = unit(0.4, "in"),
+  #   style = ggspatial::north_arrow_nautical(
+  #     fill = c("grey40", "white"),
+  #     line_col = "grey20"
+  #   )
+  # ) +
+  ggnewscale::new_scale_fill() +
+  ggnewscale::new_scale_colour()
+
+```
+
 # Overview
+
 ## Transportation Network, Bowen Island
+Base Bowen Island map with hillshade, roads, and trails. 
+```{r basic}
+template_plot +
+  geom_sf(
+    data = bowen_ocean_sf,
+    linewidth = bowen_ocean_linewidth,
+    fill = bowen_ocean_colour
+  ) +
+  ggplot2::geom_sf(
+    data = bowen_trails,
+    linewidth = 0.3,
+    aes(color = trails_colour)
+  ) +
+  ggplot2::geom_sf(
+    data = bowen_roads,
+    linewidth = 0.5,
+    aes(color = roads_colour)
+  ) +
+  scale_colour_identity(
+    name = "",
+    breaks = c(trails_colour, roads_colour),
+    labels = c("Trails", "Roads"),
+    guide = "legend"
+  ) +
+  ggspatial::annotation_scale(
+    location = "br",
+    bar_cols = c("grey60", "white")
+  ) +
+  ggspatial::annotation_north_arrow(
+    location = "br",
+    which_north = "true",
+    pad_x = unit(0.2, "in"),
+    pad_y = unit(0.4, "in"),
+    style = ggspatial::north_arrow_nautical(
+      fill = c("grey40", "white"),
+      line_col = "grey20"
+    )
+  )
+```
 
 # Focal Vertebrate Species
 ## Bird Species Richness
@@ -81,70 +222,10 @@ knitr::opts_chunk$set(
 ## IUCN Red List Categories
 ## Final Methods Summary
 
-# Data Atlas May 2 2025
 
-This document contains the code for generating the figures contained in
-the Data Atlas, using the May 2nd 2025 version of inputs and outputs.
 
-These include the following figures:
 
-1.  General Map
-2.  Species
-    1.  Bird Species Richness
-    2.  Small Mammal Species Richness
-    3.  Amphibian / Reptile Species Richness
-    4.  Threatened Species Richness
-    5.  All Species Richness
-    6.  Summed Species Distribution Models
-3.  Habitats
-    1.  Freshwater Map
-    2.  Forest Types Map
-    3.  Other Vegetation Maps
-    4.  Habitat Richness
-4.  Derived Data Products
-    1.  Combined Biodiversity Values (0-1)
-    2.  Top 30% Biodiversity Values (0-1)
-    3.  Combined Biodiversity Values (0-1) overlap with Protected Areas
-    4.  Top 30% overlap with Protected Areas (% protected)
-    5.  Combined Biodiversity Values (0-1) overlap with Private Land
-    6.  Top 30% overlap with Private land (% private)
-    7.  Human disturbance (categorical)
-    8.  Human disturbance (continuous)
-    9.  Top 30% overlap with Human disturbance (% in each of 3
-        categories)
-    10. Combined Biodiversity Values (0-1) overlap with FWater habitats
-    11. Top 30% overlap with FWater habitats (% overlap with FW)
-
-```{r, echo=F}
-devtools::load_all()
-# library(bowen.biodiversity.data, quietly = T)
-library(ggplot2, quietly = T)
-library(sf, quietly = T)
-
-ggplot() +
-  geom_sf(data = bowen_boundary)
-```
-
-```{r setup, eval=F, output=F}
-#### Palen Lab Packages ####
-library(bowen.biodiversity.webapp)
-
-#### Other Packages ####
-library(here)
-library(dplyr)
-library(stringr)
-library(foreach)
-library(sf)
-library(terra)
-library(tidyterra)
-library(readxl)
-library(googlesheets4)
-library(ggplot2)
-library(ggnewscale)
-library(RColorBrewer)
-library(randomcoloR)
-library(doParallel)
-library(magrittr)
+```{r, eval=F, output=F}
 
 sf_use_s2(FALSE)
 
@@ -206,65 +287,6 @@ bowen_ocean_linewidth <- 0.5
 bowen_ocean_colour <- "#dbdbdc"
 ```
 
-# 1 Overview
-
-## 1.1 Basic Map of Bowen Island
-
-```{r basic, eval=F}
-# Plot
-bowen_plot <- bowen_map(
-  raster_layer = empty_rast,
-  title = "Transportation Network, Bowen Island",
-  subtitle = "Base Bowen Island map with hillshade, roads, and trails.",
-  caption = caption,
-  legend_label = "Priority"
-) +
-  geom_sf(
-    data = bowen_ocean_sf,
-    linewidth = bowen_ocean_linewidth,
-    fill = bowen_ocean_colour
-  ) +
-  ggplot2::geom_sf(
-    data = bowen_trails,
-    linewidth = 0.3,
-    aes(color = trails_colour)
-  ) +
-  ggplot2::geom_sf(
-    data = bowen_roads,
-    linewidth = 0.5,
-    aes(color = roads_colour)
-  ) +
-  scale_colour_identity(
-    name = "",
-    breaks = c(trails_colour, roads_colour),
-    labels = c("Trails", "Roads"),
-    guide = "legend"
-  ) +
-  ggspatial::annotation_scale(
-    location = "br",
-    bar_cols = c("grey60", "white")
-  ) +
-  ggspatial::annotation_north_arrow(
-    location = "br",
-    which_north = "true",
-    pad_x = unit(0.2, "in"),
-    pad_y = unit(0.4, "in"),
-    style = ggspatial::north_arrow_nautical(
-      fill = c("grey40", "white"),
-      line_col = "grey20"
-    )
-  )
-# Save plot
-ggplot2::ggsave(
-  paste0(output_dir, "/", Sys.Date(), "_1_1_bowen_map.png"),
-  bowen_plot,
-  device = ragg::agg_png,
-  width = 9,
-  height = 12,
-  units = "in",
-  res = 300
-)
-```
 
 # 2 Species
 
