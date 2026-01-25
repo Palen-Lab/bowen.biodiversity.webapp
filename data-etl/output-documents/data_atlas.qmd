@@ -17,7 +17,10 @@ knitr::opts_chunk$set(
   warning = FALSE, # Don't show warnings
   message = FALSE, # Don't show messages
   results = 'hide', # Hide text output
-  fig.show = 'asis' # Show plots
+  fig.show = 'asis', # Show plots
+  fig.width = 8, # Figure width in inches
+  fig.height = 6, # Figure height in inches
+  out.width = "\\textwidth" # Scale to full text width
 )
 ```
 
