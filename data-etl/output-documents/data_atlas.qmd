@@ -9,6 +9,13 @@ format:
       - "header.tex"
     toc: true
     documentclass: report
+  docx:
+    number-sections: true
+    toc: true
+    toc-depth: 3
+    fig-width: 8
+    fig-height: 6
+    reference-doc: reference.docx
 ---
 
 ```{r global-options, include=FALSE}
@@ -20,9 +27,59 @@ knitr::opts_chunk$set(
   fig.show = 'asis', # Show plots
   fig.width = 8, # Figure width in inches
   fig.height = 6, # Figure height in inches
-  out.width = "\\textwidth" # Scale to full text width
+  out.width = "100%" # Scale to full page width (works for both PDF and Word)
 )
 ```
+
+# Overview
+## Transportation Network, Bowen Island
+
+# Focal Vertebrate Species
+## Bird Species Richness
+## Small Mammal Species Richness
+## Amphibian & Reptile Species Richness
+## Threatened & Endangered Species Richness
+## Total Species Richness
+## Total Species Diversity
+
+# Habitats
+## Freshwater Habitats: Streams, Wetlands, Riparian Corridors 
+## Old & Large Forest: Old Forest, Old Growth Management Areas
+## Other Habitats: Sensitive Ecosystem Inventory
+## Total Habitat Diversity: Number of Habitat Types by Location
+
+# Values 
+## Biodiversity Value: Species & Habitats Combined
+## Top 30% Biodiversity Value
+
+# Threats
+## Human Disturbance: Continuous
+## Human Disturbance: Categories
+
+## Wildfire Vulnerability Index
+
+# Protected Areas
+## Biodiversity Value with Protected Areas
+
+# Development
+## Biodiversity Value with Private Land
+## Biodiversity Value by Parcel
+
+# Overlays
+## Top 30% Biodiversity Value with Human Disturbance: Continuous
+## Top 30% Biodiversity Value with Wildfire Vulnerability Index
+## Top 30% Biodiversity Value with Protected Areas 
+## Top 30% Biodiversity Value with Private Land
+## Top 30% Biodiversity Value with Freshwater Habitats
+
+# Appendix
+## Habitat Layers: Sensitive Ecosystem Inventory & Human Footprint
+## Focal Vertebrate Species Layers 
+## Provincial Conservation Status Ranks
+## BC Red, Blue, Yellow Lists
+## COSEWIC Status Domain Values
+## IUCN Red List Categories
+## Final Methods Summary
 
 # Data Atlas May 2 2025
 
