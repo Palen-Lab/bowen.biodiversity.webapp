@@ -130,7 +130,7 @@ template_plot <- ggplot2::ggplot() +
     legend.background = element_rect(fill = "transparent", color = NA),
     plot.margin = unit(c(0.5, 0, 0, 1), "cm"),
     plot.background = element_rect(fill = "transparent", color = NA),
-    panel.background = element_rect(fill = "transparent", color = NA),
+    panel.background = element_rect(fill = bowen_ocean_colour, color = NA),
     panel.grid = element_blank()
   ) +
   ggnewscale::new_scale_fill() +
@@ -140,11 +140,11 @@ template_plot_overlay <- function() {
   list(
     ggnewscale::new_scale_fill(),
     ggnewscale::new_scale_colour(),
-    # geom_sf(
-    #   data = bowen_ocean_sf,
-    #   linewidth = bowen_ocean_linewidth,
-    #   fill = bowen_ocean_colour
-    # ),
+    geom_sf(
+      data = bowen_ocean_sf,
+      linewidth = bowen_ocean_linewidth,
+      fill = NA
+    ),
     geom_sf(
       data = bowen_trails,
       linewidth = 0.3,
@@ -190,6 +190,7 @@ template_plot_remove <- function() {
       axis.text.y = element_blank(),
       axis.line = element_blank(),
       axis.ticks = element_blank(),
+      panel.background = element_rect(fill = "transparent", color = NA),
       panel.border = element_blank()
     )
   )
@@ -422,11 +423,13 @@ ggplot2::ggsave(
 Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33) and species layers (n = 195).
 
 ```{r, eval=F}
+# Biodiversity values layer 
 rankmap <- here("output-data/5_values/rankmap.tif") %>%
   rast() %>%
-  project("EPSG: 3857") %>%
+  project("EPSG: 3857") %>% 
   higher_res_edges()
 
+# Base plot 
 combined_biodiversity_plot_base <- template_plot +
   tidyterra::geom_spatraster(data = rankmap) +
   colorspace::scale_fill_continuous_sequential(
@@ -445,12 +448,13 @@ combined_biodiversity_plot_base <- template_plot +
   ) +
   template_plot_overlay()
 
+# With annotations
 combined_biodiversity_plot <- combined_biodiversity_plot_base +
   template_plot_annotations()
 
+# Without annotations and axis 
 combined_biodiversity_plot_no_annotations <- combined_biodiversity_plot_base +
   template_plot_remove()
-
 
 # Save plot
 ggplot2::ggsave(
@@ -462,7 +466,6 @@ ggplot2::ggsave(
   units = "in",
   res = plot_res
 )
-
 ggplot2::ggsave(
   here(output_dir, "4_1_combined_biodiversity_values_no_annotations.png"),
   combined_biodiversity_plot_no_annotations,
@@ -473,6 +476,7 @@ ggplot2::ggsave(
   res = plot_res
 )
 
+# Render in PDF
 combined_biodiversity_plot
 ```
 
