@@ -107,7 +107,6 @@ bowen_map <- function(raster_layer,
     # ) +
     ggnewscale::new_scale_fill() +
     ggnewscale::new_scale_colour()
-
 }
 
 #' Bowen Map Plotting for Top Percentage
@@ -380,4 +379,20 @@ hatched.sf <- function(poly_sf, density = 1, pattern = "right2left") {
     mode = "sfc"
   )
   return(hatched_all)
+}
+
+#' Deal with edges
+#' @description
+#' Increases resolution for the purposes of plotting only. Disaggregates the
+#' input raster without manipulating values. Raster is then masked by the Bowen
+#' Island ocean sf, so that the jagged appearance along coastline is less
+#' pronounced in produced maps.
+#'
+#' @param raster_layer rast
+#' @returns rast
+higher_res_edges <- function(raster_layer) {
+  terra::disagg(
+    raster_layer,
+    fact = 10
+  ) %>% terra::mask(vect(bowen_ocean_sf), inverse = T)
 }
