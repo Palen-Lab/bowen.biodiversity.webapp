@@ -101,20 +101,7 @@ template_plot <- ggplot2::ggplot() +
     expand = c(0, 0),
     limits = c(bowen_mask_ext[3], bowen_mask_ext[4])
   ) +
-  # ggplot2::labs(
-  #   # title = "Transportation Network, Bowen Island",
-  #   # subtitle = "Base Bowen Island map with hillshade, roads, and trails.",
-  #   caption = caption
-  # ) +
   ggplot2::theme(
-    # plot.title = ggtext::element_textbox_simple(
-    #   size = 20,
-    #   margin = ggplot2::margin(0, 0, 20, 0)
-    # ),
-    # plot.subtitle = ggtext::element_textbox_simple(
-    #   lineheight = 1.5,
-    #   margin = ggplot2::margin(0, 0, 10, 0)
-    # ),
     axis.text.y = ggplot2::element_text(
       angle = 90,
       vjust = 1,
@@ -204,9 +191,21 @@ sheet_date <- "2025-06-30"
 #### CREATE DATAFRAME FOR INPUT LAYERS ####
 # TODO: raster paths need to be fixed now
 # Read from Google Sheets
-habitats_df <- read_sheet(habitats_url, sheet = sheet_date)
+habitats_df <- read_sheet(habitats_url, sheet = sheet_date) %>%
+  # New filepath for layers
+  mutate(path = stringr::str_replace_all(
+    path,                                 
+    "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata", 
+    "/home/jay/Programming_Projects/Palen-Lab/bowen.biodiversity.webapp/data-etl/output-data")
+  ) 
 habitats_df$weight <- habitats_df$weight / nrow(habitats_df)
-sdm_df <- read_sheet(sdm_url, sheet = sheet_date)
+sdm_df <- read_sheet(sdm_url, sheet = sheet_date) %>%
+  # New filepath for layers
+  mutate(path = stringr::str_replace_all(
+    path,                                 
+    "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/bowen_sdm", 
+    "/home/jay/Programming_Projects/Palen-Lab/bowen.biodiversity.webapp/data-etl/output-data/sdm")
+  ) 
 sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
 # Bind all input layers together
 layers_df <- sdm_df %>%
@@ -215,6 +214,14 @@ layers_df <- sdm_df %>%
   filter(weight > 0)
 presence_threshold <- 0.7
 
+# Prepare raster function 
+prep_rast <- function(path) {
+  path %>%
+    unlist() %>%
+    rast() %>%
+    project("EPSG: 3857") %>% 
+    higher_res_edges()
+}
 ```
 
 # Overview
@@ -323,6 +330,80 @@ basic_plot
 ```
 
 # Focal Vertebrate Species
+## Total Species Richness
+Based on >presence_threshold probability of occurrence in Species Distribution Models.
+```{r species_richness, eval=F}
+#### Preparing Raster #### 
+# List SDMs filepaths
+SDM_filepaths <- sdm_df[
+  sdm_df$category %in% c("Bird", "MammalSmall", "Amphibian", "Reptile"),
+  "path"
+] 
+# Prepare SDM stack
+SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
+# Create species richness SDM
+total_richness <- sdm_to_species_richness(
+  SDM_stack = SDM_stack,
+  presence_threshold = presence_threshold
+) 
+# Save raster
+writeRaster(
+  total_richness,
+  here("output-data/2_species/total_richness.tif"),
+  overwrite = T
+)
+# Prepare raster for plot
+total_richness <- total_richness %>%
+  project("EPSG: 3857") %>% 
+  higher_res_edges()
+#### Plotting ####
+# Base plot
+total_richness_plot_base <- template_plot +
+  tidyterra::geom_spatraster(data = total_richness) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "ag_GrnYl",
+    # limits = c(0,1),
+    # breaks = c(0, 0.5, 1),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Richness"
+  ) +
+  template_plot_overlay() 
+# Annotated plot
+total_richness_plot_annotations <- total_richness_plot_base + 
+  template_plot_annotations()
+# No annotation plot
+total_richness_plot_no_annotations <- total_richness_plot_base +
+  template_plot_remove()
+# Save plot
+ggplot2::ggsave(
+  here(output_dir, "2_5_total_species_richness.png"),
+  total_richness_plot_annotations,
+  device = ragg::agg_png,
+  width = plot_width,
+  height = plot_height,
+  units = "in",
+  res = plot_res
+)
+ggplot2::ggsave(
+  here(output_dir, "2_5_total_species_richness_no_annotations.png"),
+  total_richness_plot_no_annotations,
+  device = ragg::agg_png,
+  width = plot_width,
+  height = plot_height,
+  units = "in",
+  res = plot_res
+)
+# Render in PDF
+total_richness_plot_annotations
+```
+## Total Species Diversity
 ## Bird Species Richness
 Based on >presence_threshold probability of occurrence in Species Distribution Models.
 ```{r, eval=F}
@@ -409,19 +490,252 @@ ggplot2::ggsave(
 ## Small Mammal Species Richness
 ## Amphibian & Reptile Species Richness
 ## Threatened & Endangered Species Richness
-## Total Species Richness
-## Total Species Diversity
 
 # Habitats
 ## Freshwater Habitats: Streams, Wetlands, Riparian Corridors 
+Freshwater features on Bowen Island, derived from layers provided by Alan Whitehead (2025).
+```{r fw_habitats, eval=F}
+#### Prepare raster for plots ####
+fw_df <- layers_df[layers_df$category == "Freshwater", ]
+# Color ramp
+fw_df$colour <- RColorBrewer::brewer.pal(nrow(fw_df), "YlGnBu")
+
+# Prepare streams rast
+streams_rast <- fw_df[fw_df$name == "Streams", "path"] %>%
+  unlist() %>%
+  rast() %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA)) %>%
+  project("EPSG: 3857") %>% 
+  higher_res_edges()
+
+#### Plotting ####
+fw_plot_base <- template_plot +
+  tidyterra::geom_spatraster(
+    data = prep_rast(fw_df[fw_df$name == "Lakes", "path"]),
+    aes(fill = layer)
+  ) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Freshwater Lakes",
+    colours = unlist(fw_df[fw_df$name == "Lakes", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(
+    data = prep_rast(fw_df[fw_df$name == "Ponds", "path"]),
+    aes(fill = layer)
+  ) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Freshwater Ponds",
+    colours = unlist(fw_df[fw_df$name == "Ponds", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(
+    data = prep_rast(fw_df[fw_df$name == "Riparian", "path"]),
+    aes(fill = layer)
+  ) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Riparian",
+    colours = unlist(fw_df[fw_df$name == "Riparian", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(
+    data = prep_rast(fw_df[fw_df$name == "Wetlands", "path"]),
+    aes(fill = layer)
+  ) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Wetlands",
+    colours = unlist(fw_df[fw_df$name == "Wetlands", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = streams_rast, aes(fill = layer)) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Streams",
+    colours = unlist(fw_df[fw_df$name == "Streams", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+    ggplot2::theme(
+    legend.margin = margin(-26, 6, 6, 6),
+    legend.key.width = ggplot2::unit(0.5, "cm"),
+    legend.key.height = ggplot2::unit(0.5, "cm"),
+    legend.key.spacing.y = ggplot2::unit(0, "lines"),
+    legend.key.spacing.x = ggplot2::unit(0, "cm"),
+    legend.direction = "vertical",
+    legend.box = "vertical",
+    legend.box.background = element_rect(fill = "white", colour = "black"),
+    legend.box.margin = margin(20, 5, 5, 5),
+    legend.position = c(.05, .95),
+    legend.justification = c("left", "top"),
+    legend.box.just = "left"
+  ) 
+
+fw_plot_annotation <- fw_plot_base +
+  template_plot_annotations()
+fw_plot_no_annotation <- fw_plot_base +
+  template_plot_remove()
+
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "3_1_bowen_water_map_annotation.png"),
+  fw_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "3_1_bowen_water_map_no_annotation.png"),
+  fw_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+```
+
+## Freshwater Habitats Richness
+Freshwater features on Bowen Island, derived from layers provided by Alan Whitehead (2025).
+```{r fw_habitat_richness, eval=F}
+#### Prepare raster for plots ####
+fw_rast_stack <- layers_df[layers_df$category == "Freshwater", "path"] %>%
+  prep_rast()
+fw_richness <- fw_rast_stack %>%
+  lapply(not.na) %>%
+  lapply(function(x) {
+    classify(x, cbind(FALSE, NA))
+  }) %>%
+  rast() %>%
+  sum(na.rm = T)
+writeRaster(
+  fw_richness,
+  here("output-data/3_habitats/fw_richness.tif"),
+  overwrite = T
+)
+#### Plotting ####
+fw_richness_plot_base <- template_plot +
+  tidyterra::geom_spatraster(data = fw_richness) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "Mako",
+    # limits = c(0,1),
+    # breaks = c(0, 0.5, 1),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Freshwater Habitat Richness"
+  ) 
+fw_richness_plot_annotation <- fw_richness_plot_base +
+  template_plot_annotations()
+fw_richness_plot_no_annotation <- fw_richness_plot_base +
+  template_plot_remove()
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "3_2_bowen_water_richness_map.png"),
+  fw_richness_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "3_2_bowen_water_richness_map_no_annotation.png"),
+  fw_richness_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+fw_richness_plot_annotation
+```
+
 ## Old & Large Forest: Old Forest, Old Growth Management Areas
 ## Other Habitats: Sensitive Ecosystem Inventory
-## Total Habitat Diversity: Number of Habitat Types by Location
+## Total Habitat Richness: Number of Habitat Types by Location
+Total number of habitats found in each cell of the map. Habitats derived from Metro Vancouver Sensitive Ecosystem Inventory (2021), Terrestrial Ecosystem Mapping (2019), and Alan Whitehead (2025).
+```{r habitat_richness, eval=F}
+#### Prepare raster for plots ####
+habitat_stack <- habitats_df %>%
+  filter(category != "Human Disturbance") %>%
+  select(path) %>%
+  prep_rast()
+# Sum habitat stack
+habitat_richness <- habitat_stack %>% sum(na.rm = T)
+writeRaster(
+  habitat_richness,
+  here("output-data/3_habitats/total_habitat_richness.tif"),
+  overwrite = T
+)
+#### Plotting ####
+habitats_plot_base <- template_plot +
+  tidyterra::geom_spatraster(
+    data = habitat_richness
+  ) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "ag_GrnYl",
+    # limits = c(0,1),
+    # breaks = c(0, 0.5, 1),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Richness"
+  ) +
+  template_plot_overlay()
+habitats_plot_annotation <- habitats_plot_base +
+  template_plot_annotations()
+habitats_plot_no_annotation <- habitats_plot_base +
+  template_plot_remove()
+# Saving plot
+ggplot2::ggsave(
+  here(output_dir, "3_5_bowen_habitat_richness_map.png"),
+  habitats_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "3_5_bowen_habitat_richness_map_no_annotation.png"),
+  habitats_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+habitats_plot_annotation
+```
 
 # Values 
 ## Biodiversity Value: Species & Habitats Combined
 Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33) and species layers (n = 195).
-
 ```{r, eval=F}
 # Biodiversity values layer 
 rankmap <- here("output-data/5_values/rankmap.tif") %>%
@@ -481,14 +795,301 @@ combined_biodiversity_plot
 ```
 
 ## Top 30% Biodiversity Value
+Top 30% of biodiversity locations on Bowen Island. Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33)  with species layers (n = 195).
+```{r}
+#### Prepare raster for plotting #### 
+rankmap_top30_lowres <- here("output-data/5_values/rankmap.tif") %>%
+  rast() %>%
+  project("EPSG: 3857") %>% 
+  remove_by_quantile(0.7) 
+rankmap_top30 <- rankmap_top30_lowres %>%
+  higher_res_edges() 
+rankmap_mask <- rankmap_top30_lowres %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+
+#### Plotting ####
+top_plot_base <- template_plot +
+  tidyterra::geom_spatraster(data = rankmap_top30) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "ag_GrnYl",
+    limits = c(0,1),
+    breaks = c(0, 0.5, 1),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Relative Biodiversity"
+  ) +
+  template_plot_overlay()
+top_plot_annotation <- top_plot_base +
+  template_plot_annotations()
+top_plot_no_annotation <- top_plot_base +
+  template_plot_remove()
+# Save plots 
+ggplot2::ggsave(
+  here(output_dir,"5_1_top_30_biodiversity_values.png"),
+  top_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir,"5_1_top_30_biodiversity_values_no_annotation.png"),
+  top_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+top_plot_annotation
+```
+
 
 # Threats
 ## Human Disturbance: Continuous
+Continuous map of human disturbance on Bowen Island.
+```{r human_disturbance_continuous, eval=F}
+#### Prepare raster for plotting ####
+disturbed <- here("output-data/habitats/bowen_human_footprint.tif") %>%
+  prep_rast()
+#### Plotting ####
+disturb_cont_plot_base <- template_plot +
+  tidyterra::geom_spatraster(data = disturbed) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "Inferno",
+    # limits = c(0,1),
+    # breaks = c(0, 0.5, 1),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Disturbance"
+  ) +
+  template_plot_overlay()
+disturb_cont_plot_annotation <- disturb_cont_plot_base +
+  template_plot_annotations()
+disturb_cont_plot_no_annotation <- disturb_cont_plot_base +
+  template_plot_remove()
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "4_2_humandisturbance_continuous.png"),
+  disturb_cont_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "4_2_humandisturbance_continuous_no_annotation.png"),
+  disturb_cont_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+# Render for PDF
+disturb_cont_plot_annotation
+```
 ## Human Disturbance: Categories
 ## Human Disturbance: Top 30% Biodiversity Value 
 
 ## Wildfire Vulnerability Index: Continuous
-## Wildfire Vulnerability Index: Top 30% Biodiversity Value
+Index of Vulnerability to Fire. This is not an assessment of the probability or behaviour of the fire. The intention of this index is to describe the relative vulnerability to biodiversity loss due to fire, under a scenario where the habitats burn. The three major components of this vulnerability index are slope, aspect, and fuel.
+```{r}
+#### Preparing raster for plotting #### 
+fire_index_mp <- rast(here("output-data/6_threats/fire_index_40m.tif")) %>%
+  project("EPSG: 3857") %>%
+  terra::subst(4294967296, NA) %>% # Max value should be NA
+  terra::scale_linear()
+#### Plotting ####
+# TODO: change colour palette from cool to warm
+fire_plot_base <- template_plot +
+  tidyterra::geom_spatraster(data = fire_index_mp) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "Batlow",
+    rev = FALSE,
+    limits = c(0,1),
+    breaks = c(0,1),
+    labels = c("Low", "High"),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Fire Vul. Index"
+  ) +
+  template_plot_overlay()
+fire_plot_annotation <- fire_plot_base + 
+  template_plot_annotations()
+fire_plot_no_annotation <- fire_plot_base +
+  template_plot_remove()
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "6_1_fire_vulnerability_index.png"),
+  fire_plot_annotation,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "6_1_fire_vulnerability_index_no_annotation.png"),
+  fire_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+# Render for PDF
+fire_plot_annotation
+```
+
+## Wildfire Vulnerability Index: Top 30% Biodiversity Value and Top 30% WVI
+15.5% of top 30% of WVI values is in the top 30% of biodiversity values. If these were random, then 30% of top 30% of WVI values would be in the top 30% of biodiversity values.
+
+```{r}
+#### Preparing raster for plotting #### 
+top30_wvi <- rast(here("output-data/6_threats/fire_index_40m.tif")) %>%
+  project("EPSG: 3857") %>%
+  terra::subst(4294967296, NA) %>% # Max value should be NA
+  terra::scale_linear() %>% 
+  remove_by_quantile(0.7) 
+
+rankmap_mask_re <- rankmap_mask %>% 
+  resample(top30_wvi) 
+
+fire_biod_val <- mask(top30_wvi, rankmap_mask_re)
+
+top30_wvi %>%
+  terra::not.na() %>%
+  values() %>%
+  sum()
+# 6444
+
+fire_biod_val %>% 
+  terra::not.na() %>%
+  values() %>%
+  sum()
+# 998 
+
+998 / 6444
+# 0.1548727
+
+grey_rast <- rankmap_mask_re %>%
+  higher_res_edges() %>%
+  as.factor()
+
+#### Plotting ####
+fire_biod_val_plot_base <- template_plot +
+  tidyterra::geom_spatraster(
+    data = grey_rast
+  ) +
+  scale_fill_manual(
+    values = c("grey40"),           # Single grey color
+    labels = c("No Data"),          # Label it as "No Data"
+    na.value = NA,                  # Make NA transparent
+    na.translate = FALSE,
+    guide = ggplot2::guide_legend(
+      title.position = "top"
+    ),
+    name = ""
+  ) +
+  ggnewscale::new_scale_fill() +
+  ggnewscale::new_scale_colour() +
+  tidyterra::geom_spatraster(data = fire_biod_val) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "Batlow",
+    rev = FALSE,
+    limits = c(0,1),
+    breaks = c(0,1),
+    labels = c("Low", "High"),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+    ),
+    name = "Fire Vul. Index"
+  ) +
+  template_plot_overlay()
+fire_biod_val_plot_annotation <- fire_biod_val_plot_base + 
+  template_plot_annotations()
+fire_biod_val_plot_no_annotation <- fire_biod_val_plot_base +
+  template_plot_remove()
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "6_2_wvi_top30.png"),
+  fire_biod_val_plot_annotation,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "6_2_wvi_top30_no_annotation.png"),
+  fire_biod_val_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+# Render for PDF
+fire_biod_val_plot_annotation
+```
+## Wildland Urban Interface
+The Province of British Columbia produces the Wildland Urban Interface (WUI) maps, with their intention being to use these maps to inform the relative impact of wildfires on human development. These maps take into consideration three key variables - fuel load, climate conditons, and human development at the interface between urban and wildland areas. This map shows the combinations of WUI Classification and Provincial Strategic Threat Analysis (PSTA) Threat Rating.
+```{r}
+#### Prepare layers for plotting ####
+bowen_wui <- here("data-raw/datasets/bc_wui/wui.gpkg") %>% 
+  st_read(quiet = T) %>%
+  select(Name, PSTA) %>%
+  rename(WUI = Name) %>%
+  mutate(WUI_PSTA = paste0(WUI, "_", PSTA))
+wui_factor_lvls <- c("No Data (Private Land)_1-4", "Water_1-4", "Low_1-4", "Moderate_1-4", "Moderate_5-6")
+wui_factor <- bowen_wui %>%
+  mutate(
+    WUI_PSTA = factor(WUI_PSTA, levels = wui_factor_lvls)
+  )
+wui_factor_cols <- c("grey", "lightblue", "#fff7bc", "#fec44f", "#d95f0e")
+names(wui_factor_cols) <- wui_factor_lvls
+
+#### Plotting ####
+wui_plot_base <- template_plot +
+  geom_sf(data = bowen_wui, aes(fill = WUI_PSTA), colour = NA) +
+  scale_fill_manual(values = wui_factor_cols, aesthetics = c("colour", "fill")) +
+  ggnewscale::new_scale_fill() +
+  ggnewscale::new_scale_colour() +
+  template_plot_overlay()
+wui_plot_annotation <- wui_plot_base +
+  template_plot_annotations()
+wui_plot_no_annotation <- wui_plot_base +
+  template_plot_remove()
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "6_3_wui.png"),
+  wui_plot_annotation,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "6_3_wui_no_annotation.png"),
+  wui_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+# Render for PDF
+wui_plot_annotation
+```
 
 # Action
 ## Biodiversity Value with Protected Areas 
@@ -611,7 +1212,7 @@ NOTE: check Fairweather, south Bowen Island neighbourhood
 ## IUCN Red List Categories
 ## Final Methods Summary
 
-
+# OLD MAP CODE
 ## 2.2 Small Mammal Species Richness
 
 ```{r, eval=F}
@@ -870,93 +1471,6 @@ ggplot2::ggsave(
 )
 ```
 
-## 2.5 Focal Species Richness
-
-```{r species_richness, eval=F}
-# List SDMs filepaths
-SDM_filepaths <- sdm_df[
-  sdm_df$category %in% c("Bird", "MammalSmall", "Amphibian", "Reptile"),
-  "path"
-]
-# Prepare SDM stack
-SDM_stack <- lapply(SDM_filepaths, rast) %>% rast()
-# Create species richness SDM
-total_richness <- sdm_to_species_richness(
-  SDM_stack = SDM_stack,
-  presence_threshold = presence_threshold
-)
-writeRaster(
-  total_richness,
-  here("inst/extdata/2_species/total_richness.tif"),
-  overwrite = T
-)
-
-# Create species richness plots:
-## Each species is marked present in a cell, if they are above a certain
-## threshold of probability in the input SDMs.
-title <- "Total Species Richness"
-subtitle <- paste0(
-  "Based on >",
-  presence_threshold,
-  " probability of occurrence in Species Distribution Models."
-)
-
-total_richness_plot <- bowen_map(
-  raster_layer = total_richness,
-  title = title,
-  subtitle = subtitle,
-  caption = caption,
-  legend_label = "Richness"
-) +
-  geom_sf(
-    data = bowen_ocean_sf,
-    linewidth = bowen_ocean_linewidth,
-    fill = bowen_ocean_colour
-  ) +
-  ggplot2::geom_sf(
-    data = bowen_trails,
-    linewidth = 0.3,
-    aes(color = trails_colour)
-  ) +
-  ggplot2::geom_sf(
-    data = bowen_roads,
-    linewidth = 0.5,
-    aes(color = roads_colour)
-  ) +
-  scale_colour_identity(
-    name = "",
-    breaks = c(trails_colour, roads_colour),
-    labels = c("Trails", "Roads"),
-    guide = "legend"
-  ) +
-  ggspatial::annotation_scale(
-    location = "br",
-    bar_cols = c("grey60", "white")
-  ) +
-  ggspatial::annotation_north_arrow(
-    location = "br",
-    which_north = "true",
-    pad_x = unit(0.2, "in"),
-    pad_y = unit(0.4, "in"),
-    style = ggspatial::north_arrow_nautical(
-      fill = c("grey40", "white"),
-      line_col = "grey20"
-    )
-  )
-ggplot2::ggsave(
-  here(
-    output_dir,
-    "/",
-    paste0(Sys.Date(), "_2_5_bowen_species_richness_map.png")
-  ),
-  total_richness_plot,
-  device = ragg::agg_png,
-  width = 9,
-  height = 12,
-  units = "in",
-  res = 300
-)
-```
 
 ## 2.6 Focal Species Distribution Models - Summed SDMs
 
@@ -1017,195 +1531,6 @@ bowen_plot <- bowen_map(
 ggplot2::ggsave(
   paste0(output_dir, "/", Sys.Date(), "_2_6_bowen_summed_sdm_map.png"),
   bowen_plot,
-  device = ragg::agg_png,
-  width = 9,
-  height = 12,
-  units = "in",
-  res = 300
-)
-```
-
-# 3 Habitats
-
-## 3.1 ‘Freshwater Habitats: streams, wetlands, riparian corridors’ (use blue colour ramp/categories?)
-
-```{r water, eval=F}
-# Plots
-title <- "Freshwater Habitats: streams, wetlands, riparian corridors"
-subtitle <- "Freshwater features on Bowen Island, derived from layers provided by Alan Whitehead (2025)."
-
-fw_df <- layers_df[layers_df$category == "Freshwater", ]
-# Color ramp
-fw_df$colour <- RColorBrewer::brewer.pal(nrow(fw_df), "YlGnBu")
-
-streams_rast <- fw_df[fw_df$name == "Streams", "path"] %>%
-  unlist() %>%
-  rast() %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-
-fw_plot <- bowen_map(
-  raster_layer = empty_rast,
-  title = title,
-  subtitle = subtitle,
-  caption = caption,
-  legend_label = "Presence"
-) +
-  tidyterra::geom_spatraster(
-    data = rast(unlist(fw_df[fw_df$name == "Lakes", "path"])),
-    aes(fill = layer)
-  ) +
-  scale_fill_gradientn(
-    name = "",
-    labels = "Freshwater Lakes",
-    colours = unlist(fw_df[fw_df$name == "Lakes", "colour"]),
-    guide = "legend",
-    na.value = "transparent"
-  ) +
-  ggnewscale::new_scale_fill() +
-  tidyterra::geom_spatraster(
-    data = rast(unlist(fw_df[fw_df$name == "Ponds", "path"])),
-    aes(fill = layer)
-  ) +
-  scale_fill_gradientn(
-    name = "",
-    labels = "Freshwater Ponds",
-    colours = unlist(fw_df[fw_df$name == "Ponds", "colour"]),
-    guide = "legend",
-    na.value = "transparent"
-  ) +
-  ggnewscale::new_scale_fill() +
-  tidyterra::geom_spatraster(
-    data = rast(unlist(fw_df[fw_df$name == "Riparian", "path"])),
-    aes(fill = layer)
-  ) +
-  scale_fill_gradientn(
-    name = "",
-    labels = "Riparian",
-    colours = unlist(fw_df[fw_df$name == "Riparian", "colour"]),
-    guide = "legend",
-    na.value = "transparent"
-  ) +
-  ggnewscale::new_scale_fill() +
-  tidyterra::geom_spatraster(
-    data = rast(unlist(fw_df[fw_df$name == "Wetlands", "path"])),
-    aes(fill = layer)
-  ) +
-  scale_fill_gradientn(
-    name = "",
-    labels = "Wetlands",
-    colours = unlist(fw_df[fw_df$name == "Wetlands", "colour"]),
-    guide = "legend",
-    na.value = "transparent"
-  ) +
-  ggnewscale::new_scale_fill() +
-  tidyterra::geom_spatraster(data = streams_rast, aes(fill = layer)) +
-  scale_fill_gradientn(
-    name = "",
-    labels = "Streams",
-    colours = unlist(fw_df[fw_df$name == "Streams", "colour"]),
-    guide = "legend",
-    na.value = "transparent"
-  ) +
-  ggnewscale::new_scale_fill() +
-  geom_sf(
-    data = bowen_ocean_sf,
-    linewidth = bowen_ocean_linewidth,
-    fill = bowen_ocean_colour
-  ) +
-  ggplot2::theme(
-    legend.margin = margin(-26, 6, 6, 6),
-    legend.key.width = ggplot2::unit(0.5, "cm"),
-    legend.key.height = ggplot2::unit(0.5, "cm"),
-    legend.key.spacing.y = ggplot2::unit(0, "lines"),
-    legend.key.spacing.x = ggplot2::unit(0, "cm"),
-    legend.direction = "vertical",
-    legend.box = "vertical",
-    legend.box.background = element_rect(fill = "white", colour = "black"),
-    legend.box.margin = margin(20, 5, 5, 5),
-    legend.position = c(.05, .95),
-    legend.justification = c("left", "top"),
-    legend.box.just = "left"
-  ) +
-  ggspatial::annotation_scale(
-    location = "br",
-    bar_cols = c("grey60", "white")
-  ) +
-  ggspatial::annotation_north_arrow(
-    location = "br",
-    which_north = "true",
-    pad_x = unit(0.2, "in"),
-    pad_y = unit(0.4, "in"),
-    style = ggspatial::north_arrow_nautical(
-      fill = c("grey40", "white"),
-      line_col = "grey20"
-    )
-  )
-
-# Save plots
-ggplot2::ggsave(
-  here(output_dir, "/", paste0(Sys.Date(), "_", "3_1_bowen_water_map", ".png")),
-  fw_plot,
-  device = ragg::agg_png,
-  width = 9,
-  height = 12,
-  units = "in",
-  res = 300
-)
-
-
-# Plots
-title <- "Freshwater Habitat Richness"
-subtitle <- "Freshwater features on Bowen Island, derived from layers provided by Alan Whitehead (2025)."
-
-fw_rast_stack <- layers_df[layers_df$category == "Freshwater", "path"] %>%
-  unlist() %>%
-  lapply(rast) %>%
-  rast()
-fw_richness <- fw_rast_stack %>%
-  lapply(not.na) %>%
-  lapply(function(x) {
-    classify(x, cbind(FALSE, NA))
-  }) %>%
-  rast() %>%
-  sum(na.rm = T)
-writeRaster(
-  fw_richness,
-  here("inst/extdata/3_habitats/fw_richness.tif"),
-  overwrite = T
-)
-
-fw_richness_plot <- bowen_map(
-  raster_layer = fw_richness,
-  title = title,
-  subtitle = subtitle,
-  caption = caption,
-  pal = "Mako",
-  legend_label = "Freshwater Habitat Richness"
-) +
-  ggspatial::annotation_scale(
-    location = "br",
-    bar_cols = c("grey60", "white")
-  ) +
-  ggspatial::annotation_north_arrow(
-    location = "br",
-    which_north = "true",
-    pad_x = unit(0.2, "in"),
-    pad_y = unit(0.4, "in"),
-    style = ggspatial::north_arrow_nautical(
-      fill = c("grey40", "white"),
-      line_col = "grey20"
-    )
-  )
-
-# Save plots
-ggplot2::ggsave(
-  here(
-    output_dir,
-    "/",
-    paste0(Sys.Date(), "_", "3_1_bowen_water_richness_map", ".png")
-  ),
-  fw_richness_plot,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1514,153 +1839,6 @@ for (i in 1:nrow(intertidal_df)) {
 }
 ```
 
-## 3.5 ‘Habitat Diversity: Number of habitats for each pixel’ All habitat layers combined (# of layers per pixel)
-
-```{r, eval=F}
-# Prepare habitat stack
-habitat_stack <- habitats_df %>%
-  filter(category != "Human Disturbance") %>%
-  select(path) %>%
-  lapply(rast) %>%
-  rast()
-# Sum habitat stack
-habitat_richness <- habitat_stack %>% sum(na.rm = T)
-writeRaster(
-  habitat_richness,
-  here("inst/extdata/3_habitats/total_habitat_richness.tif"),
-  overwrite = T
-)
-# Create species richness plots:
-## Each species is marked present in a cell, if they are above a certain
-## threshold of probability in the input SDMs.
-title <- "Total Habitat Diversity: Number of habitat types by location"
-subtitle <- paste0(
-  "Total number of habitats found in each cell of the map. Habitats derived from Metro Vancouver Sensitive Ecosystem Inventory (2021), Terrestrial Ecosystem Mapping (2019), and Alan Whitehead (2025)."
-)
-
-habitats_plot <- bowen_map(
-  raster_layer = habitat_richness,
-  title = title,
-  subtitle = subtitle,
-  caption = caption,
-  legend_label = "Richness"
-) +
-  ggplot2::geom_sf(
-    data = bowen_trails,
-    linewidth = 0.3,
-    aes(color = trails_colour)
-  ) +
-  ggplot2::geom_sf(
-    data = bowen_roads,
-    linewidth = 0.5,
-    aes(color = roads_colour)
-  ) +
-  scale_colour_identity(
-    name = "",
-    breaks = c(trails_colour, roads_colour),
-    labels = c("Trails", "Roads"),
-    guide = "legend"
-  ) +
-  geom_sf(
-    data = bowen_ocean_sf,
-    linewidth = bowen_ocean_linewidth,
-    fill = bowen_ocean_colour
-  ) +
-  ggspatial::annotation_scale(
-    location = "br",
-    bar_cols = c("grey60", "white")
-  ) +
-  ggspatial::annotation_north_arrow(
-    location = "br",
-    which_north = "true",
-    pad_x = unit(0.2, "in"),
-    pad_y = unit(0.4, "in"),
-    style = ggspatial::north_arrow_nautical(
-      fill = c("grey40", "white"),
-      line_col = "grey20"
-    )
-  )
-
-ggplot2::ggsave(
-  here(
-    output_dir,
-    "/",
-    paste0(Sys.Date(), "_", "3_5_bowen_habitat_richness_map", ".png")
-  ),
-  habitats_plot,
-  device = ragg::agg_png,
-  width = 9,
-  height = 12,
-  units = "in",
-  res = 300
-)
-```
-
-# 4 Derived Data Products
-
-## 4.1 Biodiversity Values (0-1)
-
-
-
-## 4.2 Human Disturbance (Continuous)
-
-```{r, eval=F}
-# Disturbance raster
-disturbed <- here::here(
-  "inst",
-  "extdata",
-  "habitats",
-  "bowen_human_footprint.tif"
-) %>%
-  terra::rast() %>%
-  project(project_crs)
-
-zonation_plot <- bowen_map(
-  disturbed,
-  title = "Current Human Disturbance",
-  subtitle = "Continuous map of human disturbance on Bowen Island.",
-  caption = caption,
-  legend_label = "Disturbance",
-  pal = "Inferno"
-) +
-  geom_sf(
-    data = bowen_ocean_sf,
-    linewidth = bowen_ocean_linewidth,
-    fill = bowen_ocean_colour
-  ) +
-  ggspatial::annotation_scale(
-    location = "br",
-    bar_cols = c("grey60", "white")
-  ) +
-  ggspatial::annotation_north_arrow(
-    location = "br",
-    which_north = "true",
-    pad_x = unit(0.2, "in"),
-    pad_y = unit(0.4, "in"),
-    style = ggspatial::north_arrow_nautical(
-      fill = c("grey40", "white"),
-      line_col = "grey20"
-    )
-  )
-
-ggplot2::ggsave(
-  paste0(
-    output_dir,
-    "/",
-    Sys.Date(),
-    "_",
-    "4_2_humandisturbance_continuous",
-    ".png"
-  ),
-  zonation_plot,
-  device = ragg::agg_png,
-  width = 9,
-  height = 12,
-  units = "in",
-  res = 300
-)
-```
-
 ## 4.3 Human Disturbance (Categorical)
 
 ```{r, eval=F}
@@ -1777,11 +1955,9 @@ ggplot2::ggsave(
 )
 ```
 
-# 5 Overlap Statistics
+## 5 Overlap Statistics
 
-Here we calculate the overlap of the top % of conservation values with
-these other layers:
-
+Here we calculate the overlap of the top % of conservation values with these other layers:
 -   Protected areas
 -   Private land
 -   Human Footprint (HFP)
@@ -2999,8 +3175,4 @@ foreach(quant = quants) %do%
   }
 ```
 
-
-```{r}
-
-```
 
