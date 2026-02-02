@@ -908,8 +908,114 @@ ggplot2::ggsave(
 # Render for PDF
 disturb_cont_plot_annotation
 ```
-## Human Disturbance: Categories
 ## Human Disturbance: Top 30% Biodiversity Value 
+Top 30% of biodiversity locations on Bowen Island, with scale corresponding to relative human disturbance. 0% of top biodiversity locations are considered intact. 0.4% of top biodiversity locations considered to be less disturbed. 61.3% of top biodiversity cells are considered moderately disturbed. 35.5% of top biodiversity locations are highly disturbed. Citation: Kristen Hirsh-Pearson, Chris J. Johnson, Richard Schuster, Roger D. Wheate, and Oscar Venter. 2022. Canada’s human footprint reveals large intact areas juxtaposed against areas under immense anthropogenic pressure. FACETS. 7: 398-419."
+```{r human_disturbance_top30}
+#### Prepare layers for plots ####
+# Biodiversity values layer 
+rankmap <- here("output-data/5_values/rankmap.tif") %>%
+  rast() %>%
+  project(bowen.biodiversity.webapp::project_crs)
+rankmap_for_map <- rankmap %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges() 
+rankmap_bt_rm <- rankmap %>%
+  remove_by_quantile(0.7)
+rankmap_bt_rm_for_map <-rankmap_bt_rm %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges() 
+rankmap_mask <- rankmap_bt_rm %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+# Human Footprint (classified)
+bowen_hfp_class <- here("output-data/habitats/bowen_human_footprint_recl.tif") %>%
+  rast() %>%
+  project(rankmap) %>%
+  as.factor()
+bowen_hfp_low <- bowen_hfp_class %>%
+  classify(cbind(3, NA)) %>%
+  classify(cbind(2, NA)) %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+bowen_hfp_med <- bowen_hfp_class %>%
+  classify(cbind(3, NA)) %>%
+  classify(cbind(1, NA)) %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+bowen_hfp_high <- bowen_hfp_class %>%
+  classify(cbind(2, NA)) %>%
+  classify(cbind(1, NA)) %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+#### Statistics ####
+bowen_hfp_top <- mask(bowen_hfp_class, rankmap_mask) %>%
+  as.factor()
+# overlap with each category (low, medium, high)
+hfp_low_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_low) %>%
+  round(3)
+# 0.004
+hfp_med_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_med) %>%
+  round(3)
+# 0.613
+hfp_high_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_high) %>%
+  round(3)
+# 0.355
+hfp_cont <- here("output-data/habitats/bowen_human_footprint.tif") %>%
+  rast() %>%
+  project(rankmap_mask) 
+hfp_top30 <- hfp_cont %>%
+  mask(rankmap_mask) %>%
+  project("EPSG: 3857") %>% 
+  higher_res_edges()
+#### Plotting ####
+max_hfp <- global(hfp_cont, fun = "max", na.rm = T) %>% unlist()
+min_hfp <- global(hfp_cont, fun = "min", na.rm = T) %>% unlist()
+
+hfp_biod_vals_plot_base <- template_plot +
+  tidyterra::geom_spatraster(data = hfp_top30) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "Inferno",
+    limits = c(min_hfp, max_hfp),
+    breaks = c(min_hfp, max_hfp),
+    labels = c("Lower", "Higher"),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Disturbance"
+  ) +
+  template_plot_overlay()
+hfp_biod_vals_plot_annotation <- hfp_biod_vals_plot_base +
+  template_plot_annotations()
+hfp_biod_vals_plot_no_annotation <- hfp_biod_vals_plot_base +
+  template_plot_remove()
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "4_3_humandisturbance_top30bv.png"),
+  hfp_biod_vals_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "4_3_humandisturbance_top30bv_no_annotation.png"),
+  hfp_biod_vals_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+# Render for PDF
+hfp_biod_vals_plot_annotation
+```
+
 
 ## Wildfire Vulnerability Index: Continuous
 Index of Vulnerability to Fire. This is not an assessment of the probability or behaviour of the fire. The intention of this index is to describe the relative vulnerability to biodiversity loss due to fire, under a scenario where the habitats burn. The three major components of this vulnerability index are slope, aspect, and fuel.
@@ -971,6 +1077,17 @@ top30_wvi <- rast(here("output-data/6_threats/fire_index_40m.tif")) %>%
   terra::subst(4294967296, NA) %>% # Max value should be NA
   terra::scale_linear() %>% 
   remove_by_quantile(0.7) 
+
+rankmap_top30_lowres <- here("output-data/5_values/rankmap.tif") %>%
+  rast() %>%
+  project("EPSG: 3857") %>% 
+  remove_by_quantile(0.7) 
+rankmap_top30 <- rankmap_top30_lowres %>%
+  higher_res_edges() 
+rankmap_mask <- rankmap_top30_lowres %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+
 rankmap_mask_re <- rankmap_mask %>% 
   resample(top30_wvi) 
 grey_rast <- rankmap_mask_re %>%
@@ -980,7 +1097,7 @@ fire_biod_val <- mask(top30_wvi, rankmap_mask_re)
 
 # Calculate statistics
 top30_wvi_resamp <- top30_wvi %>%
-  resample(rankmap, method = "average") %>%
+  resample(rankmap_mask, method = "average") %>%
   mask(rankmap_mask)
 top30_wvi_resamp %>% 
   terra::not.na() %>%
@@ -1002,14 +1119,14 @@ fire_biod_val_plot_base <- template_plot +
     data = grey_rast
   ) +
   scale_fill_manual(
-    values = c("grey40"),           # Single grey color
-    labels = c("No Data"),          # Label it as "No Data"
-    na.value = NA,                  # Make NA transparent
+    values = c("grey40"),           
+    labels = c(""),          
+    na.value = NA,                  
     na.translate = FALSE,
     guide = ggplot2::guide_legend(
       title.position = "top"
     ),
-    name = ""
+    name = "Outside Top 30% WVI"
   ) +
   ggnewscale::new_scale_fill() +
   ggnewscale::new_scale_colour() +
@@ -1027,7 +1144,7 @@ fire_biod_val_plot_base <- template_plot +
       draw.llim = FALSE,
       title.position = "top"
     ),
-    name = "Fire Vul. Index"
+    name = "Wildfire Vul. Index"
   ) +
   template_plot_overlay()
 fire_biod_val_plot_annotation <- fire_biod_val_plot_base + 
@@ -1279,9 +1396,250 @@ subdivide_plot_annotation
 ```
 
 # Action
-## Biodiversity Value with Protected Areas 
-## Biodiversity Value with Public Lands 
-## Biodiversity Value with Private Land
+## Protected Areas: Top 30% Biodiversity Values 
+% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on top of the Zonation priotization output. The percentage of these biodiversity locations covered by Protected Areas is 41% 
+```{r}
+#### Preparing layers for plotting ####
+# Biodiversity values layer 
+rankmap <- here("output-data/5_values/rankmap.tif") %>%
+  rast() %>%
+  project(bowen.biodiversity.webapp::project_crs)
+rankmap_for_map <- rankmap %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges() 
+rankmap_bt_rm <- rankmap %>%
+  remove_by_quantile(0.7)
+rankmap_bt_rm_for_map <-rankmap_bt_rm %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges() 
+rankmap_mask <- rankmap_bt_rm %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+# Bowen entire area
+bowen_island <- st_read(
+  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
+  layer = "bowen_island_shoreline_w_hutt__bowen_islands"
+)
+# Protected Areas from JD
+bowen_protectedareas_include <- bowen.biodiversity.webapp::bowen_protectedareas %>%
+  filter(type != "Agricultural Land Reserve") # Remove ALR
+# Protected Areas from Bowen Island Municipality
+# TODO: figure out why there are two shapefiles / folders of protectedareas
+bowen_protectedareas_2 <- st_read(here(
+  "data-raw/datasets/bowen_island_protectedareas/BM_PROTECTED_AREAS.shp"
+)) %>%
+  filter(NAME != "Old Growth Management Area")
+# JD protected areas is more complete, with smaller municipal parks, covenants, and park land exchanges
+# Use JD protected areas instead of BM_PROTECTED_AREAS.shp
+bowen_protectedareas_rast <- bowen_protectedareas_include %>%
+  bowen_rasterize() %>%
+  project(rankmap_bt_rm)
+union_protectedareas <- bowen.biodiversity.webapp::bowen_protectedareas %>%
+  st_make_valid() %>%
+  st_union()
+
+#### Statistics ####
+# Check with polygon / polygon area calculations for full Bowen Island
+sum(st_area(bowen_protectedareas_include)) / sum(st_area(bowen_island)) 
+# 0.2149664
+sum(st_area(bowen_protectedareas_2)) / sum(st_area(bowen_island)) 
+# 0.17935
+
+# Check with raster
+n_cells_top30bv_protectedareas <- rankmap_bt_rm %>% 
+  mask(bowen_protectedareas_rast) %>%
+  terra::noNA() %>%
+  global("sum", na.rm = T)
+# 668 cells noNA within protectedareas rast
+n_cells_top30bv <- rankmap_bt_rm %>% 
+  terra::noNA() %>%
+  global("sum", na.rm = T)
+# 1623 cells noNA in total
+n_cells_top30bv_protectedareas / n_cells_top30bv
+# 0.41 when calculate with raster
+
+#### Plotting ####
+protectedareas_colour <- "purple"
+
+protectedareas_plot_base <- template_plot +
+  geom_spatraster(data = rankmap_bt_rm_for_map) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "ag_GrnYl",
+    limits = c(0,1),
+    breaks = c(0, 0.5, 1),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Relative Biodiversity"
+  ) +
+  ggnewscale::new_scale_fill() +
+  ggnewscale::new_scale_color() +
+  geom_sf(
+    data = union_protectedareas,
+    aes(fill = protectedareas_colour, color = protectedareas_colour),
+    alpha = 0.1,
+    linewidth = 0.5
+  ) +
+  scale_fill_identity(
+    name = "",
+    breaks = c(protectedareas_colour),
+    labels = c("Protected Areas"),
+    guide = "legend"
+  ) +
+  scale_colour_identity(
+    name = "",
+    breaks = c(protectedareas_colour),
+    labels = c("Protected Areas"),
+    guide = "legend"
+  ) 
+protectedareas_plot_annotations <- protectedareas_plot_base +
+  template_plot_annotations()
+protectedareas_plot_no_annotations <- protectedareas_plot_base + 
+  template_plot_remove()
+# Save plots
+ggplot2::ggsave(
+  here(output_dir, "7_1_biod_vals_protected_areas.png"),
+  protectedareas_plot_annotations,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir, "7_1_biod_vals_protected_areas_no_annotation.png"),
+  protectedareas_plot_no_annotations,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+# Render for PDF
+protectedareas_plot_annotations
+```
+
+
+## Private Land: Top 30% Biodiversity Values
+% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Private Lands are visualized as an overlay on top of the Zonation priotization output. The percentage of these biodiversity locations covered by Private Lands is 43.9%
+```{r biod_vals_private_land}
+#### Preparing layers for plotting ####
+# Biodiversity values layer 
+rankmap <- here("output-data/5_values/rankmap.tif") %>%
+  rast() %>%
+  project(bowen.biodiversity.webapp::project_crs)
+rankmap_for_map <- rankmap %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges() 
+rankmap_bt_rm <- rankmap %>%
+  remove_by_quantile(0.7)
+rankmap_bt_rm_for_map <-rankmap_bt_rm %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges() 
+rankmap_mask <- rankmap_bt_rm %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+# Bowen entire area
+bowen_island <- st_read(
+  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
+  layer = "bowen_island_shoreline_w_hutt__bowen_islands"
+)
+# Private Land
+bowen_mask <- rast(here("output-data/bowen_mask.tif"))
+bowen_parcelmap_rast <- bowen.biodiversity.webapp::bowen_parcelmap %>%
+  st_cast("MULTIPOLYGON") %>% # Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12
+  filter(OwnerType == "Private") %>%
+  bowen_rasterize() %>%
+  project(rankmap_bt_rm)
+bowen_parcelmap_union <- bowen.biodiversity.webapp::bowen_parcelmap %>%
+  filter(OwnerType == "Private") %>%
+  st_cast("MULTIPOLYGON") %>% # Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12
+  st_make_valid() %>%
+  st_union()
+
+#### Statistics ####
+# Overlay by raster
+n_cells_top30bv_privateland <- rankmap_bt_rm %>% 
+  mask(bowen_parcelmap_rast) %>%
+  terra::noNA() %>%
+  global("sum", na.rm = T)
+n_cells_top30bv <- rankmap_bt_rm %>% 
+  terra::noNA() %>%
+  global("sum", na.rm = T)
+n_cells_top30bv_privateland / n_cells_top30bv
+# 0.6691312 of top30bv is in private land, calc by rast
+
+# Check with polygon / polygon area calculations for full Bowen Island
+sum(st_area(bowen_parcelmap_union)) / sum(st_area(bowen_island)) 
+# 0.4398537 of Bowen Island area is private land
+
+#### Plotting ####
+properties_colour <- "brown"
+privatelands_overlap_plot_base <- template_plot +
+  geom_spatraster(data = rankmap_bt_rm_for_map) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "ag_GrnYl",
+    limits = c(0,1),
+    breaks = c(0, 0.5, 1),
+    guide = ggplot2::guide_colourbar(
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+      # title.hjust = 0.5
+    ),
+    name = "Relative Biodiversity"
+  ) +
+  ggnewscale::new_scale_fill() +
+  ggnewscale::new_scale_color() +
+  geom_sf(
+    data = bowen_parcelmap_union,
+    aes(fill = properties_colour, color = properties_colour),
+    alpha = 0.2,
+    linewidth = 0.5
+  ) +
+  scale_fill_identity(
+    name = "",
+    breaks = c(properties_colour),
+    labels = c("Private Land"),
+    guide = "legend"
+  ) +
+  scale_colour_identity(
+    name = "",
+    breaks = c(properties_colour),
+    labels = c("Private Land"),
+    guide = "legend"
+  ) 
+privatelands_overlap_plot_annotation <- privatelands_overlap_plot_base +
+  template_plot_annotations()
+privatelands_overlap_plot_no_annotation <- privatelands_overlap_plot_base +
+  template_plot_remove()
+ggplot2::ggsave(
+  here(output_dir,"7_2_biodvals_private_land.png"),
+  privatelands_overlap_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir,"7_2_biodvals_private_land_no_annotation.png"),
+  privatelands_overlap_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+privatelands_overlap_plot_annotation
+```
 
 ## Land Ownership / Authority: Top 30% Biodiversity Value
 - record ownership / authority category by pixel
@@ -1294,15 +1652,123 @@ NOTE: check Fairweather, south Bowen Island neighbourhood
 - shared strata land that is private is not appearing as private on the map
 
 ## Example Locations for Protected Areas 
+Let's update this where we use the same colour scheme as for existing protected areas above (purple), keep the OGMAs (maybe make slightly more distinct colour), and then add potential candidate areas for protection
+
 - restricted to Crown Land
 - input of biodiversity values
 - considers optimizing for boundary length, contiguousness, and existing protected areas 
 - calculate % of orange protential protected areas coverage of bowen island
+```{r}
+#### Loading layers ####
+bowen_pa <- here("output-data/7_protected_areas/existing_protected_areas.gpkg") %>%
+  st_read()
+bowen_ogma <- ogma %>%
+  st_transform(st_crs(bowen_pa))
+bowen_new_pa <- here("output-data/7_protected_areas/new_protected_areas.gpkg") %>%
+  st_read() %>%
+  st_transform(st_crs(bowen_pa))
+#### Plotting ####
+protected_colour <- "purple"
+ogma_colour <- "#a1d76a"
+new_colour <- "orange"
+protectedareas_example_plot_base <- template_plot +
+  geom_sf(data = bowen_pa, 
+          aes(fill = protected_colour, color = protected_colour), 
+          alpha = 0.1,
+          linewidth = 0.5) +
+  geom_sf(data = bowen_ogma, 
+          aes(fill = ogma_colour, color = ogma_colour), 
+          alpha = 0.1,
+          linewidth = 0.5) +
+  geom_sf(data = bowen_new_pa, 
+          aes(fill = new_colour, color = new_colour), 
+          alpha = 0.1,
+          linewidth = 0.5) +
+  scale_fill_identity(name = "",
+                      breaks = c(protected_colour, ogma_colour, new_colour),
+                      labels = c("Current Protected", "Old Growth Management Areas", "Proposed Protected"),
+                      guide = "legend"
+  ) +
+  scale_color_identity(name = "",
+                       breaks = c(protected_colour, ogma_colour, new_colour),
+                       labels = c("Current Protected", "Old Growth Management Areas", "Proposed Protected"),
+                       guide = "legend"
+  ) +
+  template_plot_overlay()
+
+geom_sf(
+    data = union_protectedareas,
+    aes(fill = protectedareas_colour, color = protectedareas_colour),
+    alpha = 0.1,
+    linewidth = 0.5
+  ) +
+  
+  geom_sf(
+    data = union_protectedareas,
+    aes(fill = protectedareas_colour, color = protectedareas_colour),
+    alpha = 0.1,
+    linewidth = 0.5
+  ) +
+  scale_fill_identity(
+    name = "",
+    breaks = c(protectedareas_colour),
+    labels = c("Protected Areas"),
+    guide = "legend"
+  ) +
+  scale_colour_identity(
+    name = "",
+    breaks = c(protectedareas_colour),
+    labels = c("Protected Areas"),
+    guide = "legend"
+  ) 
+
+
+
+# gg
+protect_gg <- function() {
+  protected_colour <- "#a1d76a"
+  ogma_colour <- "beige"
+  new_colour <- "orange"
+  output <- list(
+    geom_sf(data = bowen_pa, aes(fill = protected_colour), alpha = 0.5),
+    geom_sf(data = bowen_ogma, aes(fill = ogma_colour), alpha = 0.5),
+    geom_sf(data = bowen_new_pa, aes(fill = new_colour), alpha = 0.5),
+    scale_fill_identity(name = "",
+                          breaks = c(protected_colour, ogma_colour, new_colour),
+                          labels = c("Current Protected", "Old Growth Management Areas", "Proposed Protected"),
+                          guide = "legend"
+    ),
+    ggnewscale::new_scale_fill(),
+    ggnewscale::new_scale_colour()
+  )
+  return(output)
+}
+
+protect_ggplot <- bowen_map_ggplot(
+  protect_gg,
+  title = "Top Locations for Protected Areas (30x30)",
+  subtitle = "Mapping optimal Crown land for reaching 30x30 targets, using the conservation values analysis and existing protected areas. This output considers connectivity by applying boundary penalties, which prioritizes shorter boundaries relative to area. Currently, about 20% of Bowen Island is under some protection.",
+  caption = paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
+)
+
+ggplot2::ggsave(
+  here(output_dir, "/", paste0(Sys.Date(), "_protect_ggplot.png")),
+  protect_ggplot,
+  device = ragg::agg_png,
+  width = 9, height = 12, units = "in", res = 300
+)
+
+
+protectedareas_example_plot_base
+```
+
+
 
 # Other Overlays
 ## Top 30% Biodiversity Value with Freshwater Habitats
 
 # Appendix
+## iNaturalist Observations
 ## Habitat Layers: Sensitive Ecosystem Inventory & Human Footprint
 ## Focal Vertebrate Species Layers 
 ## Provincial Conservation Status Ranks
@@ -2077,122 +2543,12 @@ rankmap <- here(paste0(
   rast() %>%
   project(project_crs)
 
-#' Only keep top or bottom cell values by quantile
-#'
-#' @param x SpatRaster
-#' @param prob Quantile between 0 and 1
-#' @param direction "top" or "bottom", for direction of keep / discard cell values
-#'
-#' @returns SpatRaster
-#' @export
-remove_by_quantile <- function(x, prob, direction = "top") {
-  val <- x %>%
-    values() %>%
-    quantile(probs = prob, na.rm = T)
-  min_val <- x %>%
-    values() %>%
-    min(na.rm = T)
-  max_val <- x %>%
-    values() %>%
-    max(na.rm = T)
-  if (direction == "top") {
-    m <- matrix(
-      c(
-        min_val,
-        val,
-        NA,
-        val,
-        max_val,
-        1
-      ),
-      ncol = 3,
-      byrow = T
-    )
-  } else if (direction == "bottom") {
-    m <- matrix(
-      c(
-        min_val,
-        val,
-        1,
-        val,
-        max_val,
-        NA
-      ),
-      ncol = 3,
-      byrow = T
-    )
-  }
-  mask_quantile <- x %>%
-    classify(m, , include.lowest = T)
-  mask_quantile * x
-}
-
-#' Rasterize to Bowen Island Mask
-bowen_rasterize_cover <- function(sf) {
-  bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
-    rast() %>%
-    project(bowen.biodiversity.webapp::project_crs)
-
-  output <- sf %>%
-    terra::vect() %>% # Change to SpatVector for rasterization
-    terra::project(bowen.biodiversity.webapp::project_crs) %>% # Reproject to the mask CRS
-    terra::rasterize(
-      bowen_island_mask,
-      cover = T, # Return proportion of cell covered by polygon
-      background = NA
-    ) # Rasterize to match mask, set background values to NA
-}
-
-#' Provide ratio of overlap between two rasters (in terms of NA vs nonNA)
-raster_overlap_ratio <- function(top_rast, area_rast) {
-  overlap_res <- (top_rast * area_rast)
-  top_cell_count <- top_rast %>%
-    global("sum", na.rm = T)
-  overlap_cell_values <- overlap_res %>%
-    values(na.rm = T)
-  overlap_cell_area <- overlap_cell_values %>% sum()
-  overlap_ratio <- (overlap_cell_area / top_cell_count) %>% as.numeric()
-  return(overlap_ratio)
-}
-
 # Bowen entire area
 bowen_island <- st_read(
   here("data-raw/bowen_island_shoreline_w_hutt.gpkg"),
   layer = "bowen_island_shoreline_w_hutt__bowen_islands"
 )
-# Protected Areas from JD
-bowen_protectedareas_include <- bowen.biodiversity.webapp::bowen_protectedareas %>%
-  filter(type != "Agricultural Land Reserve") # Remove ALR
-# Protected Areas from Bowen Island Municipality
-bowen_protectedareas_2 <- st_read(here(
-  "data-raw/archive/bowen_island_protectedareas/BM_PROTECTED_AREAS.shp"
-)) %>%
-  filter(NAME != "Old Growth Management Area")
-# JD protected areas is more complete, with smaller municipal parks, covenants, and park land exchanges
 
-bowen_protectedareas_rast <- bowen_protectedareas_include %>%
-  bowen_rasterize_cover()
-union_protectedareas <- bowen.biodiversity.webapp::bowen_protectedareas %>%
-  st_make_valid() %>%
-  st_union()
-
-# Check with polygon / polygon area calculations for full Bowen Island
-sum(st_area(bowen_protectedareas_include)) / sum(st_area(bowen_island)) # 0.2149664
-sum(st_area(bowen_protectedareas_2)) / sum(st_area(bowen_island)) # 0.17935
-
-
-# Private Land
-bowen_mask <- rast(here("inst/extdata/bowen_mask.tif"))
-bowen_parcelmap_rast <- bowen.biodiversity.webapp::bowen_parcelmap %>%
-  st_cast("MULTIPOLYGON") %>% # Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12
-  filter(OwnerType == "Private") %>%
-  bowen_rasterize_cover()
-
-bowen_parcelmap_union <- bowen.biodiversity.webapp::bowen_parcelmap %>%
-  filter(OwnerType == "Private") %>%
-  st_cast("MULTIPOLYGON") %>% # Need this due to MULTISURFACE - see: https://gis.stackexchange.com/questions/389814/r-st-centroid-geos-error-unknown-wkb-type-12
-  st_make_valid() %>%
-  st_union()
 
 # Other Land
 bowen_mask <- rast(here("inst/extdata/bowen_mask.tif"))
@@ -2216,25 +2572,7 @@ fw_rast_dissolve <- fw_rast_stack %>%
   not.na() %>%
   classify(cbind(FALSE, NA))
 
-# Human Footprint (classified)
-bowen_hfp <- here("inst/extdata/habitats/bowen_human_footprint_recl.tif") %>%
-  rast() %>%
-  as.factor()
-bowen_hfp_low <- bowen_hfp %>%
-  classify(cbind(3, NA)) %>%
-  classify(cbind(2, NA)) %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-bowen_hfp_med <- bowen_hfp %>%
-  classify(cbind(3, NA)) %>%
-  classify(cbind(1, NA)) %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-bowen_hfp_high <- bowen_hfp %>%
-  classify(cbind(2, NA)) %>%
-  classify(cbind(1, NA)) %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
+
 
 sf_use_s2(FALSE)
 
@@ -2251,400 +2589,9 @@ foreach(quant = quants) %do%
 
     top_pct <- (1 - quant) * 100
 
-    # 5.1 Top XX% Biodiversity Values (0-1)
-    top_plot <- bowen_map_toppct(
-      rankmap_bt_rm,
-      title = paste0("Top ", top_pct, "% Biodiversity Values"),
-      subtitle = paste0(
-        "Top ",
-        top_pct,
-        "% of biodiversity locations on Bowen Island. Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33)  with species layers (n = 195)."
-      ),
-      caption = caption,
-      legend_label = "Relative Biodiversity",
-      pal = conservation_val_pal
-    ) +
-      ggplot2::geom_sf(
-        data = bowen_trails,
-        linewidth = 0.3,
-        aes(color = trails_colour)
-      ) +
-      ggplot2::geom_sf(
-        data = bowen_roads,
-        linewidth = 0.5,
-        aes(color = roads_colour)
-      ) +
-      scale_colour_identity(
-        name = "",
-        breaks = c(trails_colour, roads_colour),
-        labels = c("Trails", "Roads"),
-        guide = "legend"
-      ) +
-      geom_sf(
-        data = bowen_ocean_sf,
-        linewidth = bowen_ocean_linewidth,
-        fill = bowen_ocean_colour
-      ) +
-      ggspatial::annotation_scale(
-        location = "br",
-        bar_cols = c("grey60", "white")
-      ) +
-      ggspatial::annotation_north_arrow(
-        location = "br",
-        which_north = "true",
-        pad_x = unit(0.2, "in"),
-        pad_y = unit(0.4, "in"),
-        style = ggspatial::north_arrow_nautical(
-          fill = c("grey40", "white"),
-          line_col = "grey20"
-        )
-      )
-
-    ggplot2::ggsave(
-      paste0(
-        output_dir,
-        "/",
-        Sys.Date(),
-        "_",
-        "5_1_top_",
-        top_pct,
-        "_biodiversity_values",
-        ".png"
-      ),
-      top_plot,
-      device = ragg::agg_png,
-      width = 9,
-      height = 12,
-      units = "in",
-      res = 300
-    )
-
-    # 5.2 Biodiversity Values (0-1) overlap with Protected Areas
-    protectedareas_colour <- "purple"
-    protectedareas_overlap <- raster_overlap_ratio(
-      rankmap_bt_rm,
-      bowen_protectedareas_rast
-    ) %>%
-      round(2)
-    protectedareas_plot <- bowen_map_toppct(
-      rankmap_bt_rm,
-      title = paste0(
-        "Top ",
-        top_pct,
-        "% Biodiversity Values with Protected Areas"
-      ),
-      subtitle = paste0(
-        "Top ",
-        top_pct,
-        "% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Protected Areas are visualized as an overlay on top of the Zonation priotization output. The percentage of these biodiversity locations covered by Protected Areas is ",
-        protectedareas_overlap * 100,
-        "%."
-      ),
-      caption = caption,
-      legend_label = "Priority",
-      pal = conservation_val_pal
-    ) +
-      geom_sf(
-        data = union_protectedareas,
-        aes(fill = protectedareas_colour, color = protectedareas_colour),
-        alpha = 0.1,
-        linewidth = 0.5
-      ) +
-      scale_fill_identity(
-        name = "",
-        breaks = c(protectedareas_colour),
-        labels = c("Protected Areas"),
-        guide = "legend"
-      ) +
-      scale_colour_identity(
-        name = "",
-        breaks = c(protectedareas_colour),
-        labels = c("Protected Areas"),
-        guide = "legend"
-      ) +
-      geom_sf(
-        data = bowen_ocean_sf,
-        linewidth = bowen_ocean_linewidth,
-        fill = bowen_ocean_colour
-      ) +
-      ggspatial::annotation_scale(
-        location = "br",
-        bar_cols = c("grey60", "white")
-      ) +
-      ggspatial::annotation_north_arrow(
-        location = "br",
-        which_north = "true",
-        pad_x = unit(0.2, "in"),
-        pad_y = unit(0.4, "in"),
-        style = ggspatial::north_arrow_nautical(
-          fill = c("grey40", "white"),
-          line_col = "grey20"
-        )
-      )
-    ggplot2::ggsave(
-      paste0(
-        output_dir,
-        "/",
-        Sys.Date(),
-        "_",
-        "5_2_top_",
-        top_pct,
-        "_protectedareas",
-        ".png"
-      ),
-      protectedareas_plot,
-      device = ragg::agg_png,
-      width = 9,
-      height = 12,
-      units = "in",
-      res = 300
-    )
-
-    # 5.3 Biodiversity Values (0-1) overlap with Private Land
-    properties_colour <- "brown"
-    privatelands_overlap <- raster_overlap_ratio(
-      rankmap_bt_rm,
-      bowen_parcelmap_rast
-    ) %>%
-      round(2)
-    privateland_plot <- bowen_map_toppct(
-      rankmap_bt_rm,
-      title = paste0("Top ", top_pct, "% Biodiversity Value with Private Land"),
-      subtitle = paste0(
-        "Top ",
-        top_pct,
-        "% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Higher values, towards 1.0, indicate higher priority. Lower values, towards 0.0, show lower priority. Private Lands are visualized as an overlay on top of the Zonation priotization output. The percentage of these biodiversity locations covered by Private Lands is ",
-        privatelands_overlap * 100,
-        "%."
-      ),
-      caption = caption,
-      legend_label = "Priority",
-      pal = conservation_val_pal
-    ) +
-      geom_sf(
-        data = bowen_parcelmap_union,
-        aes(fill = properties_colour, color = properties_colour),
-        alpha = 0.2,
-        linewidth = 0.5
-      ) +
-      scale_fill_identity(
-        name = "",
-        breaks = c(properties_colour),
-        labels = c("Private Land"),
-        guide = "legend"
-      ) +
-      scale_colour_identity(
-        name = "",
-        breaks = c(properties_colour),
-        labels = c("Private Land"),
-        guide = "legend"
-      ) +
-      geom_sf(
-        data = bowen_ocean_sf,
-        linewidth = bowen_ocean_linewidth,
-        fill = bowen_ocean_colour
-      ) +
-      ggspatial::annotation_scale(
-        location = "br",
-        bar_cols = c("grey60", "white")
-      ) +
-      ggspatial::annotation_north_arrow(
-        location = "br",
-        which_north = "true",
-        pad_x = unit(0.2, "in"),
-        pad_y = unit(0.4, "in"),
-        style = ggspatial::north_arrow_nautical(
-          fill = c("grey40", "white"),
-          line_col = "grey20"
-        )
-      )
-
-    ggplot2::ggsave(
-      paste0(
-        output_dir,
-        "/",
-        Sys.Date(),
-        "_",
-        "5_3_top_",
-        top_pct,
-        "_privateland",
-        ".png"
-      ),
-      privateland_plot,
-      device = ragg::agg_png,
-      width = 9,
-      height = 12,
-      units = "in",
-      res = 300
-    )
-
-    # 5.4 Biodiversity Values overlap with Human Disturbance (categorical)
-    bowen_hfp_top <- max(c(bowen_hfp, rankmap_mask)) %>%
-      as.factor()
-    # overlap with each category (low, medium, high)
-    hfp_low_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_low) %>%
-      round(2)
-    hfp_med_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_med) %>%
-      round(2)
-    hfp_high_overlap = raster_overlap_ratio(rankmap_mask, bowen_hfp_high) %>%
-      round(2)
-
-    bowen_hfp_plot <- bowen_map_2(
-      bowen_hfp_top,
-      title = paste0(
-        "Top ",
-        top_pct,
-        "% Biodiversity Value with Human Footprint (Categorical)"
-      ),
-      subtitle = paste0(
-        "Top ",
-        top_pct,
-        "% of biodiversity locations on Bowen Island, with scale corresponding to relative human disturbance. 0% of top biodiversity locations are considered intact. ",
-        hfp_low_overlap * 100,
-        "% of top biodiversity locations considered to be less disturbed. ",
-        hfp_med_overlap * 100,
-        "% of top biodiversity cells are considered moderately disturbed. ",
-        hfp_high_overlap * 100,
-        "% of top biodiversity locations are highly disturbed. Citation: Kristen Hirsh-Pearson, Chris J. Johnson, Richard Schuster, Roger D. Wheate, and Oscar Venter. 2022. Canada’s human footprint reveals large intact areas juxtaposed against areas under immense anthropogenic pressure. FACETS. 7: 398-419."
-      ),
-      caption = caption,
-      legend_label = "Disturbance"
-    ) +
-      ggplot2::geom_sf(
-        data = bowen_trails,
-        linewidth = 0.3,
-        aes(color = trails_colour)
-      ) +
-      ggplot2::geom_sf(
-        data = bowen_roads,
-        linewidth = 0.5,
-        aes(color = roads_colour)
-      ) +
-      scale_colour_identity(
-        name = "",
-        breaks = c(trails_colour, roads_colour),
-        labels = c("Trails", "Roads"),
-        guide = "legend"
-      ) +
-      geom_sf(
-        data = bowen_ocean_sf,
-        linewidth = bowen_ocean_linewidth,
-        fill = bowen_ocean_colour
-      ) +
-      ggspatial::annotation_scale(
-        location = "br",
-        bar_cols = c("grey60", "white")
-      ) +
-      ggspatial::annotation_north_arrow(
-        location = "br",
-        which_north = "true",
-        pad_x = unit(0.2, "in"),
-        pad_y = unit(0.4, "in"),
-        style = ggspatial::north_arrow_nautical(
-          fill = c("grey40", "white"),
-          line_col = "grey20"
-        )
-      )
-
-    ggplot2::ggsave(
-      paste0(
-        output_dir,
-        "/",
-        Sys.Date(),
-        "_",
-        "5_4_top_",
-        top_pct,
-        "_hfp_categorical",
-        ".png"
-      ),
-      bowen_hfp_plot,
-      device = ragg::agg_png,
-      width = 9,
-      height = 12,
-      units = "in",
-      res = 300
-    )
-
-    # 5.5 Biodiversity Values overlap with Human Disturbance (continuous)
-    bowen_hfp_continuous_top <- rankmap_mask *
-      rast(here("inst/extdata/habitats/bowen_human_footprint.tif"))
-
-    bowen_hfp_continuous_plot <- bowen_map(
-      bowen_hfp_continuous_top,
-      title = paste0(
-        "Top ",
-        top_pct,
-        "% Biodiversity Value with Human Footprint (Continuous)"
-      ),
-      subtitle = paste0(
-        "Top ",
-        top_pct,
-        "% of biodiversity locations on Bowen Island, with scale corresponding to relative human disturbance. 0% of top biodiversity locations are considered intact. ",
-        hfp_low_overlap * 100,
-        "% of top biodiversity locations considered to be less disturbed. ",
-        hfp_med_overlap * 100,
-        "% of top biodiversity cells are considered moderately disturbed. ",
-        hfp_high_overlap * 100,
-        "% of top biodiversity locations are highly disturbed. Citation: Kristen Hirsh-Pearson, Chris J. Johnson, Richard Schuster, Roger D. Wheate, and Oscar Venter. 2022. Canada’s human footprint reveals large intact areas juxtaposed against areas under immense anthropogenic pressure. FACETS. 7: 398-419."
-      ),
-      caption = caption,
-      legend_label = "Disturbance",
-      pal = "Inferno"
-    ) +
-      ggplot2::geom_sf(
-        data = bowen_trails,
-        linewidth = 0.3,
-        aes(color = trails_colour)
-      ) +
-      ggplot2::geom_sf(
-        data = bowen_roads,
-        linewidth = 0.5,
-        aes(color = roads_colour)
-      ) +
-      scale_colour_identity(
-        name = "",
-        breaks = c(trails_colour, roads_colour),
-        labels = c("Trails", "Roads"),
-        guide = "legend"
-      ) +
-      geom_sf(
-        data = bowen_ocean_sf,
-        linewidth = bowen_ocean_linewidth,
-        fill = bowen_ocean_colour
-      ) +
-      ggspatial::annotation_scale(
-        location = "br",
-        bar_cols = c("grey60", "white")
-      ) +
-      ggspatial::annotation_north_arrow(
-        location = "br",
-        which_north = "true",
-        pad_x = unit(0.2, "in"),
-        pad_y = unit(0.4, "in"),
-        style = ggspatial::north_arrow_nautical(
-          fill = c("grey40", "white"),
-          line_col = "grey20"
-        )
-      )
-
-    ggplot2::ggsave(
-      paste0(
-        output_dir,
-        "/",
-        Sys.Date(),
-        "_",
-        "5_5_top_",
-        top_pct,
-        "_hfp_continuous",
-        ".png"
-      ),
-      bowen_hfp_continuous_plot,
-      device = ragg::agg_png,
-      width = 9,
-      height = 12,
-      units = "in",
-      res = 300
-    )
+    
+    
+    
 
     # 5.6 Biodiversity Values overlap with Freshwater
     fw_mask <- fw_rast_dissolve %>%
