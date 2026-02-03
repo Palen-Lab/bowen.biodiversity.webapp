@@ -13,7 +13,7 @@ Data citation: BC Assessment, 2020, "BC Assessment Data Advice and Inventory Ext
 
 ```{r setup}
 #### Palen Lab Packages ####
-library(bowen.biodiversity.webapp)
+devtools::load_all()
 
 #### Other Packages ####
 library(here)
@@ -38,7 +38,7 @@ library(magrittr)
 sf_use_s2(FALSE)
 
 # Output Directory
-output_dir <- here("vignettes/figures/threats_development")
+output_dir <- here("output-figures/threats_development")
 if(!dir.exists(output_dir)) {
   dir.create(output_dir)
 }
@@ -49,7 +49,7 @@ roads_colour <- "darkgrey"
 caption <- paste0("Map created: ", date(), ". Palen Lab. Created by Jay Matsushiba (jmatsush@sfu.ca)")
 
 # Template raster
-bowen_mask <- terra::rast(here("inst/extdata/bowen_mask.tif"))
+bowen_mask <- terra::rast(here("data/bowen_mask.tif"))
 empty_rast <- terra::rast(
   ext(bowen_mask),
   resolution = res(bowen_mask),
@@ -57,8 +57,7 @@ empty_rast <- terra::rast(
 )
 
 # Shoreline 
-bowen_shoreline <- st_read(here("data-raw/bowen_island_shoreline_w_hutt.gpkg"), layer = "bowen_island_shoreline_w_hutt__bowen_islands") %>%
-  st_transform(project_crs)
+bowen_shoreline
 
 bowen_mask_sf <- as.polygons(bowen_mask, extent=T) %>%
   st_as_sf() %>%
@@ -143,13 +142,13 @@ This section is on quantifying the development potential on Bowen Island, via su
 Daniel Martin, Manager of Planning and Development at Bowen Island Municipality, provided these spreadsheets with information on the potential for individual lots to be subdivided. Additionally, Martin provided the number of potential further developments possible in Comprehensive Development Zones on Bowen Island. 
 ```{r}
 # RR1 and RR2 (Rural Residential 1 and 2 Zoning)
-rr1_rr2 <- here("data-raw/bowen_development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
+rr1_rr2 <- here("data-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
   readxl::read_xlsx(sheet = "RR1,RR2")
 # RR3 (Rural Residential 3 Zoning)
-rr3 <- here("data-raw/bowen_development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
+rr3 <- here("data-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
   readxl::read_xlsx(sheet = "RR3 properties")
 # SR (Settlement Residential zoning)
-sr <- here("data-raw/bowen_development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
+sr <- here("data-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx") %>%
   readxl::read_xlsx(sheet = "SR properties")
 # CD (Comprehensive Development Zones)
 ## Deal with these separately, need to do some wrangling 
@@ -186,7 +185,7 @@ unique(ocp_subdivision_parcelmap_fd$pid) %>% length() # 1778, so one fewer than 
 ocp_subdivision_parcelmap_fdr <- ocp_subdivision_parcelmap_fd %>%
   filter(`Can Subdivide?` != 46)
 
-write_sf(ocp_subdivision_parcelmap_fdr, here("data-raw/bowen_development_potential_danielmartin/ocp_subdivision_parcelmap.gpkg"), delete_layer = TRUE)
+write_sf(ocp_subdivision_parcelmap_fdr, here("data-raw/datasets/development_potential_danielmartin/ocp_subdivision_parcelmap.gpkg"), delete_layer = TRUE)
 
 ggplot(ocp_subdivision_parcelmap_fdr) +
   geom_sf(aes(fill = `subdividable`, geometry = geom), color = NA) 
@@ -364,4 +363,29 @@ ggplot2::ggsave(
 # TODO: generally clean up code and document decision making
 ```
 
+
+```{r}
+parcelmap <- st_read(here("data-raw/datasets/parcelmap/bowen_parcelmap.gpkg")) %>%
+  filter(PID != 31243550) # Remove ferry route 
+  
+parcelmap$geom <- parcelmap$geom %>%
+  st_cast("MULTIPOLYGON") %>%
+  st_make_valid()
+
+parcelmap$area <- st_area(parcelmap) # equal to SHAPE_Area, units in m^2
+
+
+biod_vals <- rast(here("output-data/5_values/rankmap.tif"))
+
+parcelmap_vect <- parcelmap %>% 
+  vect() %>%
+  project(biod_vals)
+
+parcelmap_extract <- terra::extract(biod_vals, parcelmap_vect, sum, bind = T)
+
+parcelmap_sf <- st_as_sf(parcelmap_extract)
+
+ggplot(parcelmap_sf) + geom_sf(aes(fill = rankmap))
+
+```
 

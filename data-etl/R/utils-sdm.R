@@ -123,7 +123,7 @@ invert <- function(input_rast) {
 #' @param sf input sf object to rasterize
 #' @export
 bowen_rasterize <- function(sf) {
-  bowen_island_mask <- here("inst/extdata/bowen_mask.tif") %>%
+  bowen_island_mask <- here("data/bowen_mask.tif") %>%
     rast() %>%
     project(bowen.biodiversity.webapp::project_crs)
 
@@ -168,3 +168,16 @@ remove_by_quantile <- function(x, prob, direction = "top") {
     terra::classify(m, include.lowest = T)
   mask_quantile * x
 }
+
+#' Provide ratio of overlap between two rasters (in terms of NA vs nonNA)
+raster_overlap_ratio <- function(top_rast, area_rast) {
+  overlap_res <- (top_rast * area_rast)
+  top_cell_count <- top_rast %>%
+    global("sum", na.rm = T)
+  overlap_cell_values <- overlap_res %>%
+    values(na.rm = T)
+  overlap_cell_area <- overlap_cell_values %>% sum()
+  overlap_ratio <- (overlap_cell_area / top_cell_count) %>% as.numeric()
+  return(overlap_ratio)
+}
+
