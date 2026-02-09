@@ -419,8 +419,8 @@ ggplot2::ggsave(
 )
 # Render in PDF
 total_richness_plot_annotations
-``
-`
+```
+
 <!-- ## Total Species Diversity -->
 <!-- ## TODO: Bird Species Richness -->
 <!-- Based on >presence_threshold probability of occurrence in Species Distribution Models. -->
