@@ -324,7 +324,7 @@ basic_plot_no_annotations <- template_plot +
   template_plot_remove()
 
 ggplot2::ggsave(
-  here(output_dir_annotated, "2_1_basic_map.png"),
+  here(output_dir_annotated, "2_1_transportation_network.png"),
   basic_plot,
   device = ragg::agg_png,
   width = plot_width,
@@ -334,7 +334,7 @@ ggplot2::ggsave(
 )
 
 ggplot2::ggsave(
-  here(output_dir_unannotated, "2_1_basic_map_no_annotations.png"),
+  here(output_dir_unannotated, "2_1_transportation_network_no_annotation.png"),
   basic_plot_no_annotations,
   device = ragg::agg_png,
   width = plot_width,
@@ -400,7 +400,7 @@ total_richness_plot_no_annotations <- total_richness_plot_base +
   template_plot_remove()
 # Save plot
 ggplot2::ggsave(
-  here(output_dir_annotated, "3_1_total_species_richness.png"),
+  here(output_dir_annotated, "3_1_species_richness.png"),
   total_richness_plot_annotations,
   device = ragg::agg_png,
   width = plot_width,
@@ -409,7 +409,7 @@ ggplot2::ggsave(
   res = plot_res
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "3_1_total_species_richness_no_annotations.png"),
+  here(output_dir_unannotated, "3_1_species_richness_no_annotation.png"),
   total_richness_plot_no_annotations,
   device = ragg::agg_png,
   width = plot_width,
@@ -608,7 +608,7 @@ fw_plot_no_annotation <- fw_plot_base +
 
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "4_1_bowen_water_map_annotation.png"),
+  here(output_dir_annotated, "4_1_freshwater_habitats.png"),
   fw_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -617,7 +617,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "4_1_bowen_water_map_no_annotation.png"),
+  here(output_dir_unannotated, "4_1_freshwater_habitats_no_annotation.png"),
   fw_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -671,7 +671,7 @@ fw_richness_plot_no_annotation <- fw_richness_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "4_2_bowen_water_richness_map.png"),
+  here(output_dir_annotated, "4_2_freshwater_richness.png"),
   fw_richness_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -680,7 +680,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "4_2_bowen_water_richness_map_no_annotation.png"),
+  here(output_dir_unannotated, "4_2_freshwater_richness_no_annotation.png"),
   fw_richness_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -735,7 +735,7 @@ habitats_plot_no_annotation <- habitats_plot_base +
   template_plot_remove()
 # Saving plot
 ggplot2::ggsave(
-  here(output_dir_annotated, "4_3_bowen_habitat_richness_map.png"),
+  here(output_dir_annotated, "4_3_habitat_richness.png"),
   habitats_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -744,7 +744,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "4_3_bowen_habitat_richness_map_no_annotation.png"),
+  here(output_dir_unannotated, "4_3_habitat_richness_no_annotation.png"),
   habitats_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -797,7 +797,7 @@ combined_biodiversity_plot_no_annotations <- combined_biodiversity_plot_base +
 
 # Save plot
 ggplot2::ggsave(
-  here(output_dir_annotated, "5_1_combined_biodiversity_values.png"),
+  here(output_dir_annotated, "5_1_biodiversity_values.png"),
   combined_biodiversity_plot,
   device = ragg::agg_png,
   width = plot_width,
@@ -806,7 +806,7 @@ ggplot2::ggsave(
   res = plot_res
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "5_1_combined_biodiversity_values_no_annotations.png"),
+  here(output_dir_unannotated, "5_1_biodiversity_values_no_annotation.png"),
   combined_biodiversity_plot_no_annotations,
   device = ragg::agg_png,
   width = plot_width,
@@ -861,7 +861,7 @@ top_plot_no_annotation <- top_plot_base +
   template_plot_remove()
 # Save plots 
 ggplot2::ggsave(
-  here(output_dir_annotated,"5_2_top_30_biodiversity_values.png"),
+  here(output_dir_annotated,"5_2_biodiversity_values_top30.png"),
   top_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -870,7 +870,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated,"5_2_top_30_biodiversity_values_no_annotation.png"),
+  here(output_dir_unannotated,"5_2_biodiversity_values_top30_no_annotation.png"),
   top_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -918,7 +918,7 @@ disturb_cont_plot_no_annotation <- disturb_cont_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "6_1_humandisturbance_continuous.png"),
+  here(output_dir_annotated, "6_1_human_disturbance.png"),
   disturb_cont_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -927,7 +927,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "6_1_humandisturbance_continuous_no_annotation.png"),
+  here(output_dir_unannotated, "6_1_human_disturbance_no_annotation.png"),
   disturb_cont_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1031,7 +1031,7 @@ hfp_biod_vals_plot_no_annotation <- hfp_biod_vals_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "6_2_humandisturbance_top30bv.png"),
+  here(output_dir_annotated, "6_2_human_disturbance_top30.png"),
   hfp_biod_vals_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1040,7 +1040,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "6_2_humandisturbance_top30bv_no_annotation.png"),
+  here(output_dir_unannotated, "6_2_human_disturbance_top30_no_annotation.png"),
   hfp_biod_vals_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1090,7 +1090,7 @@ fire_plot_no_annotation <- fire_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "6_3_fire_vulnerability_index.png"),
+  here(output_dir_annotated, "6_3_wildfire_vulnerability.png"),
   fire_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1099,7 +1099,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "6_3_fire_vulnerability_index_no_annotation.png"),
+  here(output_dir_unannotated, "6_3_wildfire_vulnerability_no_annotation.png"),
   fire_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1203,13 +1203,13 @@ fire_biod_val_plot_no_annotation <- fire_biod_val_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "6_4_wvi_top30.png"),
+  here(output_dir_annotated, "6_4_wildfire_vulnerability_top30.png"),
   fire_biod_val_plot_annotation,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "6_4_wvi_top30_no_annotation.png"),
+  here(output_dir_unannotated, "6_4_wildfire_vulnerability_top30_no_annotation.png"),
   fire_biod_val_plot_no_annotation,
   device = ragg::agg_png,
   width = 9, height = 12, units = "in", res = 300
@@ -1275,7 +1275,7 @@ wui_plot_no_annotation <- wui_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "6_5_wui.png"),
+  here(output_dir_annotated, "6_5_wildland_urban_interface.png"),
   wui_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1284,7 +1284,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "6_5_wui_no_annotation.png"),
+  here(output_dir_unannotated, "6_5_wildland_urban_interface_no_annotation.png"),
   wui_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1358,7 +1358,7 @@ parcelmap_biod_vals_plot_no_annotation <- parcelmap_biod_vals_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "7_1_parcelmap_biod_vals_plot.png"),
+  here(output_dir_annotated, "7_1_parcel_biodiversity_values.png"),
   parcelmap_biod_vals_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1367,7 +1367,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_1_parcelmap_biod_vals_plot_no_annotation.png"),
+  here(output_dir_unannotated, "7_1_parcel_biodiversity_values_no_annotation.png"),
   parcelmap_biod_vals_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1500,7 +1500,7 @@ subdivide_plot_no_annotation <- subdivide_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "7_2_parcelmap_subdiv.png"),
+  here(output_dir_annotated, "7_2_subdivision_potential.png"),
   subdivide_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1509,7 +1509,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_2_parcelmap_subdiv_no_annotation.png"),
+  here(output_dir_unannotated, "7_2_subdivision_potential_no_annotation.png"),
   subdivide_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1626,7 +1626,7 @@ protectedareas_plot_no_annotations <- protectedareas_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "7_3_biod_vals_protected_areas.png"),
+  here(output_dir_annotated, "7_3_protected_areas_top30.png"),
   protectedareas_plot_annotations,
   device = ragg::agg_png,
   width = 9,
@@ -1635,7 +1635,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_3_biod_vals_protected_areas_no_annotation.png"),
+  here(output_dir_unannotated, "7_3_protected_areas_top30_no_annotation.png"),
   protectedareas_plot_no_annotations,
   device = ragg::agg_png,
   width = 9,
@@ -1742,7 +1742,7 @@ privatelands_overlap_plot_annotation <- privatelands_overlap_plot_base +
 privatelands_overlap_plot_no_annotation <- privatelands_overlap_plot_base +
   template_plot_remove()
 ggplot2::ggsave(
-  here(output_dir_annotated, "7_4_biodvals_private_land.png"),
+  here(output_dir_annotated, "7_4_private_land_top30.png"),
   privatelands_overlap_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1751,7 +1751,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_4_biodvals_private_land_no_annotation.png"),
+  here(output_dir_unannotated, "7_4_private_land_top30_no_annotation.png"),
   privatelands_overlap_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1760,6 +1760,135 @@ ggplot2::ggsave(
   res = 300
 )
 privatelands_overlap_plot_annotation
+```
+
+{{< pagebreak >}}
+
+## Other Public Lands: Top 30% Biodiversity Values
+Top 30% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Other public lands, such as crown land, are visualized as an overlay on top of the Zonation prioritization output. The total coverage of Other Public Lands on Bowen Island is 30.0%. The percentage of top 30% biodiversity locations covered by other public lands is 13.3%. 
+```{r biod_vals_public_land}
+#### Preparing layers for plotting ####
+# Biodiversity values layer
+rankmap <- here("output-data/5_values/rankmap.tif") %>%
+  rast() %>%
+  project(bowen.biodiversity.webapp::project_crs)
+rankmap_for_map <- rankmap %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges()
+rankmap_bt_rm <- rankmap %>%
+  remove_by_quantile(0.7)
+rankmap_bt_rm_for_map <- rankmap_bt_rm %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges()
+rankmap_mask <- rankmap_bt_rm %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+# Bowen entire area
+bowen_island <- st_read(
+  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
+  layer = "bowen_island_shoreline_w_hutt__bowen_islands"
+)
+# Protected Areas (to subtract from Crown Land)
+protectedareas <- bowen.biodiversity.webapp::bowen_protectedareas %>%
+  filter(type != "Agricultural Land Reserve")
+dissolved_protectedareas <- protectedareas %>%
+  st_make_valid() %>%
+  summarise() %>%
+  st_cast() %>%
+  st_buffer(1)
+# Crown Land (Other Public Lands)
+crown_valid <- crown %>%
+  st_snap(x = ., y = ., tolerance = 0.1) %>%
+  st_make_valid() %>%
+  st_transform(st_crs(dissolved_protectedareas))
+notprotected_crown <- st_difference(crown_valid, dissolved_protectedareas)
+# Remove polygons that should not be included
+# rowname 1 (Fairy Fen Natural Reserve), sliver
+# rowname 74 (Seymour Bay Park), wrong polygon in the first place
+notprotected_crown <- notprotected_crown[
+  !rownames(notprotected_crown) %in% c("1", "74"),
+]
+notprotected_crown_union <- notprotected_crown %>%
+  st_make_valid() %>%
+  st_union()
+
+#### Statistics ####
+notprotected_crown_rast <- notprotected_crown_union %>%
+  vect() %>%
+  project(rankmap_mask) %>%
+  rasterize(rankmap_bt_rm, cover = TRUE)
+n_cells_top30bv_crown <- (notprotected_crown_rast * rankmap_mask) %>%
+  global("sum", na.rm = T)
+n_cells_top30bv <- rankmap_mask %>%
+  global("sum", na.rm = T)
+n_cells_top30bv_crown / n_cells_top30bv
+
+# Check with polygon / polygon area calculations for full Bowen Island
+sum(st_area(notprotected_crown_union)) / sum(st_area(bowen_island))
+
+#### Plotting ####
+crown_colour <- "green"
+
+crownland_overlap_plot_base <- template_plot +
+  geom_spatraster(data = rankmap_bt_rm_for_map) +
+  colorspace::scale_fill_continuous_sequential(
+    na.value = NA,
+    palette = "ag_GrnYl",
+    limits = c(0, 1),
+    breaks = c(0, 1),
+    labels = c("Lower", "Higher"),
+    guide = ggplot2::guide_colourbar(
+      order = 1,
+      nbin = 100,
+      draw.ulim = FALSE,
+      draw.llim = FALSE,
+      title.position = "top"
+    ),
+    name = "Relative Biodiversity"
+  ) +
+  ggnewscale::new_scale_fill() +
+  ggnewscale::new_scale_color() +
+  geom_sf(
+    data = notprotected_crown_union,
+    aes(fill = crown_colour, color = crown_colour),
+    alpha = 0.2,
+    linewidth = 0.5
+  ) +
+  scale_fill_identity(
+    name = "",
+    breaks = c(crown_colour),
+    labels = c("Other Public Lands"),
+    guide = "legend"
+  ) +
+  scale_colour_identity(
+    name = "",
+    breaks = c(crown_colour),
+    labels = c("Other Public Lands"),
+    guide = "legend"
+  )
+crownland_overlap_plot_annotation <- crownland_overlap_plot_base +
+  template_plot_annotations()
+crownland_overlap_plot_no_annotation <- crownland_overlap_plot_base +
+  template_plot_remove()
+ggplot2::ggsave(
+  here(output_dir_annotated, "7_5_public_land_top30.png"),
+  crownland_overlap_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir_unannotated, "7_5_public_land_top30_no_annotation.png"),
+  crownland_overlap_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+crownland_overlap_plot_annotation
 ```
 
 {{< pagebreak >}}
@@ -1911,7 +2040,7 @@ authority_plot_annotations <- authority_plot_base +
 authority_plot_no_annotations <- authority_plot_base +
   template_plot_remove()
 ggplot2::ggsave(
-  here(output_dir_annotated, "7_5_authority_plot.png"),
+  here(output_dir_annotated, "7_6_land_ownership.png"),
   authority_plot_annotations,
   device = ragg::agg_png,
   width = 9,
@@ -1920,7 +2049,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_5_authority_plot_no_annotations.png"),
+  here(output_dir_unannotated, "7_6_land_ownership_no_annotation.png"),
   authority_plot_no_annotations,
   device = ragg::agg_png,
   width = 9,
@@ -2108,7 +2237,7 @@ authority_plot_annotations <- authority_plot_base +
 authority_plot_no_annotations <- authority_plot_base +
   template_plot_remove()
 ggplot2::ggsave(
-  here(output_dir_annotated, "7_7_authority_top30bv.png"),
+  here(output_dir_annotated, "7_7_land_ownership_top30.png"),
   authority_plot_annotations,
   device = ragg::agg_png,
   width = 9,
@@ -2117,7 +2246,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_7_authority_top30bv_no_annotations.png"),
+  here(output_dir_unannotated, "7_7_land_ownership_top30_no_annotation.png"),
   authority_plot_no_annotations,
   device = ragg::agg_png,
   width = 9,
@@ -2212,7 +2341,7 @@ pa_example_plot_no_annotations <- protectedareas_example_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated, "7_6_candidate_protectedareas.png"),
+  here(output_dir_annotated, "7_8_candidate_protected_areas.png"),
   pa_example_plot_annotations,
   device = ragg::agg_png,
   width = 9,
@@ -2221,7 +2350,7 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_6_candidate_protectedareas_no_annotations.png"),
+  here(output_dir_unannotated, "7_8_candidate_protected_areas_no_annotation.png"),
   pa_example_plot_no_annotations,
   device = ragg::agg_png,
   width = 9,
@@ -2330,7 +2459,7 @@ ggplot2::ggsave(
   res = plot_res
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "8_1_inaturalist_no_annotations.png"),
+  here(output_dir_unannotated, "8_1_inaturalist_no_annotation.png"),
   inaturalist_plot_no_annotations,
   device = ragg::agg_png,
   width = plot_width,
