@@ -1645,8 +1645,8 @@ ggplot2::ggsave(
 )
 # Render for PDF
 protectedareas_plot_annotations
-`
-``
+```
+
 {{< pagebreak >}}
 
 ## Private Land: Top 30% Biodiversity Values
