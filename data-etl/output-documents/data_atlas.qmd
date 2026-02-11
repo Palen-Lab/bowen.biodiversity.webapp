@@ -424,7 +424,7 @@ total_richness_plot_annotations
 <!-- ## Total Species Diversity -->
 <!-- ## TODO: Bird Species Richness -->
 <!-- Based on >presence_threshold probability of occurrence in Species Distribution Models. -->
-```{r, eval=F}
+```{r bird_species_richness, eval=F}
 # Create species richness plots:
 ## Each species is marked present in a cell, if they are above a certain
 ## threshold of probability in the input SDMs.
@@ -524,7 +524,7 @@ streams_rast <- fw_df[fw_df$name == "Streams", "path"] %>%
   rast() %>%
   not.na() %>%
   classify(cbind(FALSE, NA)) %>%
-  project("EPSG: 3857") %>% 
+  project("EPSG: 3857") %>%
   higher_res_edges()
 
 #### Plotting ####
@@ -586,7 +586,7 @@ fw_plot_base <- template_plot +
     na.value = "transparent"
   ) +
   ggnewscale::new_scale_fill() +
-    ggplot2::theme(
+  ggplot2::theme(
     legend.margin = margin(-26, 6, 6, 6),
     legend.key.width = ggplot2::unit(0.5, "cm"),
     legend.key.height = ggplot2::unit(0.5, "cm"),
@@ -599,7 +599,7 @@ fw_plot_base <- template_plot +
     legend.position = c(.05, .95),
     legend.justification = c("left", "top"),
     legend.box.just = "left"
-  ) 
+  )
 
 fw_plot_annotation <- fw_plot_base +
   template_plot_annotations()
@@ -755,26 +755,215 @@ ggplot2::ggsave(
 habitats_plot_annotation
 ```
 
+{{< pagebreak >}}
+
+## Freshwater Habitats: Top 30% Biodiversity Values
+Top 30% of biodiversity locations on Bowen Island, showing freshwater habitat features within the top 30% biodiversity cells. Cells in the top 30% without freshwater features are shown in grey. 46.7% of all cells contain freshwater habitats. The percentage of top 30% biodiversity locations covered by freshwater habitats is 56.6%.
+```{r fw_habitats_top30}
+#### Preparing layers for plotting ####
+# Biodiversity values layer
+rankmap <- here("output-data/5_values/rankmap.tif") %>%
+  rast() %>%
+  project(bowen.biodiversity.webapp::project_crs)
+rankmap_bt_rm <- rankmap %>%
+  remove_by_quantile(0.7)
+rankmap_mask <- rankmap_bt_rm %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+
+# Grey raster for top 30% background
+grey_rast <- rankmap_mask %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges() %>%
+  as.factor()
+
+# Freshwater layers
+fw_df <- layers_df[layers_df$category == "Freshwater", ]
+fw_df$colour <- RColorBrewer::brewer.pal(nrow(fw_df), "YlGnBu")
+
+# Helper: load raster, mask to top 30%, and prep for map
+prep_rast_top30 <- function(path) {
+  path %>%
+    unlist() %>%
+    rast() %>%
+    project(rankmap_bt_rm) %>%
+    mask(rankmap_mask) %>%
+    project("EPSG: 3857") %>%
+    higher_res_edges()
+}
+
+# Streams need special handling (binary presence)
+streams_rast_top30 <- fw_df[fw_df$name == "Streams", "path"] %>%
+  unlist() %>%
+  rast() %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA)) %>%
+  project(rankmap_bt_rm) %>%
+  mask(rankmap_mask) %>%
+  project("EPSG: 3857") %>%
+  higher_res_edges()
+
+# Combined freshwater presence mask (for statistics)
+fw_paths <- fw_df$path %>% unlist()
+fw_presence_list <- lapply(fw_paths, function(p) {
+  rast(p) %>%
+    project(rankmap_bt_rm) %>%
+    not.na() %>%
+    classify(cbind(FALSE, NA))
+})
+fw_presence_mask <- rast(fw_presence_list) %>%
+  sum(na.rm = TRUE) %>%
+  classify(cbind(0, NA)) %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
+
+#### Statistics ####
+# Proportion of all cells that are freshwater habitat
+n_cells_fw <- fw_presence_mask %>%
+  global("sum", na.rm = TRUE)
+n_cells_total <- rankmap %>%
+  not.na() %>%
+  global("sum", na.rm = TRUE)
+n_cells_fw / n_cells_total
+
+# Proportion of top 30% biodiversity cells overlapping with freshwater
+n_cells_top30bv_fw <- (fw_presence_mask * rankmap_mask) %>%
+  global("sum", na.rm = TRUE)
+n_cells_top30bv <- rankmap_mask %>%
+  global("sum", na.rm = TRUE)
+n_cells_top30bv_fw / n_cells_top30bv
+
+#### Plotting ####
+fw_top30_plot_base <- template_plot +
+  tidyterra::geom_spatraster(
+    data = grey_rast
+  ) +
+  scale_fill_manual(
+    values = c("grey40"),
+    labels = c(""),
+    na.value = NA,
+    na.translate = FALSE,
+    guide = FALSE
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(
+    data = prep_rast_top30(fw_df[fw_df$name == "Lakes", "path"]),
+    aes(fill = layer)
+  ) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Freshwater Lakes",
+    colours = unlist(fw_df[fw_df$name == "Lakes", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(
+    data = prep_rast_top30(fw_df[fw_df$name == "Ponds", "path"]),
+    aes(fill = layer)
+  ) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Freshwater Ponds",
+    colours = unlist(fw_df[fw_df$name == "Ponds", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(
+    data = prep_rast_top30(fw_df[fw_df$name == "Riparian", "path"]),
+    aes(fill = layer)
+  ) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Riparian",
+    colours = unlist(fw_df[fw_df$name == "Riparian", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(
+    data = prep_rast_top30(fw_df[fw_df$name == "Wetlands", "path"]),
+    aes(fill = layer)
+  ) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Wetlands",
+    colours = unlist(fw_df[fw_df$name == "Wetlands", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  tidyterra::geom_spatraster(data = streams_rast_top30, aes(fill = layer)) +
+  scale_fill_gradientn(
+    name = "",
+    labels = "Streams",
+    colours = unlist(fw_df[fw_df$name == "Streams", "colour"]),
+    guide = "legend",
+    na.value = "transparent"
+  ) +
+  ggnewscale::new_scale_fill() +
+  ggplot2::theme(
+    legend.margin = margin(-26, 6, 6, 6),
+    legend.key.width = ggplot2::unit(0.5, "cm"),
+    legend.key.height = ggplot2::unit(0.5, "cm"),
+    legend.key.spacing.y = ggplot2::unit(0, "lines"),
+    legend.key.spacing.x = ggplot2::unit(0, "cm"),
+    legend.direction = "vertical",
+    legend.box = "vertical",
+    legend.box.background = element_rect(fill = "white", colour = "black"),
+    legend.box.margin = margin(20, 5, 5, 5),
+    legend.position = c(.05, .95),
+    legend.justification = c("left", "top"),
+    legend.box.just = "left"
+  )
+fw_top30_plot_annotation <- fw_top30_plot_base +
+  template_plot_annotations()
+fw_top30_plot_no_annotation <- fw_top30_plot_base +
+  template_plot_remove()
+ggplot2::ggsave(
+  here(output_dir_annotated, "4_4_freshwater_top30.png"),
+  fw_top30_plot_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggplot2::ggsave(
+  here(output_dir_unannotated, "4_4_freshwater_top30_no_annotation.png"),
+  fw_top30_plot_no_annotation,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+fw_top30_plot_annotation
+```
+
+{{< pagebreak >}}
+
 # Values 
 ## Biodiversity Value: Species & Habitats Combined
 Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33) and species layers (n = 195).
-```{r}
-# Biodiversity values layer 
+```{r biodiversity_values}
+# Biodiversity values layer
 rankmap <- here("output-data/5_values/rankmap.tif") %>%
   rast() %>%
-  project("EPSG: 3857") 
+  project("EPSG: 3857")
 rankmap_for_map <- rankmap %>%
   higher_res_edges()
 
-# Base plot 
+# Base plot
 combined_biodiversity_plot_base <- template_plot +
   tidyterra::geom_spatraster(data = rankmap_for_map) +
   colorspace::scale_fill_continuous_sequential(
     name = "Relative Biodiversity",
     na.value = NA,
     palette = "ag_GrnYl",
-    limits = c(0,1),
-    breaks = c(0,1),
+    limits = c(0, 1),
+    breaks = c(0, 1),
     labels = c("Lower", "Higher"),
     guide = ggplot2::guide_colourbar(
       order = 1,
@@ -791,7 +980,7 @@ combined_biodiversity_plot_base <- template_plot +
 combined_biodiversity_plot <- combined_biodiversity_plot_base +
   template_plot_annotations()
 
-# Without annotations and axis 
+# Without annotations and axis
 combined_biodiversity_plot_no_annotations <- combined_biodiversity_plot_base +
   template_plot_remove()
 
@@ -823,14 +1012,14 @@ combined_biodiversity_plot
 
 ## Top 30% Biodiversity Value
 Top 30% of biodiversity locations on Bowen Island. Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33)  with species layers (n = 195).
-```{r}
-#### Prepare raster for plotting #### 
+```{r biodiversity_values_top30}
+#### Prepare raster for plotting ####
 rankmap_top30_lowres <- here("output-data/5_values/rankmap.tif") %>%
   rast() %>%
-  project("EPSG: 3857") %>% 
-  remove_by_quantile(0.7) 
+  project("EPSG: 3857") %>%
+  remove_by_quantile(0.7)
 rankmap_top30 <- rankmap_top30_lowres %>%
-  higher_res_edges() 
+  higher_res_edges()
 rankmap_mask <- rankmap_top30_lowres %>%
   not.na() %>%
   classify(cbind(FALSE, NA))
@@ -842,8 +1031,8 @@ top_plot_base <- template_plot +
     name = "Relative Biodiversity",
     na.value = NA,
     palette = "ag_GrnYl",
-    limits = c(0,1),
-    breaks = c(0,1),
+    limits = c(0, 1),
+    breaks = c(0, 1),
     labels = c("Lower", "Higher"),
     guide = ggplot2::guide_colourbar(
       order = 1,
@@ -859,9 +1048,9 @@ top_plot_annotation <- top_plot_base +
   template_plot_annotations()
 top_plot_no_annotation <- top_plot_base +
   template_plot_remove()
-# Save plots 
+# Save plots
 ggplot2::ggsave(
-  here(output_dir_annotated,"5_2_biodiversity_values_top30.png"),
+  here(output_dir_annotated, "5_2_biodiversity_values_top30.png"),
   top_plot_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -870,7 +1059,10 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated,"5_2_biodiversity_values_top30_no_annotation.png"),
+  here(
+    output_dir_unannotated,
+    "5_2_biodiversity_values_top30_no_annotation.png"
+  ),
   top_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1056,7 +1248,7 @@ hfp_biod_vals_plot_annotation
 
 ## Wildfire Vulnerability Index: Continuous
 This is not an assessment of the probability or behaviour of the fire. The intention of this index is to describe the relative vulnerability to biodiversity loss due to fire, under a scenario where the habitats burn. The three major components of this vulnerability index are slope, aspect, and fuel.
-```{r}
+```{r wildfire_vulnerability}
 #### Preparing raster for plotting ####
 fire_index_mp <- rast(here("output-data/6_threats/fire_index_40m.tif")) %>%
   project("EPSG: 3857") %>%
@@ -1116,28 +1308,28 @@ fire_plot_annotation
 ## Wildfire Vulnerability Index: Top 30% Biodiversity Value and Top 30% WVI
 This is not an assessment of the probability or behaviour of the fire. The intention of this index is to describe the relative vulnerability to biodiversity loss due to fire, under a scenario where the habitats burn. The three major components of this vulnerability index are slope, aspect, and fuel.
 
-26.3% of top 30% biodiversity values are within the top 30% of wildfire vulnerability index values. 
+26.3% of top 30% biodiversity values are within the top 30% of wildfire vulnerability index values.
 
-```{r}
-#### Preparing raster for plotting #### 
+```{r wildfire_vulnerability_top30}
+#### Preparing raster for plotting ####
 top30_wvi <- rast(here("output-data/6_threats/fire_index_40m.tif")) %>%
   project("EPSG: 3857") %>%
   terra::subst(4294967296, NA) %>% # Max value should be NA
-  terra::scale_linear() %>% 
-  remove_by_quantile(0.7) 
+  terra::scale_linear() %>%
+  remove_by_quantile(0.7)
 
 rankmap_top30_lowres <- here("output-data/5_values/rankmap.tif") %>%
   rast() %>%
-  project("EPSG: 3857") %>% 
-  remove_by_quantile(0.7) 
+  project("EPSG: 3857") %>%
+  remove_by_quantile(0.7)
 rankmap_top30 <- rankmap_top30_lowres %>%
-  higher_res_edges() 
+  higher_res_edges()
 rankmap_mask <- rankmap_top30_lowres %>%
   not.na() %>%
   classify(cbind(FALSE, NA))
 
-rankmap_mask_re <- rankmap_mask %>% 
-  resample(top30_wvi) 
+rankmap_mask_re <- rankmap_mask %>%
+  resample(top30_wvi)
 grey_rast <- rankmap_mask_re %>%
   higher_res_edges() %>%
   as.factor()
@@ -1147,19 +1339,19 @@ fire_biod_val <- mask(top30_wvi, rankmap_mask_re)
 top30_wvi_resamp <- top30_wvi %>%
   resample(rankmap_mask, method = "average") %>%
   mask(rankmap_mask)
-top30_wvi_resamp %>% 
+top30_wvi_resamp %>%
   terra::not.na() %>%
   values() %>%
   sum()
 # 426
-rankmap_mask %>% 
+rankmap_mask %>%
   terra::not.na() %>%
   values() %>%
   sum()
 # 1621
 426 / 1621
-# 0.2628007 
-# This proportion of top 30% biodiversity values are within the top 30% of wildfire vulnerability index values. 
+# 0.2628007
+# This proportion of top 30% biodiversity values are within the top 30% of wildfire vulnerability index values.
 
 #### Plotting ####
 fire_biod_val_plot_base <- template_plot +
@@ -1167,9 +1359,9 @@ fire_biod_val_plot_base <- template_plot +
     data = grey_rast
   ) +
   scale_fill_manual(
-    values = c("grey40"),           
-    labels = c(""),          
-    na.value = NA,                  
+    values = c("grey40"),
+    labels = c(""),
+    na.value = NA,
     na.translate = FALSE,
     guide = ggplot2::guide_legend(
       title.position = "top",
@@ -1184,8 +1376,8 @@ fire_biod_val_plot_base <- template_plot +
     na.value = NA,
     palette = "Batlow",
     rev = FALSE,
-    limits = c(0,1),
-    breaks = c(0,1),
+    limits = c(0, 1),
+    breaks = c(0, 1),
     labels = c("Lower", "Higher"),
     guide = ggplot2::guide_colourbar(
       order = 1,
@@ -1197,7 +1389,7 @@ fire_biod_val_plot_base <- template_plot +
     name = "Wildfire Vul. Index"
   ) +
   template_plot_overlay()
-fire_biod_val_plot_annotation <- fire_biod_val_plot_base + 
+fire_biod_val_plot_annotation <- fire_biod_val_plot_base +
   template_plot_annotations()
 fire_biod_val_plot_no_annotation <- fire_biod_val_plot_base +
   template_plot_remove()
@@ -1206,13 +1398,22 @@ ggplot2::ggsave(
   here(output_dir_annotated, "6_4_wildfire_vulnerability_top30.png"),
   fire_biod_val_plot_annotation,
   device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "6_4_wildfire_vulnerability_top30_no_annotation.png"),
+  here(
+    output_dir_unannotated,
+    "6_4_wildfire_vulnerability_top30_no_annotation.png"
+  ),
   fire_biod_val_plot_no_annotation,
   device = ragg::agg_png,
-  width = 9, height = 12, units = "in", res = 300
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
 )
 # Render for PDF
 fire_biod_val_plot_annotation
@@ -1222,7 +1423,7 @@ fire_biod_val_plot_annotation
 
 ## Wildland Urban Interface
 The Province of British Columbia produces the Wildland Urban Interface (WUI) maps, with their intention being to use these maps to inform the relative impact of wildfires on human development. These maps take into consideration three key variables - fuel load, climate conditons, and human development at the interface between urban and wildland areas. This map shows the combinations of WUI Classification and Provincial Strategic Threat Analysis (PSTA) Threat Rating.
-```{r}
+```{r wildland_urban_interface}
 #### Prepare layers for plotting ####
 bowen_wui <- here("data-raw/datasets/bc_wui/wui.gpkg") %>%
   st_read(quiet = T) %>%
@@ -1284,7 +1485,10 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "6_5_wildland_urban_interface_no_annotation.png"),
+  here(
+    output_dir_unannotated,
+    "6_5_wildland_urban_interface_no_annotation.png"
+  ),
   wui_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1299,8 +1503,8 @@ wui_plot_annotation
 # Land Management
 
 ## Development Pressure: Biodiversity Value by Parcel
-Summed relative biodiversity value of properties (parcels). Relative measure of which parcels deserve closer consideration during the development process. 
-```{r}
+Summed relative biodiversity value of properties (parcels). Relative measure of which parcels deserve closer consideration during the development process.
+```{r parcel_biodiversity_values}
 #### Preparing layers for plot ####
 # Load and prepare parcel map
 parcelmap_bowen_prepd <- parcelmap_bowen %>%
@@ -1367,7 +1571,10 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_1_parcel_biodiversity_values_no_annotation.png"),
+  here(
+    output_dir_unannotated,
+    "7_1_parcel_biodiversity_values_no_annotation.png"
+  ),
   parcelmap_biod_vals_plot_no_annotation,
   device = ragg::agg_png,
   width = 9,
@@ -1384,8 +1591,8 @@ parcelmap_biod_vals_plot_annotation
 ## Development Pressure: Subdivision Potential
 Quantifying the development potential on Bowen Island, via subdivisions of properties that enable increased development / density.The current zoning restricts the number of buildings per lot and the minimum area per lot. Therefore, splitting properties into multiple smaller but above minimum area properties increases the number of buildings that can be built. 
 
-Daniel Martin, Manager of Planning and Development at Bowen Island Municipality, provided these spreadsheets with information on the potential for individual lots to be subdivided. Additionally, Martin provided the number of potential further developments possible in Comprehensive Development Zones on Bowen Island. 
-```{r}
+Daniel Martin, Manager of Planning and Development at Bowen Island Municipality, provided these spreadsheets with information on the potential for individual lots to be subdivided. Additionally, Martin provided the number of potential further developments possible in Comprehensive Development Zones on Bowen Island.
+```{r subdivision_potential}
 #### Preparing layers for plotting ####
 # RR1 and RR2 (Rural Residential 1 and 2 Zoning)
 rr1_rr2 <- here(
@@ -1522,22 +1729,22 @@ subdivide_plot_annotation
 
 {{< pagebreak >}}
 
-## Protected Areas: Top 30% Biodiversity Values 
-Top 30% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Protected Areas are visualized as an overlay on top of the Zonation priotization output. The percentage of top 30% biodiversity locations covered by Protected Areas is 28.3% 
-```{r}
+## Protected Areas: Top 30% Biodiversity Values
+Top 30% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Protected Areas are visualized as an overlay on top of the Zonation priotization output. The percentage of top 30% biodiversity locations covered by Protected Areas is 28.3%
+```{r protected_areas_top30}
 #### Preparing layers for plotting ####
-# Biodiversity values layer 
+# Biodiversity values layer
 rankmap <- here("output-data/5_values/rankmap.tif") %>%
   rast() %>%
   project(bowen.biodiversity.webapp::project_crs)
 rankmap_for_map <- rankmap %>%
   project("EPSG: 3857") %>%
-  higher_res_edges() 
+  higher_res_edges()
 rankmap_bt_rm <- rankmap %>%
   remove_by_quantile(0.7)
-rankmap_bt_rm_for_map <-rankmap_bt_rm %>%
+rankmap_bt_rm_for_map <- rankmap_bt_rm %>%
   project("EPSG: 3857") %>%
-  higher_res_edges() 
+  higher_res_edges()
 rankmap_mask <- rankmap_bt_rm %>%
   not.na() %>%
   classify(cbind(FALSE, NA))
@@ -1568,15 +1775,15 @@ bowen_protectedareas_rast <- union_protectedareas %>%
   rasterize(rankmap_bt_rm, cover = TRUE)
 n_cells_top30bv_protected <- (bowen_protectedareas_rast * rankmap_mask) %>%
   global("sum", na.rm = T)
-n_cells_top30bv <- rankmap_mask %>% 
+n_cells_top30bv <- rankmap_mask %>%
   global("sum", na.rm = T)
 n_cells_top30bv_protected / n_cells_top30bv
 # 0.2825755
 
 # Check with polygon / polygon area calculations for full Bowen Island
-sum(st_area(bowen_protectedareas_include)) / sum(st_area(bowen_island)) 
+sum(st_area(bowen_protectedareas_include)) / sum(st_area(bowen_island))
 # 0.2149664
-sum(st_area(bowen_protectedareas_2)) / sum(st_area(bowen_island)) 
+sum(st_area(bowen_protectedareas_2)) / sum(st_area(bowen_island))
 # 0.17935
 
 #### Plotting ####
@@ -1587,8 +1794,8 @@ protectedareas_plot_base <- template_plot +
   colorspace::scale_fill_continuous_sequential(
     na.value = NA,
     palette = "ag_GrnYl",
-    limits = c(0,1),
-    breaks = c(0,1),
+    limits = c(0, 1),
+    breaks = c(0, 1),
     labels = c("Lower", "Higher"),
     guide = ggplot2::guide_colourbar(
       order = 1,
@@ -1619,10 +1826,10 @@ protectedareas_plot_base <- template_plot +
     breaks = c(protectedareas_colour),
     labels = c("Protected Areas"),
     guide = "legend"
-  ) 
+  )
 protectedareas_plot_annotations <- protectedareas_plot_base +
   template_plot_annotations()
-protectedareas_plot_no_annotations <- protectedareas_plot_base + 
+protectedareas_plot_no_annotations <- protectedareas_plot_base +
   template_plot_remove()
 # Save plots
 ggplot2::ggsave(
@@ -2261,7 +2468,7 @@ authority_plot_annotations
 
 ## Example Candidate Locations for Protected Areas 
 Mapping optimal Crown land for reaching 30x30 targets, using the conservation values analysis and existing protected areas. This output considers connectivity by applying boundary penalties, which prioritizes shorter boundaries relative to area. Currently, about 20% of Bowen Island is under some protection.
-```{r}
+```{r candidate_protected_areas}
 #### Loading layers ####
 bowen_pa <- here(
   "output-data/7_protected_areas/existing_protected_areas.gpkg"
@@ -2350,7 +2557,10 @@ ggplot2::ggsave(
   res = 300
 )
 ggplot2::ggsave(
-  here(output_dir_unannotated, "7_8_candidate_protected_areas_no_annotation.png"),
+  here(
+    output_dir_unannotated,
+    "7_8_candidate_protected_areas_no_annotation.png"
+  ),
   pa_example_plot_no_annotations,
   device = ragg::agg_png,
   width = 9,
