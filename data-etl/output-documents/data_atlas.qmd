@@ -350,7 +350,7 @@ basic_plot
 
 # Focal Vertebrate Species
 ## Total Species Richness
-Based on >0.7 probability of occurrence in Species Distribution Models.
+Based on >`{r} presence_threshold` probability of occurrence in Species Distribution Models.
 ```{r species_richness}
 #### Preparing Raster ####
 # List SDMs filepaths
@@ -1783,8 +1783,8 @@ n_cells_top30bv_protected / n_cells_top30bv
 # Check with polygon / polygon area calculations for full Bowen Island
 sum(st_area(bowen_protectedareas_include)) / sum(st_area(bowen_island))
 # 0.2149664
-sum(st_area(bowen_protectedareas_2)) / sum(st_area(bowen_island))
-# 0.17935
+sum(st_area(union_protectedareas)) / sum(st_area(bowen_island))
+# 0.2267595
 
 #### Plotting ####
 protectedareas_colour <- "purple"
@@ -1857,7 +1857,7 @@ protectedareas_plot_annotations
 {{< pagebreak >}}
 
 ## Private Land: Top 30% Biodiversity Values
-Top 30% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Private Lands are visualized as an overlay on top of the Zonation priotization output. Private lands cover 48.7% of Bowen Island. The percentage of top 30% biodiversity locations covered by Private Lands is 49.8%
+Top 30% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Private Lands are visualized as an overlay on top of the Zonation priotization output. Private lands cover 48.7% of Bowen Island. The percentage of top 30% biodiversity locations covered by Private Lands is 49.1%
 ```{r biod_vals_private_land}
 #### Preparing layers for plotting ####
 # Biodiversity values layer
@@ -2270,7 +2270,7 @@ authority_plot_annotations
 {{< pagebreak >}}
 
 ## Land Ownership / Authority: Top 30% Biodiversity Value
-This map shows the land ownership or authority classification for only the top 30% of biodiversity locations on Bowen Island. Of the top 30% biodiversity cells, private lands entirely cover 27.7%. Protected areas entirely cover 29.1%. Other public lands, such as crown land, entirely cover 31.2%. 29.1% of top biodiversity cells have some mix of private and public land categories.
+This map shows the land ownership or authority classification for only the top 30% of biodiversity locations on Bowen Island. Of the top 30% biodiversity cells, private lands entirely cover 41.5%. Protected areas entirely cover 15.6%. Other public lands, such as crown land, entirely cover 11.5%. 31.4% of top biodiversity cells have some mix of private and public land categories.
 
 ```{r land_ownership_top30}
 #### Preparing layers for plotting ####
@@ -2370,37 +2370,14 @@ comb_rast_top30_for_map <- comb_rast_top30 %>%
   as.factor()
 
 #### Statistics ####
-comb_rast_top30 %>%
-  summary()
+sum_stats <- comb_rast_top30 %>%
+  freq() %>%
+  as.data.frame() %>%
+  mutate(prop = count / sum(count))
 top30_total <- comb_rast_top30 %>%
   not.na() %>%
   values() %>%
   sum()
-
-# Create binary masks for each ownership category
-private_mask <- comb_rast %>%
-  subst(2, NA) %>%
-  subst(3, NA) %>%
-  subst(4, NA)
-protected_mask <- comb_rast %>%
-  subst(1, NA) %>%
-  subst(3, NA) %>%
-  subst(4, NA)
-crown_mask <- comb_rast %>%
-  subst(1, NA) %>%
-  subst(2, NA) %>%
-  subst(4, NA)
-mixed_mask <- comb_rast %>%
-  subst(1, NA) %>%
-  subst(2, NA) %>%
-  subst(3, NA)
-
-# Overlap of each category with top 30% biodiversity
-private_overlap <- raster_overlap_ratio(private_mask, rankmap_mask) %>% round(3)
-protected_overlap <- raster_overlap_ratio(protected_mask, rankmap_mask) %>%
-  round(3)
-crown_overlap <- raster_overlap_ratio(crown_mask, rankmap_mask) %>% round(3)
-mixed_overlap <- raster_overlap_ratio(mixed_mask, rankmap_mask) %>% round(3)
 
 #### Plotting ####
 authority_factor_lvls <- c(1, 2, 3, 4)
