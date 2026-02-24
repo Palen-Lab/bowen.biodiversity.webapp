@@ -396,3 +396,81 @@ higher_res_edges <- function(raster_layer) {
     fact = 10
   ) %>% terra::mask(vect(bowen_ocean_sf), inverse = T)
 }
+
+
+ggsave_drive <- function(file_path, plot, drive_folder_id, ...) {
+
+  plot_width = 9
+  plot_height = 12
+  plot_res = 300
+
+  ggplot2::ggsave(file_path, plot, ...)
+  googledrive::drive_put(
+    media = file_path,
+    path = googledrive::as_id(drive_folder_id),
+    name = basename(file_path)
+  )
+  invisible(file_path)
+}
+
+#' @import terra
+template_plot <- function(mask, ocean_sf) {
+  #### Define plot extent ####
+  mask <- mask %>%
+    project('epsg:3857')
+  
+  mask_ext <- mask %>% # Project to Web Mercator for basemap
+    ext()
+
+  #### Base map for plots ####
+  # basemap_for_plot <- basemaps::basemap_terra(ext = raster_layer, map_service = "carto", map_type = "voyager")
+  basemap_for_plot <- basemaps::basemap_terra(
+    ext = mask,
+    map_service = "maptiler",
+    map_type = "backdrop",
+    map_token = "baL4WLstSFqSHP2fnYrE"
+  ) %>%
+    mask(vect(ocean_sf), inverse = T)
+
+  #### Consistent elements for plots ####
+  bowen_ocean_linewidth <- 0.5
+  bowen_ocean_colour <- "#dbdbdc"
+  trails_colour <- "brown"
+  roads_colour <- "darkgrey"
+  caption <- glue(
+    "Map created: {date()}. Palen Lab."
+  )
+
+  ggplot2::ggplot() +
+    ggplot2::theme_bw() +
+    tidyterra::geom_spatraster_rgb(data = basemap_for_plot) +
+    ggplot2::scale_x_continuous(
+      expand = c(0, 0),
+      limits = c(bowen_mask_ext[1], bowen_mask_ext[2])
+    ) +
+    ggplot2::scale_y_continuous(
+      expand = c(0, 0),
+      limits = c(bowen_mask_ext[3], bowen_mask_ext[4])
+    ) +
+    ggplot2::theme(
+      axis.text.y = ggplot2::element_text(
+        angle = 90,
+        vjust = 1,
+        hjust = 0.5
+      ),
+      legend.position = "bottom",
+      legend.title = ggplot2::element_text(size = 10),
+      legend.key.height = ggplot2::unit(0.5, "cm"),
+      legend.key.width = ggplot2::unit(1.5, "cm"),
+      legend.direction = "horizontal",
+      legend.box = "horizontal",
+      legend.box.margin = margin(1, 1, 1, 1),
+      legend.background = element_rect(fill = "transparent", color = NA),
+      plot.margin = unit(c(0, 0, 0, 0), "cm"),
+      plot.background = element_rect(fill = "transparent", color = NA),
+      panel.background = element_rect(fill = bowen_ocean_colour, color = NA),
+      panel.grid = element_blank()
+    ) +
+    ggnewscale::new_scale_fill() +
+    ggnewscale::new_scale_colour()
+}
