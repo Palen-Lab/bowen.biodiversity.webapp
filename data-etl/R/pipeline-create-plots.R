@@ -134,11 +134,11 @@ wui_plot <- function(wui, template_plot, template_plot_overlay) {
 # Subdivision Capacity
 subd_capacity_plot <- function(parcelmap_subdiv, parcelmap, template_plot, template_plot_overlay) {
   template_plot +
-    geom_sf(
-      data = parcelmap,
-      aes(geometry = geom, fill = "grey"),
-      color = NA
-    ) +
+    # geom_sf(
+    #   data = parcelmap,
+    #   aes(geometry = geom, fill = "grey"),
+    #   color = NA
+    # ) +
     scale_fill_identity(
       name = "No Capacity",
       breaks = c("grey40"),
@@ -259,6 +259,55 @@ wvi_top30_plot <- function(wvi, rankmap, ocean_sf, template_plot, template_plot_
       name = "Wildfire Vulnerability Index"
     ) +
     template_plot_overlay
+}
+
+# Land Ownership / Authority
+# ocean_sf passed explicitly to replace higher_res_edges() global reference.
+land_ownership_plot <- function(land_ownership_rast, ocean_sf, template_plot, template_plot_overlay) {
+  comb_rast_for_map <- land_ownership_rast %>%
+    terra::as.factor() %>%
+    terra::project("EPSG: 3857") %>%
+    terra::disagg(fact = 10) %>%
+    terra::mask(terra::vect(ocean_sf), inverse = TRUE) %>%
+    terra::as.factor()
+
+  authority_factor_lvls <- c(1, 2, 3, 4)
+  authority_factor_cols <- c("brown", "purple", "lightgreen", "blue")
+  names(authority_factor_cols) <- authority_factor_lvls
+
+  # TODO: investigate why gaps between the land ownership types appear 
+  # When terra::plot(), the comb_rast_for_map looks as expected
+  template_plot +
+    tidyterra::geom_spatraster(
+      data = comb_rast_for_map,
+      aes(fill = layer),
+      alpha = 0.3,
+      na.rm = TRUE
+    ) +
+    scale_fill_manual(
+      values = authority_factor_cols,
+      aesthetics = c("colour", "fill"),
+      labels = c("Private", "Protected", "Public", "Mixed"),
+      name = "",
+      na.value = NA,
+      na.translate = FALSE,
+      guide = guide_legend(order = 1)
+    ) +
+    template_plot_overlay +
+    ggplot2::theme(
+      legend.margin = margin(-9, 6, 6, 6),
+      legend.key.width = ggplot2::unit(0.5, "cm"),
+      legend.key.height = ggplot2::unit(0.5, "cm"),
+      legend.key.spacing.y = ggplot2::unit(0, "lines"),
+      legend.key.spacing.x = ggplot2::unit(0, "cm"),
+      legend.direction = "vertical",
+      legend.box = "vertical",
+      legend.box.background = element_rect(fill = "white", colour = "black"),
+      legend.box.margin = margin(10, 5, 5, 5),
+      legend.position = c(.05, .95),
+      legend.justification = c("left", "top"),
+      legend.box.just = "left"
+    )
 }
 
 #### Loading layers ####

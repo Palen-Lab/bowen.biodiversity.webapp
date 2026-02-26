@@ -220,7 +220,7 @@ parcel_biod_val <- function(parcelmap, rankmap) {
 
 create_privateland <- function(parcelmap_bowen, dissolved_protectedareas) {
   parcelmap_bowen %>%
-    dplyr::filter(OwnerType == "Private") %>%
+    dplyr::filter(OWNER_TYPE %in% c("Private", "Unclassified")) %>%
     sf::st_make_valid() %>%
     sf::st_union() %>%
     sf::st_difference(dissolved_protectedareas) %>%
@@ -235,4 +235,83 @@ load_pa_candidates <- function(project_crs) {
   ) %>%
     st_read() %>%
     st_transform(st_crs(project_crs))
+}
+
+# Creates a categorical raster of land ownership/authority:
+#   1 = Private, 2 = Protected Areas, 3 = Crown Land, 4 = Mixed
+# Uses rankmap as the rasterization template (CRS/resolution/extent).
+create_land_ownership_rast <- function(pa, unprotected_crown, privateland, rankmap) {
+  sf_rasterize <- function(sf_obj) {
+    sf_obj %>%
+      terra::vect() %>%
+      terra::project(rankmap) %>%
+      terra::rasterize(rankmap, touches = TRUE, background = NA)
+  }
+  # Rasterize each category
+  private_rast <- sf_rasterize(privateland)
+
+  protectedareas_rast <- sf_rasterize(pa) %>%
+    terra::subst(1, 2) %>%
+    terra::as.factor()
+
+  unprotected_crown_rast <- sf_rasterize(unprotected_crown) %>%
+    terra::subst(1, 3) %>%
+    terra::as.factor()
+
+  # Combine: mixed where private overlaps public, then layer protected > crown > private
+  pub_prot_rast <- terra::cover(protectedareas_rast, unprotected_crown_rast)
+  mixed_rast <- terra::mask(pub_prot_rast, private_rast) %>%
+    terra::not.na(falseNA = TRUE) %>%
+    terra::subst(1, 4) %>%
+    terra::as.factor()
+
+  terra::cover(mixed_rast, pub_prot_rast) %>%
+    terra::cover(private_rast) %>%
+    terra::as.factor()
+}
+
+# Returns a named list of cell counts and percentages for each land ownership
+# category: private (1), protected (2), crown (3), mixed (4).
+compute_land_ownership_stats <- function(land_ownership_rast) {
+  freq_tbl <- terra::freq(land_ownership_rast)
+  counts   <- setNames(freq_tbl$count, as.character(freq_tbl$value))
+  total    <- sum(counts)
+  data.frame(
+    total_cells   = total,
+    private_n     = counts[["1"]],
+    protected_n   = counts[["2"]],
+    crown_n       = counts[["3"]],
+    mixed_n       = counts[["4"]],
+    private_pct   = counts[["1"]] / total,
+    protected_pct = counts[["2"]] / total,
+    crown_pct     = counts[["3"]] / total,
+    mixed_pct     = counts[["4"]] / total
+  )
+}
+
+# Returns land ownership cell counts and percentages restricted to the top 30%
+# biodiversity cells (rankmap >= 70th percentile).
+compute_land_ownership_top30_stats <- function(land_ownership_rast, rankmap) {
+  top30_mask <- rankmap %>%
+    remove_by_quantile(0.7) %>%
+    terra::not.na() %>%
+    terra::classify(cbind(FALSE, NA)) %>%
+    terra::resample(land_ownership_rast, method = "near")
+
+  masked_rast <- terra::mask(land_ownership_rast, top30_mask)
+
+  freq_tbl <- terra::freq(masked_rast)
+  counts   <- setNames(freq_tbl$count, as.character(freq_tbl$value))
+  total    <- sum(counts)
+  data.frame(
+    total_cells   = total,
+    private_n     = counts[["1"]],
+    protected_n   = counts[["2"]],
+    crown_n       = counts[["3"]],
+    mixed_n       = counts[["4"]],
+    private_pct   = counts[["1"]] / total,
+    protected_pct = counts[["2"]] / total,
+    crown_pct     = counts[["3"]] / total,
+    mixed_pct     = counts[["4"]] / total
+  )
 }

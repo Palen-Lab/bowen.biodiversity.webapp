@@ -58,18 +58,18 @@ list(
       st_drop_geometry() %>%
       write.csv(file = here("data-3-outputs/protectedareas.csv"))
   }, format = "file"),
-  # tar_target(dissolved_pa, dissolve_protected_areas(pa)),
+  tar_target(dissolved_pa, dissolve_protected_areas(pa)),
   # tar_target(ogma,                     load_ogma(project_crs)),
   # # TODO: manual step, move this to post Zonation calculation
   tar_target(pa_candidates, load_pa_candidates(project_crs)),
 
   # # Public Lands
-  # tar_target(crown,                    load_crown(project_crs)),
-  # tar_target(unprotected_crown,        create_unprotected_crown(crown, dissolved_pa)),
+  tar_target(crown, load_crown(project_crs)),
+  tar_target(unprotected_crown, create_unprotected_crown(crown, dissolved_pa)),
 
   # # Private Lands
   tar_target(parcelmap, load_parcelmap(project_crs)),
-  # tar_target(privateland,              create_privateland(parcelmap_bowen, dissolved_pa)),
+  tar_target(privateland, create_privateland(parcelmap, dissolved_pa)),
 
   # # ── Phase 3: Load Species ──────────────────────────────────────────────────────
   # # iNaturalist
@@ -248,6 +248,42 @@ list(
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
       p       <- candidate_pa_plot(pa, pa_candidates, tmpl, overlay)
       path    <- here(output_dir_unannotated, "7_8_candidate_protected_areas_no_annotation.png")
+      ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
+    },
+    format = "file"
+  ),
+
+  # Land Ownership / Authority
+  tar_terra_rast(
+    land_ownership_rast,
+    create_land_ownership_rast(pa, unprotected_crown, privateland, rankmap)
+  ),
+  tar_target(
+    land_ownership_stats,
+    compute_land_ownership_stats(land_ownership_rast)
+  ),
+  tar_target(
+    land_ownership_top30_stats,
+    compute_land_ownership_top30_stats(land_ownership_rast, rankmap)
+  ),
+  tar_target(
+    land_ownership_annotated,
+    {
+      tmpl    <- template_plot(mask, ocean_sf, basemap)
+      overlay <- template_plot_overlay(ocean_sf, trails, roads)
+      p       <- land_ownership_plot(land_ownership_rast, ocean_sf, tmpl, overlay)
+      path    <- here(output_dir_annotated, "7_6_land_ownership.png")
+      ggsave_drive(path, add_annotation(p), drive_folder_id_annotated)
+    },
+    format = "file"
+  ),
+  tar_target(
+    land_ownership_unannotated,
+    {
+      tmpl    <- template_plot(mask, ocean_sf, basemap)
+      overlay <- template_plot_overlay(ocean_sf, trails, roads)
+      p       <- land_ownership_plot(land_ownership_rast, ocean_sf, tmpl, overlay)
+      path    <- here(output_dir_unannotated, "7_6_land_ownership_no_annotation.png")
       ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
     },
     format = "file"
