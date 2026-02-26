@@ -47,6 +47,7 @@ library(tidyterra, quietly = T)
 #### Tabular Data ####
 library(readxl)
 library(googlesheets4)
+library(googledrive)
 #### Plotting ####
 library(ggplot2, quietly = T)
 library(ggnewscale, quietly = T)
@@ -55,6 +56,20 @@ library(randomcoloR, quietly = T)
 
 #### Use planar coordinates ####
 sf_use_s2(FALSE)
+
+#### Google Drive upload ####
+drive_folder_id_annotated <- "1mi0iC0OKSJ-x3nC0AI0tZjpJy_yN7-JJ"
+drive_folder_id_unannotated <- "1XkDA2Oc4zNQquNM3MbNV9To7GyE8BKA8"
+
+ggsave_drive <- function(file_path, plot, drive_folder_id, ...) {
+  ggplot2::ggsave(file_path, plot, ...)
+  googledrive::drive_put(
+    media = file_path,
+    path = googledrive::as_id(drive_folder_id),
+    name = basename(file_path)
+  )
+  invisible(file_path)
+}
 
 #### Output directories ####
 output_dir <- here("output-figures/data-atlas")
@@ -70,6 +85,52 @@ if (!dir.exists(output_dir_unannotated)) {
   dir.create(output_dir_unannotated)
 }
 
+#### Input data layers ####
+sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
+habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
+sheet_date <- "2025-06-30"
+
+#### CREATE DATAFRAME FOR INPUT LAYERS ####
+# TODO: raster paths need to be fixed now
+# Read from Google Sheets
+habitats_df <- read_sheet(habitats_url, sheet = sheet_date) %>%
+  # New filepath for layers
+  mutate(
+    path = stringr::str_replace_all(
+      path,
+      "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata",
+      "/home/jay/Programming_Projects/Palen-Lab/bowen.biodiversity.webapp/data-etl/output-data"
+    )
+  )
+habitats_df$weight <- habitats_df$weight / nrow(habitats_df)
+sdm_df <- read_sheet(sdm_url, sheet = sheet_date) %>%
+  # New filepath for layers
+  mutate(
+    path = stringr::str_replace_all(
+      path,
+      "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/bowen_sdm",
+      "/home/jay/Programming_Projects/Palen-Lab/bowen.biodiversity.webapp/data-etl/output-data/sdm"
+    )
+  )
+sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
+# Bind all input layers together
+layers_df <- sdm_df %>%
+  select(colnames(habitats_df)) %>% # Select common columns
+  bind_rows(habitats_df) %>%
+  filter(weight > 0)
+presence_threshold <- 0.7
+
+# Prepare raster function
+prep_rast <- function(path) {
+  path %>%
+    unlist() %>%
+    rast() %>%
+    project("EPSG: 3857") %>%
+    higher_res_edges()
+}
+```
+
+```{r plotting_functions}
 #### Define plot extent ####
 bowen_mask <- rast(here("data/bowen_mask.tif")) %>%
   project('epsg:3857') # Project to Web Mercator for basemap
@@ -194,50 +255,83 @@ template_plot_remove <- function() {
     )
   )
 }
+```
 
-#### Input data layers ####
-sdm_url <- "https://docs.google.com/spreadsheets/d/1IGFwkr9LidcZwbzOJJGSEXLsmpKp0a9gBs65EY-H1xw/edit?usp=sharing"
-habitats_url <- "https://docs.google.com/spreadsheets/d/1yDKw4r3tbXYivwtxbbfxc-pYSbtbj_o2ee1pwlNCOO4/edit?usp=drive_link"
-sheet_date <- "2025-06-30"
+```{r data_imports}
+#### Raster Data ####
+# Biodiversity values (Zonation prioritization output)
+# Used in: fw_habitats_top30, biodiversity_values, biodiversity_values_top30,
+#          wildfire_vulnerability_top30, protected_areas_top30,
+#          biod_vals_private_land, biod_vals_public_land,
+#          land_ownership, land_ownership_top30
+rankmap <- here("output-data/5_values/rankmap.tif") %>%
+  rast() %>%
+  project(bowen.biodiversity.webapp::project_crs)
+rankmap_bt_rm <- rankmap %>%
+  remove_by_quantile(0.7)
+rankmap_mask <- rankmap_bt_rm %>%
+  not.na() %>%
+  classify(cbind(FALSE, NA))
 
-#### CREATE DATAFRAME FOR INPUT LAYERS ####
-# TODO: raster paths need to be fixed now
-# Read from Google Sheets
-habitats_df <- read_sheet(habitats_url, sheet = sheet_date) %>%
-  # New filepath for layers
-  mutate(
-    path = stringr::str_replace_all(
-      path,
-      "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata",
-      "/home/jay/Programming_Projects/Palen-Lab/bowen.biodiversity.webapp/data-etl/output-data"
-    )
-  )
-habitats_df$weight <- habitats_df$weight / nrow(habitats_df)
-sdm_df <- read_sheet(sdm_url, sheet = sheet_date) %>%
-  # New filepath for layers
-  mutate(
-    path = stringr::str_replace_all(
-      path,
-      "/home/jay/Programming_Projects/bowen.biodiversity.webapp/inst/extdata/bowen_sdm",
-      "/home/jay/Programming_Projects/Palen-Lab/bowen.biodiversity.webapp/data-etl/output-data/sdm"
-    )
-  )
-sdm_df$weight <- sdm_df$weight / nrow(sdm_df)
-# Bind all input layers together
-layers_df <- sdm_df %>%
-  select(colnames(habitats_df)) %>% # Select common columns
-  bind_rows(habitats_df) %>%
-  filter(weight > 0)
-presence_threshold <- 0.7
+# Wildfire vulnerability index
+# Used in: wildfire_vulnerability, wildfire_vulnerability_top30
+fire_index <- rast(here("output-data/6_threats/fire_index_40m.tif"))
 
-# Prepare raster function
-prep_rast <- function(path) {
-  path %>%
-    unlist() %>%
-    rast() %>%
-    project("EPSG: 3857") %>%
-    higher_res_edges()
-}
+#### Vector Data ####
+# Bowen Island shoreline
+# Used in: protected_areas_top30, biod_vals_private_land, biod_vals_public_land,
+#          land_ownership, land_ownership_top30
+bowen_island <- st_read(
+  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
+  layer = "bowen_island_shoreline_w_hutt__bowen_islands",
+  quiet = TRUE
+)
+
+# Wildland Urban Interface classification (used in: wildland_urban_interface)
+bowen_wui_raw <- here("data-raw/datasets/bc_wui/wui.gpkg") %>%
+  st_read(quiet = T)
+
+#### Package Datasets (loaded via devtools::load_all()) ####
+# Available: crown, parcelmap_bowen, bowen_protectedareas,
+#            bowen_ocean_sf, bowen_roads, bowen_trails, ogma
+
+#### Common Derived Objects ####
+# Protected areas
+# Used in: protected_areas_top30, biod_vals_public_land,
+#          land_ownership, land_ownership_top30
+protectedareas <- bowen.biodiversity.webapp::bowen_protectedareas %>%
+  filter(type != "Agricultural Land Reserve")
+dissolved_protectedareas <- protectedareas %>%
+  st_make_valid() %>%
+  summarise() %>%
+  st_cast() %>%
+  st_buffer(1)
+
+# Crown land excluding protected areas (Other Public Lands)
+# Used in: biod_vals_public_land, land_ownership, land_ownership_top30
+crown_valid <- crown %>%
+  st_snap(x = ., y = ., tolerance = 0.1) %>%
+  st_make_valid() %>%
+  st_transform(st_crs(dissolved_protectedareas))
+notprotected_crown <- st_difference(crown_valid, dissolved_protectedareas)
+# Exclude: rowname 1 (Fairy Fen Natural Reserve, sliver),
+#          rowname 74 (Seymour Bay Park, invalid polygon)
+notprotected_crown <- notprotected_crown[
+  !rownames(notprotected_crown) %in% c("1", "74"),
+]
+
+parcelmap_private <- parcelmap_bowen %>%
+  filter(OWNER_TYPE %in% c("Private", "Unclassified"))
+# Private land raster
+# Used in: biod_vals_private_land, land_ownership, land_ownership_top30
+private_raster <- parcelmap_private %>%
+  bowen_rasterize() %>%
+  project(rankmap_bt_rm)
+
+# Freshwater layer metadata
+# Used in: fw_habitats (section 4.1), fw_habitats_top30 (section 4.4)
+fw_df <- layers_df[layers_df$category == "Freshwater", ]
+fw_df$colour <- RColorBrewer::brewer.pal(nrow(fw_df), "YlGnBu")
 ```
 
 # Introduction
@@ -323,9 +417,10 @@ basic_plot_no_annotations <- template_plot +
   template_plot_overlay() +
   template_plot_remove()
 
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "2_1_transportation_network.png"),
   basic_plot,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = plot_width,
   height = plot_height,
@@ -333,9 +428,10 @@ ggplot2::ggsave(
   res = plot_res
 )
 
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "2_1_transportation_network_no_annotation.png"),
   basic_plot_no_annotations,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = plot_width,
   height = plot_height,
@@ -399,18 +495,20 @@ total_richness_plot_annotations <- total_richness_plot_base +
 total_richness_plot_no_annotations <- total_richness_plot_base +
   template_plot_remove()
 # Save plot
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "3_1_species_richness.png"),
   total_richness_plot_annotations,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = plot_width,
   height = plot_height,
   units = "in",
   res = plot_res
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "3_1_species_richness_no_annotation.png"),
   total_richness_plot_no_annotations,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = plot_width,
   height = plot_height,
@@ -490,13 +588,20 @@ bird_richness_plot <- bowen_map(
     )
   )
 
-ggplot2::ggsave(
-  here(
-    output_dir_annotated,
-    "/",
-    paste0(Sys.Date(), "_2_1_bird_species_richness_map.png")
-  ),
+ggsave_drive(
+  here(output_dir_annotated, "3_2_bird_species_richness.png"),
   bird_richness_plot,
+  drive_folder_id_annotated,
+  device = ragg::agg_png,
+  width = 9,
+  height = 12,
+  units = "in",
+  res = 300
+)
+ggsave_drive(
+  here(output_dir_unannotated, "3_2_bird_species_richness_no_annotation.png"),
+  bird_richness_plot + template_plot_remove(),
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -514,9 +619,6 @@ ggplot2::ggsave(
 Freshwater features on Bowen Island, derived from layers provided by Alan Whitehead (2025).
 ```{r fw_habitats}
 #### Prepare raster for plots ####
-fw_df <- layers_df[layers_df$category == "Freshwater", ]
-# Color ramp
-fw_df$colour <- RColorBrewer::brewer.pal(nrow(fw_df), "YlGnBu")
 
 # Prepare streams rast
 streams_rast <- fw_df[fw_df$name == "Streams", "path"] %>%
@@ -607,18 +709,20 @@ fw_plot_no_annotation <- fw_plot_base +
   template_plot_remove()
 
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "4_1_freshwater_habitats.png"),
   fw_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "4_1_freshwater_habitats_no_annotation.png"),
   fw_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -670,18 +774,20 @@ fw_richness_plot_annotation <- fw_richness_plot_base +
 fw_richness_plot_no_annotation <- fw_richness_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "4_2_freshwater_richness.png"),
   fw_richness_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "4_2_freshwater_richness_no_annotation.png"),
   fw_richness_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -734,18 +840,20 @@ habitats_plot_annotation <- habitats_plot_base +
 habitats_plot_no_annotation <- habitats_plot_base +
   template_plot_remove()
 # Saving plot
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "4_3_habitat_richness.png"),
   habitats_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "4_3_habitat_richness_no_annotation.png"),
   habitats_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -761,25 +869,11 @@ habitats_plot_annotation
 Top 30% of biodiversity locations on Bowen Island, showing freshwater habitat features within the top 30% biodiversity cells. Cells in the top 30% without freshwater features are shown in grey. 46.7% of all cells contain freshwater habitats. The percentage of top 30% biodiversity locations covered by freshwater habitats is 56.6%.
 ```{r fw_habitats_top30}
 #### Preparing layers for plotting ####
-# Biodiversity values layer
-rankmap <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
-  project(bowen.biodiversity.webapp::project_crs)
-rankmap_bt_rm <- rankmap %>%
-  remove_by_quantile(0.7)
-rankmap_mask <- rankmap_bt_rm %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-
 # Grey raster for top 30% background
 grey_rast <- rankmap_mask %>%
   project("EPSG: 3857") %>%
   higher_res_edges() %>%
   as.factor()
-
-# Freshwater layers
-fw_df <- layers_df[layers_df$category == "Freshwater", ]
-fw_df$colour <- RColorBrewer::brewer.pal(nrow(fw_df), "YlGnBu")
 
 # Helper: load raster, mask to top 30%, and prep for map
 prep_rast_top30 <- function(path) {
@@ -921,18 +1015,20 @@ fw_top30_plot_annotation <- fw_top30_plot_base +
   template_plot_annotations()
 fw_top30_plot_no_annotation <- fw_top30_plot_base +
   template_plot_remove()
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "4_4_freshwater_top30.png"),
   fw_top30_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "4_4_freshwater_top30_no_annotation.png"),
   fw_top30_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -949,10 +1045,8 @@ fw_top30_plot_annotation
 Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33) and species layers (n = 195).
 ```{r biodiversity_values}
 # Biodiversity values layer
-rankmap <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
-  project("EPSG: 3857")
 rankmap_for_map <- rankmap %>%
+  project("EPSG: 3857") %>%
   higher_res_edges()
 
 # Base plot
@@ -985,18 +1079,20 @@ combined_biodiversity_plot_no_annotations <- combined_biodiversity_plot_base +
   template_plot_remove()
 
 # Save plot
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "5_1_biodiversity_values.png"),
   combined_biodiversity_plot,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = plot_width,
   height = plot_height,
   units = "in",
   res = plot_res
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "5_1_biodiversity_values_no_annotation.png"),
   combined_biodiversity_plot_no_annotations,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = plot_width,
   height = plot_height,
@@ -1014,13 +1110,12 @@ combined_biodiversity_plot
 Top 30% of biodiversity locations on Bowen Island. Zonation5 Prioritization Algorithm of Locations on Bowen Island. Environmental layers (n = 33)  with species layers (n = 195).
 ```{r biodiversity_values_top30}
 #### Prepare raster for plotting ####
-rankmap_top30_lowres <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
+rankmap_top30_lowres <- rankmap %>%
   project("EPSG: 3857") %>%
   remove_by_quantile(0.7)
 rankmap_top30 <- rankmap_top30_lowres %>%
   higher_res_edges()
-rankmap_mask <- rankmap_top30_lowres %>%
+rankmap_top30_mask <- rankmap_top30_lowres %>%
   not.na() %>%
   classify(cbind(FALSE, NA))
 
@@ -1049,21 +1144,23 @@ top_plot_annotation <- top_plot_base +
 top_plot_no_annotation <- top_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "5_2_biodiversity_values_top30.png"),
   top_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(
     output_dir_unannotated,
     "5_2_biodiversity_values_top30_no_annotation.png"
   ),
   top_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1109,18 +1206,20 @@ disturb_cont_plot_annotation <- disturb_cont_plot_base +
 disturb_cont_plot_no_annotation <- disturb_cont_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "6_1_human_disturbance.png"),
   disturb_cont_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "6_1_human_disturbance_no_annotation.png"),
   disturb_cont_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1222,18 +1321,20 @@ hfp_biod_vals_plot_annotation <- hfp_biod_vals_plot_base +
 hfp_biod_vals_plot_no_annotation <- hfp_biod_vals_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "6_2_human_disturbance_top30.png"),
   hfp_biod_vals_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "6_2_human_disturbance_top30_no_annotation.png"),
   hfp_biod_vals_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1250,7 +1351,7 @@ hfp_biod_vals_plot_annotation
 This is not an assessment of the probability or behaviour of the fire. The intention of this index is to describe the relative vulnerability to biodiversity loss due to fire, under a scenario where the habitats burn. The three major components of this vulnerability index are slope, aspect, and fuel.
 ```{r wildfire_vulnerability}
 #### Preparing raster for plotting ####
-fire_index_mp <- rast(here("output-data/6_threats/fire_index_40m.tif")) %>%
+fire_index_mp <- fire_index %>%
   project("EPSG: 3857") %>%
   terra::subst(4294967296, NA) %>% # Max value should be NA
   terra::scale_linear()
@@ -1281,18 +1382,20 @@ fire_plot_annotation <- fire_plot_base +
 fire_plot_no_annotation <- fire_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "6_3_wildfire_vulnerability.png"),
   fire_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "6_3_wildfire_vulnerability_no_annotation.png"),
   fire_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1312,23 +1415,22 @@ This is not an assessment of the probability or behaviour of the fire. The inten
 
 ```{r wildfire_vulnerability_top30}
 #### Preparing raster for plotting ####
-top30_wvi <- rast(here("output-data/6_threats/fire_index_40m.tif")) %>%
+top30_wvi <- fire_index %>%
   project("EPSG: 3857") %>%
   terra::subst(4294967296, NA) %>% # Max value should be NA
   terra::scale_linear() %>%
   remove_by_quantile(0.7)
 
-rankmap_top30_lowres <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
+rankmap_top30_lowres <- rankmap %>%
   project("EPSG: 3857") %>%
   remove_by_quantile(0.7)
 rankmap_top30 <- rankmap_top30_lowres %>%
   higher_res_edges()
-rankmap_mask <- rankmap_top30_lowres %>%
+rankmap_top30_mask <- rankmap_top30_lowres %>%
   not.na() %>%
   classify(cbind(FALSE, NA))
 
-rankmap_mask_re <- rankmap_mask %>%
+rankmap_mask_re <- rankmap_top30_mask %>%
   resample(top30_wvi)
 grey_rast <- rankmap_mask_re %>%
   higher_res_edges() %>%
@@ -1337,14 +1439,14 @@ fire_biod_val <- mask(top30_wvi, rankmap_mask_re)
 
 # Calculate statistics
 top30_wvi_resamp <- top30_wvi %>%
-  resample(rankmap_mask, method = "average") %>%
-  mask(rankmap_mask)
+  resample(rankmap_top30_mask, method = "average") %>%
+  mask(rankmap_top30_mask)
 top30_wvi_resamp %>%
   terra::not.na() %>%
   values() %>%
   sum()
 # 426
-rankmap_mask %>%
+rankmap_top30_mask %>%
   terra::not.na() %>%
   values() %>%
   sum()
@@ -1394,21 +1496,23 @@ fire_biod_val_plot_annotation <- fire_biod_val_plot_base +
 fire_biod_val_plot_no_annotation <- fire_biod_val_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "6_4_wildfire_vulnerability_top30.png"),
   fire_biod_val_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(
     output_dir_unannotated,
     "6_4_wildfire_vulnerability_top30_no_annotation.png"
   ),
   fire_biod_val_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1425,8 +1529,7 @@ fire_biod_val_plot_annotation
 The Province of British Columbia produces the Wildland Urban Interface (WUI) maps, with their intention being to use these maps to inform the relative impact of wildfires on human development. These maps take into consideration three key variables - fuel load, climate conditons, and human development at the interface between urban and wildland areas. This map shows the combinations of WUI Classification and Provincial Strategic Threat Analysis (PSTA) Threat Rating.
 ```{r wildland_urban_interface}
 #### Prepare layers for plotting ####
-bowen_wui <- here("data-raw/datasets/bc_wui/wui.gpkg") %>%
-  st_read(quiet = T) %>%
+bowen_wui <- bowen_wui_raw %>%
   select(Name, PSTA) %>%
   rename(WUI = Name) %>%
   mutate(WUI_PSTA = paste0(WUI, " / ", PSTA))
@@ -1441,7 +1544,7 @@ wui_factor <- bowen_wui %>%
   mutate(
     WUI_PSTA = factor(WUI_PSTA, levels = wui_factor_lvls)
   )
-wui_factor_cols <- c("grey", "lightblue", "#fff7bc", "#fec44f", "#d95f0e")
+wui_factor_cols <- c("#fff9cfff", "lightblue", "#fdef86ff", "#fcbb3aff", "#d95f0e")
 names(wui_factor_cols) <- wui_factor_lvls
 
 #### Plotting ####
@@ -1475,21 +1578,23 @@ wui_plot_annotation <- wui_plot_base +
 wui_plot_no_annotation <- wui_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "6_5_wildland_urban_interface.png"),
   wui_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(
     output_dir_unannotated,
     "6_5_wildland_urban_interface_no_annotation.png"
   ),
   wui_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1510,15 +1615,13 @@ Summed relative biodiversity value of properties (parcels). Relative measure of 
 parcelmap_bowen_prepd <- parcelmap_bowen %>%
   filter(OBJECTID != 2096841) # Remove ferry route
 
-# Load biodiversity values generated from Zonation
-biod_vals <- rast(here("output-data/5_values/rankmap.tif"))
 # Match parcelmap projection to the Zonation rast
 parcelmap_vect <- parcelmap_bowen_prepd %>%
   vect() %>%
-  project(biod_vals)
+  project(rankmap)
 # Extract values that overlap cells
 parcelmap_extract <- terra::extract(
-  biod_vals,
+  rankmap,
   parcelmap_vect,
   sum, # sums all cells that overlap with each parcel
   bind = T, # bind to SpatVector
@@ -1561,21 +1664,23 @@ parcelmap_biod_vals_plot_annotation <- parcelmap_biod_vals_plot_base +
 parcelmap_biod_vals_plot_no_annotation <- parcelmap_biod_vals_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "7_1_parcel_biodiversity_values.png"),
   parcelmap_biod_vals_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(
     output_dir_unannotated,
     "7_1_parcel_biodiversity_values_no_annotation.png"
   ),
   parcelmap_biod_vals_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1706,18 +1811,20 @@ subdivide_plot_annotation <- subdivide_plot_base +
 subdivide_plot_no_annotation <- subdivide_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "7_2_subdivision_potential.png"),
   subdivide_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "7_2_subdivision_potential_no_annotation.png"),
   subdivide_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1734,25 +1841,12 @@ Top 30% of biodiversity locations on Bowen Island, with gradient scale correspon
 ```{r protected_areas_top30}
 #### Preparing layers for plotting ####
 # Biodiversity values layer
-rankmap <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
-  project(bowen.biodiversity.webapp::project_crs)
 rankmap_for_map <- rankmap %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_bt_rm <- rankmap %>%
-  remove_by_quantile(0.7)
 rankmap_bt_rm_for_map <- rankmap_bt_rm %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_mask <- rankmap_bt_rm %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-# Bowen entire area
-bowen_island <- st_read(
-  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
-  layer = "bowen_island_shoreline_w_hutt__bowen_islands"
-)
 # Protected Areas from JD
 bowen_protectedareas_include <- bowen.biodiversity.webapp::bowen_protectedareas %>%
   filter(type != "Agricultural Land Reserve") # Remove ALR
@@ -1832,18 +1926,20 @@ protectedareas_plot_annotations <- protectedareas_plot_base +
 protectedareas_plot_no_annotations <- protectedareas_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "7_3_protected_areas_top30.png"),
   protectedareas_plot_annotations,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "7_3_protected_areas_top30_no_annotation.png"),
   protectedareas_plot_no_annotations,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1860,28 +1956,12 @@ protectedareas_plot_annotations
 Top 30% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Private Lands are visualized as an overlay on top of the Zonation priotization output. Private lands cover 48.7% of Bowen Island. The percentage of top 30% biodiversity locations covered by Private Lands is 49.1%
 ```{r biod_vals_private_land}
 #### Preparing layers for plotting ####
-# Biodiversity values layer
-rankmap <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
-  project(bowen.biodiversity.webapp::project_crs)
 rankmap_for_map <- rankmap %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_bt_rm <- rankmap %>%
-  remove_by_quantile(0.7)
 rankmap_bt_rm_for_map <- rankmap_bt_rm %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_mask <- rankmap_bt_rm %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-# Bowen entire area
-bowen_island <- st_read(
-  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
-  layer = "bowen_island_shoreline_w_hutt__bowen_islands"
-)
-# Private Land
-bowen_mask <- rast(here("output-data/bowen_mask.tif"))
 
 bowen_parcelmap_union <- parcelmap_bowen %>%
   filter(OWNER_TYPE %in% c("Private", "Unclassified")) %>%
@@ -1948,18 +2028,20 @@ privatelands_overlap_plot_annotation <- privatelands_overlap_plot_base +
   template_plot_annotations()
 privatelands_overlap_plot_no_annotation <- privatelands_overlap_plot_base +
   template_plot_remove()
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "7_4_private_land_top30.png"),
   privatelands_overlap_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "7_4_private_land_top30_no_annotation.png"),
   privatelands_overlap_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -1975,46 +2057,12 @@ privatelands_overlap_plot_annotation
 Top 30% of biodiversity locations on Bowen Island, with gradient scale corresponding to relative priority for conservation. Other public lands, such as crown land, are visualized as an overlay on top of the Zonation prioritization output. The total coverage of Other Public Lands on Bowen Island is 30.0%. The percentage of top 30% biodiversity locations covered by other public lands is 13.3%. 
 ```{r biod_vals_public_land}
 #### Preparing layers for plotting ####
-# Biodiversity values layer
-rankmap <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
-  project(bowen.biodiversity.webapp::project_crs)
 rankmap_for_map <- rankmap %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_bt_rm <- rankmap %>%
-  remove_by_quantile(0.7)
 rankmap_bt_rm_for_map <- rankmap_bt_rm %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_mask <- rankmap_bt_rm %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-# Bowen entire area
-bowen_island <- st_read(
-  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
-  layer = "bowen_island_shoreline_w_hutt__bowen_islands"
-)
-# Protected Areas (to subtract from Crown Land)
-protectedareas <- bowen.biodiversity.webapp::bowen_protectedareas %>%
-  filter(type != "Agricultural Land Reserve")
-dissolved_protectedareas <- protectedareas %>%
-  st_make_valid() %>%
-  summarise() %>%
-  st_cast() %>%
-  st_buffer(1)
-# Crown Land (Other Public Lands)
-crown_valid <- crown %>%
-  st_snap(x = ., y = ., tolerance = 0.1) %>%
-  st_make_valid() %>%
-  st_transform(st_crs(dissolved_protectedareas))
-notprotected_crown <- st_difference(crown_valid, dissolved_protectedareas)
-# Remove polygons that should not be included
-# rowname 1 (Fairy Fen Natural Reserve), sliver
-# rowname 74 (Seymour Bay Park), wrong polygon in the first place
-notprotected_crown <- notprotected_crown[
-  !rownames(notprotected_crown) %in% c("1", "74"),
-]
 notprotected_crown_union <- notprotected_crown %>%
   st_make_valid() %>%
   st_union()
@@ -2077,18 +2125,20 @@ crownland_overlap_plot_annotation <- crownland_overlap_plot_base +
   template_plot_annotations()
 crownland_overlap_plot_no_annotation <- crownland_overlap_plot_base +
   template_plot_remove()
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "7_5_public_land_top30.png"),
   crownland_overlap_plot_annotation,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "7_5_public_land_top30_no_annotation.png"),
   crownland_overlap_plot_no_annotation,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -2105,66 +2155,27 @@ Aligning to grid cells of the relative biodiversity values, this map provides an
 
 ```{r land_ownership}
 #### Preparing layers for plotting ####
-# Biodiversity values layer
-rankmap <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
-  project(bowen.biodiversity.webapp::project_crs)
 rankmap_for_map <- rankmap %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_bt_rm <- rankmap %>%
-  remove_by_quantile(0.7)
 rankmap_bt_rm_for_map <- rankmap_bt_rm %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_mask <- rankmap_bt_rm %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-
-# Bowen entire area
-bowen_island <- st_read(
-  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
-  layer = "bowen_island_shoreline_w_hutt__bowen_islands"
-)
 
 # Private Land
-private_raster <- parcelmap_bowen %>%
-  filter(OWNER_TYPE %in% c("Private", "Unclassified")) %>%
-  bowen_rasterize() %>%
-  project(rankmap_bt_rm)
 private_raster_for_map <- private_raster %>%
   project("EPSG: 3857") %>%
   higher_res_edges() %>%
   as.factor()
 
-# Protected Areas from JD
-protectedareas <- bowen.biodiversity.webapp::bowen_protectedareas %>%
-  filter(type != "Agricultural Land Reserve") # Remove ALR
+# Protected Areas raster (coded as 2)
 protectedareas_rast <- protectedareas %>%
   bowen_rasterize() %>%
   project(rankmap_bt_rm) %>%
   subst(1, 2) %>%
   as.factor()
-# Dissolve protected areas into one geometry
-dissolved_protectedareas <- protectedareas %>%
-  st_make_valid() %>%
-  summarise() %>%
-  st_cast() %>%
-  st_buffer(1)
 
-# Public Land
-# Crown Land
-crown_valid <- crown %>%
-  st_snap(x = ., y = ., tolerance = 0.1) %>%
-  st_make_valid() %>%
-  st_transform(st_crs(dissolved_protectedareas))
-notprotected_crown <- st_difference(crown_valid, dissolved_protectedareas)
-# Remove polygons that should not be included in notprotected areas
-# rowname 1 (Fairy Fen Natural Reserve), sliver
-# rowname 74 (Seymour Bay Park), wrong polygon in the first place
-notprotected_crown <- notprotected_crown[
-  !rownames(notprotected_crown) %in% c("1", "74"),
-]
+# Crown Land raster (coded as 3)
 notprotected_crown_rast <- notprotected_crown %>%
   bowen_rasterize() %>%
   project(rankmap_bt_rm) %>%
@@ -2246,18 +2257,20 @@ authority_plot_annotations <- authority_plot_base +
   template_plot_annotations()
 authority_plot_no_annotations <- authority_plot_base +
   template_plot_remove()
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "7_6_land_ownership.png"),
   authority_plot_annotations,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "7_6_land_ownership_no_annotation.png"),
   authority_plot_no_annotations,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -2274,66 +2287,27 @@ This map shows the land ownership or authority classification for only the top 3
 
 ```{r land_ownership_top30}
 #### Preparing layers for plotting ####
-# Biodiversity values layer
-rankmap <- here("output-data/5_values/rankmap.tif") %>%
-  rast() %>%
-  project(bowen.biodiversity.webapp::project_crs)
 rankmap_for_map <- rankmap %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_bt_rm <- rankmap %>%
-  remove_by_quantile(0.7)
 rankmap_bt_rm_for_map <- rankmap_bt_rm %>%
   project("EPSG: 3857") %>%
   higher_res_edges()
-rankmap_mask <- rankmap_bt_rm %>%
-  not.na() %>%
-  classify(cbind(FALSE, NA))
-
-# Bowen entire area
-bowen_island <- st_read(
-  here("data-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
-  layer = "bowen_island_shoreline_w_hutt__bowen_islands"
-)
 
 # Private Land
-private_raster <- parcelmap_bowen %>%
-  filter(OWNER_TYPE %in% c("Private", "Unclassified")) %>%
-  bowen_rasterize() %>%
-  project(rankmap_bt_rm)
 private_raster_for_map <- private_raster %>%
   project("EPSG: 3857") %>%
   higher_res_edges() %>%
   as.factor()
 
-# Protected Areas from JD
-protectedareas <- bowen.biodiversity.webapp::bowen_protectedareas %>%
-  filter(type != "Agricultural Land Reserve") # Remove ALR
+# Protected Areas raster (coded as 2)
 protectedareas_rast <- protectedareas %>%
   bowen_rasterize() %>%
   project(rankmap_bt_rm) %>%
   subst(1, 2) %>%
   as.factor()
-# Dissolve protected areas into one geometry
-dissolved_protectedareas <- protectedareas %>%
-  st_make_valid() %>%
-  summarise() %>%
-  st_cast() %>%
-  st_buffer(1)
 
-# Public Land
-# Crown Land
-crown_valid <- crown %>%
-  st_snap(x = ., y = ., tolerance = 0.1) %>%
-  st_make_valid() %>%
-  st_transform(st_crs(dissolved_protectedareas))
-notprotected_crown <- st_difference(crown_valid, dissolved_protectedareas)
-# Remove polygons that should not be included in notprotected areas
-# rowname 1 (Fairy Fen Natural Reserve), sliver
-# rowname 74 (Seymour Bay Park), wrong polygon in the first place
-notprotected_crown <- notprotected_crown[
-  !rownames(notprotected_crown) %in% c("1", "74"),
-]
+# Crown Land raster (coded as 3)
 notprotected_crown_rast <- notprotected_crown %>%
   bowen_rasterize() %>%
   project(rankmap_bt_rm) %>%
@@ -2420,18 +2394,20 @@ authority_plot_annotations <- authority_plot_base +
   template_plot_annotations()
 authority_plot_no_annotations <- authority_plot_base +
   template_plot_remove()
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "7_7_land_ownership_top30.png"),
   authority_plot_annotations,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "7_7_land_ownership_top30_no_annotation.png"),
   authority_plot_no_annotations,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -2524,21 +2500,23 @@ pa_example_plot_annotations <- protectedareas_example_plot_base +
 pa_example_plot_no_annotations <- protectedareas_example_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "7_8_candidate_protected_areas.png"),
   pa_example_plot_annotations,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
   units = "in",
   res = 300
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(
     output_dir_unannotated,
     "7_8_candidate_protected_areas_no_annotation.png"
   ),
   pa_example_plot_no_annotations,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = 9,
   height = 12,
@@ -2636,18 +2614,20 @@ inaturalist_plot_annotations <- inaturalist_plot_base +
 inaturalist_plot_no_annotations <- inaturalist_plot_base +
   template_plot_remove()
 # Save plots
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_annotated, "8_1_inaturalist.png"),
   inaturalist_plot_annotations,
+  drive_folder_id_annotated,
   device = ragg::agg_png,
   width = plot_width,
   height = plot_height,
   units = "in",
   res = plot_res
 )
-ggplot2::ggsave(
+ggsave_drive(
   here(output_dir_unannotated, "8_1_inaturalist_no_annotation.png"),
   inaturalist_plot_no_annotations,
+  drive_folder_id_unannotated,
   device = ragg::agg_png,
   width = plot_width,
   height = plot_height,
