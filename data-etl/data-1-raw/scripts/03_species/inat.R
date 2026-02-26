@@ -14,7 +14,7 @@ bowen_inat <- bowen_inat_raw %>%
   st_set_crs(4326) %>%
   dplyr::select(!c("private_longitude", "private_latitude"))
 # Export to data
-usethis::use_data(bowen_inat, overwrite = TRUE)
+st_write(bowen_inat, here("data-2-processed/03_species", "inat.gpkg"), append = FALSE)
 
 #### Creating raster with iNaturalist observation counts per cell ####
 # Matches the Zonation raster cells
@@ -28,5 +28,5 @@ bowen_inat_vect <- bowen_inat %>%
 bowen_inat_count_rast <- terra::rasterize(bowen_inat_vect, bowen_mask, fun = "count") %>%
   mask(bowen_mask) # Mask to cells with Zonation values
 # Export to inst/extdata
-writeRaster(bowen_inat_count_rast, "inst/extdata/4_people/bowen_inat.tif", overwrite = T)
+writeRaster(bowen_inat_count_rast, here("data-2-processed/03_species", "inat.tif"), overwrite = T)
 
