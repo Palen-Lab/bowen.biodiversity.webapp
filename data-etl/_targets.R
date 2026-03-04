@@ -87,7 +87,7 @@ list(
   ## TODO: manual step, move this to post Zonation calculation
   tar_target(pa_candidates_path, here("data-3-outputs/7_protected_areas/new_protected_areas.gpkg"), format = "file"),
   tar_target(pa_candidates, load_pa_candidates(pa_candidates_path, project_crs)),
-  tar_target(pa_candidates_upload, upload_gdrive(pa_candidates, pa_candidates_path, drive_folder_id_values), format = "file"),
+  tar_target(pa_candidates_upload, upload_gdrive(pa_candidates, pa_candidates_path, "1NXFNGKnioc1S-MJI6qZlweQBBoh_Bbvr"), format = "file"),
 
   ## Crown (Public) Land
   tar_target(crown_path, here("data-1-raw/datasets/protectedareas/Crown-Land-JD.gpkg"), format = "file"),
