@@ -26,32 +26,33 @@ tar_option_set(
 tar_source()
 
 #### Google Drive upload ####
-drive_folder_id_annotated <- "1mi0iC0OKSJ-x3nC0AI0tZjpJy_yN7-JJ"
+drive_folder_id_annotated   <- "1mi0iC0OKSJ-x3nC0AI0tZjpJy_yN7-JJ"
 drive_folder_id_unannotated <- "1XkDA2Oc4zNQquNM3MbNV9To7GyE8BKA8"
+drive_folder_id_rasters     <- ""  # TODO: set Google Drive folder ID for raster outputs
 #### Output directories ####
 output_dir <- here("output-figures/data-atlas")
 output_dir_annotated <- here(output_dir, "annotated")
 output_dir_unannotated <- here(output_dir, "unannotated")
 
 list(
-  # ── Phase 0: Load Constants ────────────────────────────────────────────────────
+  # Phase 0: Load Constants 
   tar_target(project_crs, load_project_crs()),
 
-  # # ── Phase 1: Load Foundation Layers ────────────────────────────────────────────────────────
+  # Phase 1: Load Foundation Layers 
   tar_target(boundary,  load_boundary(project_crs)),
   tar_target(shoreline, load_shoreline(project_crs)),
 
-  # SpatRaster — stored natively via geotargets
+  ## SpatRaster — stored natively via geotargets
   tar_terra_rast(mask, create_mask(shoreline, zoning, project_crs)),
 
   tar_target(ocean_sf,  create_ocean(mask, shoreline)),
   tar_target(roads,     load_roads(project_crs)),
   tar_target(trails,    load_trails(project_crs)),
 
-  # # ── Phase 2: Load Landuse ───────────────────────────────────────────────────
+  # Phase 2: Load Landuse 
   tar_target(zoning, load_zoning(project_crs)),
 
-  # # Protected Areas
+  ## Protected Areas
   tar_target(pa, load_protected_areas(project_crs)),
   tar_target(pa_export, {
     pa %>%
@@ -60,19 +61,19 @@ list(
   }, format = "file"),
   tar_target(dissolved_pa, dissolve_protected_areas(pa)),
   # tar_target(ogma,                     load_ogma(project_crs)),
-  # # TODO: manual step, move this to post Zonation calculation
+  ## TODO: manual step, move this to post Zonation calculation
   tar_target(pa_candidates, load_pa_candidates(project_crs)),
 
-  # # Public Lands
+  ## Public Lands
   tar_target(crown, load_crown(project_crs)),
   tar_target(unprotected_crown, create_unprotected_crown(crown, dissolved_pa)),
 
-  # # Private Lands
+  ## Private Lands
   tar_target(parcelmap, load_parcelmap(project_crs)),
   tar_target(privateland, create_privateland(parcelmap, dissolved_pa)),
 
-  # # ── Phase 3: Load Species ──────────────────────────────────────────────────────
-  # # iNaturalist
+  # Phase 3: Load Species 
+  ## iNaturalist
   # # Track the raw iNat zip by file hash — re-runs if the export is updated
   # tar_target(inat_raw, here::here("data-1-raw/datasets/inat/observations-610962.csv.zip"),
   #            format = "file"),
@@ -84,15 +85,25 @@ list(
   # # SpatRaster of SDMs masked to Bowen Island
   # # tar_terra_rast(),
 
-  # # ── Phase 4: Load Habitats ─────────────────────────────────────────────────────
-  # # Whitehead consultant datasets — written to data-2-processed/04_habitats/
+  # Phase 4: Load Habitats 
+  ## Whitehead consultant datasets — written to data-2-processed/04_habitats/
   # tar_target(ponds_wc,        process_whitehead_ponds(),    format = "file"),
   # tar_target(wetlands_wc,     process_whitehead_wetlands(), format = "file"),
   # tar_target(fish_streams_wc, process_whitehead_fish(),     format = "file"),
 
-  #### Phase 5: Conservation Value ####
-  # Use Zonation
+  # Phase 5: Conservation Value
+  ## Use Zonation
   tar_terra_rast(rankmap, load_rankmap(project_crs)),
+  ## Upload Zonation Raster to Google Drive
+  tar_target(
+    rankmap_upload,
+    upload_gdrive_rast(
+      rankmap,
+      here("data-3-outputs/5_values/rankmap.tif"),
+      drive_folder_id_rasters
+    ),
+    format = "file"
+  ),
 
   #### Output Figures ####
   # Base map
