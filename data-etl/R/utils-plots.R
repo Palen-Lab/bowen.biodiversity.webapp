@@ -398,28 +398,6 @@ higher_res_edges <- function(raster_layer) {
 }
 
 
-ggsave_drive <- function(file_path, plot, drive_folder_id, ...) {
-  plot_width = 9
-  plot_height = 12
-  plot_res = 300
-
-  ggplot2::ggsave(
-    file_path, 
-    plot, 
-    width = plot_width,
-    height = plot_height,
-    units = "in",
-    res = plot_res,
-    device = ragg::agg_png,
-    ...)
-  googledrive::drive_put(
-    media = file_path,
-    path = googledrive::as_id(drive_folder_id),
-    name = basename(file_path)
-  )
-  invisible(file_path)
-}
-
 #' @import terra
 template_plot <- function(mask, ocean_sf, basemap) {
   #### Define plot extent ####

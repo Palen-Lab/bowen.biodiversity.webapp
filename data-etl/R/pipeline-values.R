@@ -1,5 +1,5 @@
-load_rankmap <- function(project_crs) {
-  here("data-3-outputs/5_values/rankmap.tif") %>%
+load_rankmap <- function(filepath, project_crs) {
+  filepath %>%
     rast() %>%
     project(project_crs)
 }

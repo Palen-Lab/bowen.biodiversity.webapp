@@ -28,7 +28,6 @@ tar_source()
 #### Google Drive upload ####
 drive_folder_id_annotated   <- "1mi0iC0OKSJ-x3nC0AI0tZjpJy_yN7-JJ"
 drive_folder_id_unannotated <- "1XkDA2Oc4zNQquNM3MbNV9To7GyE8BKA8"
-drive_folder_id_rasters     <- ""  # TODO: set Google Drive folder ID for raster outputs
 #### Output directories ####
 output_dir <- here("output-figures/data-atlas")
 output_dir_annotated <- here(output_dir, "annotated")
@@ -93,14 +92,18 @@ list(
 
   # Phase 5: Conservation Value
   ## Use Zonation
-  tar_terra_rast(rankmap, load_rankmap(project_crs)),
+  tar_target(rankmap_filepath, {here("data-3-outputs/5_values/rankmap.tif")}),
+  ## TODO: run Zonation through function 
+  tar_terra_rast(rankmap, load_rankmap(rankmap_filepath, project_crs)),
   ## Upload Zonation Raster to Google Drive
+  tar_target(drive_folder_id_values, {"1pYZjm8dyazPm8lvZCAXn46RT0Rx_4w5L"}),
   tar_target(
     rankmap_upload,
-    upload_gdrive_rast(
+    upload_gdrive(
       rankmap,
-      here("data-3-outputs/5_values/rankmap.tif"),
-      drive_folder_id_rasters
+      rankmap_filepath,
+      drive_folder_id_values,
+      name = "conservation_values.tif"
     ),
     format = "file"
   ),
