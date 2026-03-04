@@ -145,7 +145,7 @@ list(
   # 7: LAND MANAGEMENT ####
 
   ## Protected Areas: Top 30% Biodiversity Values
-  
+  tar_target(pa_top30_coverage, compute_pa_top30_coverage(pa, rankmap)),
 
   ## Land Ownership / Authority
   tar_terra_rast(land_ownership_rast, create_land_ownership_rast(pa, unprotected_crown, privateland, rankmap)),
@@ -305,6 +305,32 @@ list(
     format = "file"
   ),
   tar_target(biod_val_parcel_unannotated_upload, upload_gdrive(biod_val_parcel_unannotated, biod_val_parcel_unannotated, drive_folder_id_unannotated), format = "file"),
+
+  # Protected Areas: Top 30% Biodiversity Values
+  tar_target(
+    pa_top30_annotated,
+    {
+      tmpl <- template_plot(mask, ocean_sf, basemap)
+      overlay <- template_plot_overlay(ocean_sf, trails, roads)
+      p <- protected_areas_top30_plot(rankmap, pa, ocean_sf, tmpl, overlay)
+      path <- here(output_dir_annotated, "7_3_protected_areas_top30.png")
+      ggsave_template(path, add_annotation(p))
+    },
+    format = "file"
+  ),
+  tar_target(pa_top30_annotated_upload, upload_gdrive(pa_top30_annotated, pa_top30_annotated, drive_folder_id_annotated), format = "file"),
+  tar_target(
+    pa_top30_unannotated,
+    {
+      tmpl <- template_plot(mask, ocean_sf, basemap)
+      overlay <- template_plot_overlay(ocean_sf, trails, roads)
+      p <- protected_areas_top30_plot(rankmap, pa, ocean_sf, tmpl, overlay)
+      path <- here(output_dir_unannotated, "7_3_protected_areas_top30_no_annotation.png")
+      ggsave_template(path, remove_annotation(p))
+    },
+    format = "file"
+  ),
+  tar_target(pa_top30_unannotated_upload, upload_gdrive(pa_top30_unannotated, pa_top30_unannotated, drive_folder_id_unannotated), format = "file"),
 
   # Candidate Protected Areas
   tar_target(

@@ -259,6 +259,30 @@ create_land_ownership_rast <- function(pa, unprotected_crown, privateland, rankm
     terra::as.factor()
 }
 
+# Returns the fraction of top-30% biodiversity cells covered by protected areas.
+compute_pa_top30_coverage <- function(pa, rankmap) {
+  rankmap_top30 <- rankmap %>% remove_by_quantile(0.7)
+  rankmap_top30_mask <- rankmap_top30 %>%
+    terra::not.na() %>%
+    terra::classify(cbind(FALSE, NA))
+
+  pa_rast <- pa %>%
+    sf::st_make_valid() %>%
+    sf::st_union() %>%
+    terra::vect() %>%
+    terra::project(rankmap_top30_mask) %>%
+    terra::rasterize(rankmap_top30, cover = TRUE)
+
+  n_covered <- (pa_rast * rankmap_top30_mask) %>% terra::global("sum", na.rm = TRUE)
+  n_total   <- rankmap_top30_mask %>% terra::global("sum", na.rm = TRUE)
+
+  data.frame(
+    n_cells_top30bv           = n_total$sum,
+    n_cells_top30bv_protected = n_covered$sum,
+    pct_top30bv_protected     = n_covered$sum / n_total$sum
+  )
+}
+
 # Returns a named list of cell counts and percentages for each land ownership
 # category: private (1), protected (2), crown (3), mixed (4).
 compute_land_ownership_stats <- function(land_ownership_rast) {

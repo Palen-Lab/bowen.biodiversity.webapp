@@ -6,12 +6,11 @@
 #' pronounced in produced maps.
 #'
 #' @param raster_layer rast
+#' @param ocean_sf sf; Bowen Island ocean polygon used for coastline masking
 #' @returns rast
-higher_res_edges <- function(raster_layer) {
-  terra::disagg(
-    raster_layer,
-    fact = 10
-  ) %>% terra::mask(vect(bowen_ocean_sf), inverse = T)
+higher_res_edges <- function(raster_layer, ocean_sf) {
+  terra::disagg(raster_layer, fact = 10) %>%
+    terra::mask(terra::vect(ocean_sf), inverse = TRUE)
 }
 
 

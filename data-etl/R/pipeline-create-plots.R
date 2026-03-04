@@ -198,8 +198,6 @@ parcel_biodiversity_plot <- function(biod_val_parcel, tmpl, overlay) {
 
 
 # Wildfire Vulnerability Index: Top 30% Biodiversity Value overlapping Top 30% WVI
-# ocean_sf is passed explicitly because higher_res_edges() references bowen_ocean_sf
-# as a global, which is not available inside a targets execution.
 wildfire_vulnerability_top30_plot <- function(wvi, rankmap, ocean_sf, tmpl, overlay) {
   top30_wvi <- wvi %>%
     terra::project("EPSG: 3857") %>%
@@ -218,9 +216,7 @@ wildfire_vulnerability_top30_plot <- function(wvi, rankmap, ocean_sf, tmpl, over
   rankmap_mask_re <- rankmap_top30_mask %>%
     terra::resample(top30_wvi)
 
-  grey_rast <- rankmap_mask_re %>%
-    terra::disagg(fact = 10) %>%
-    terra::mask(terra::vect(ocean_sf), inverse = TRUE) %>%
+  grey_rast <- higher_res_edges(rankmap_mask_re, ocean_sf) %>%
     as.factor()
 
   fire_biod_val <- terra::mask(top30_wvi, rankmap_mask_re)
@@ -261,14 +257,65 @@ wildfire_vulnerability_top30_plot <- function(wvi, rankmap, ocean_sf, tmpl, over
     overlay
 }
 
+# Protected Areas: Top 30% Biodiversity Values
+protected_areas_top30_plot <- function(rankmap, pa, ocean_sf, tmpl, overlay) {
+  rankmap_top30 <- rankmap %>%
+    remove_by_quantile(0.7) %>%
+    terra::project("EPSG: 3857") %>%
+    higher_res_edges(ocean_sf)
+
+  union_pa <- pa %>%
+    sf::st_make_valid() %>%
+    sf::st_union()
+
+  protectedareas_colour <- "purple"
+
+  tmpl +
+    tidyterra::geom_spatraster(data = rankmap_top30) +
+    colorspace::scale_fill_continuous_sequential(
+      na.value = NA,
+      palette = "ag_GrnYl",
+      limits = c(0, 1),
+      breaks = c(0, 1),
+      labels = c("Lower", "Higher"),
+      guide = ggplot2::guide_colourbar(
+        order = 1,
+        nbin = 100,
+        draw.ulim = FALSE,
+        draw.llim = FALSE,
+        title.position = "top"
+      ),
+      name = "Relative Biodiversity"
+    ) +
+    ggnewscale::new_scale_fill() +
+    ggnewscale::new_scale_colour() +
+    ggplot2::geom_sf(
+      data = union_pa,
+      aes(fill = protectedareas_colour, color = protectedareas_colour),
+      alpha = 0.1,
+      linewidth = 0.5
+    ) +
+    ggplot2::scale_fill_identity(
+      name = "",
+      breaks = c(protectedareas_colour),
+      labels = c("Protected Areas"),
+      guide = "legend"
+    ) +
+    ggplot2::scale_colour_identity(
+      name = "",
+      breaks = c(protectedareas_colour),
+      labels = c("Protected Areas"),
+      guide = "legend"
+    ) +
+    overlay
+}
+
 # Land Ownership / Authority
-# ocean_sf passed explicitly to replace higher_res_edges() global reference.
 land_ownership_plot <- function(land_ownership_rast, ocean_sf, tmpl, overlay) {
   comb_rast_for_map <- land_ownership_rast %>%
     terra::as.factor() %>%
     terra::project("EPSG: 3857") %>%
-    terra::disagg(fact = 10) %>%
-    terra::mask(terra::vect(ocean_sf), inverse = TRUE) %>%
+    higher_res_edges(ocean_sf) %>%
     terra::as.factor()
 
   authority_factor_lvls <- c(1, 2, 3, 4)
