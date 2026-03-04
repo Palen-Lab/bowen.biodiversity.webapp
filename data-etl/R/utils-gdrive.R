@@ -1,22 +1,13 @@
-ggsave_drive <- function(file_path, plot, drive_folder_id, ...) {
-  plot_width = 9
-  plot_height = 12
-  plot_res = 300
-
+ggsave_template <- function(file_path, plot, ...) {
   ggplot2::ggsave(
     file_path,
     plot,
-    width = plot_width,
-    height = plot_height,
+    width = 9,
+    height = 12,
     units = "in",
-    res = plot_res,
+    res = 300,
     device = ragg::agg_png,
     ...)
-  googledrive::drive_put(
-    media = file_path,
-    path  = googledrive::as_id(drive_folder_id),
-    name  = basename(file_path)
-  )
   invisible(file_path)
 }
 

@@ -36,6 +36,7 @@ list(
   tar_target(drive_folder_id_threats, {"1eA-6hmVSRO8ZuQMdIlQ5t4XF2xYEnMs3"}),
   tar_target(drive_folder_id_annotated, {"1mi0iC0OKSJ-x3nC0AI0tZjpJy_yN7-JJ"}),
   tar_target(drive_folder_id_unannotated, {"1XkDA2Oc4zNQquNM3MbNV9To7GyE8BKA8"}),
+  tar_target(drive_folder_id_pa_candidates, {"1NXFNGKnioc1S-MJI6qZlweQBBoh_Bbvr"}),
 
   #### Plot Output Directories ####
   tar_target(output_dir, here("output-figures/data-atlas")),
@@ -87,7 +88,7 @@ list(
   ## TODO: manual step, move this to post Zonation calculation
   tar_target(pa_candidates_path, here("data-3-outputs/7_protected_areas/new_protected_areas.gpkg"), format = "file"),
   tar_target(pa_candidates, load_pa_candidates(pa_candidates_path, project_crs)),
-  tar_target(pa_candidates_upload, upload_gdrive(pa_candidates, pa_candidates_path, "1NXFNGKnioc1S-MJI6qZlweQBBoh_Bbvr"), format = "file"),
+  tar_target(pa_candidates_upload, upload_gdrive(pa_candidates, pa_candidates_path, drive_folder_id_pa_candidates), format = "file"),
 
   ## Crown (Public) Land
   tar_target(crown_path, here("data-1-raw/datasets/protectedareas/Crown-Land-JD.gpkg"), format = "file"),
@@ -103,7 +104,10 @@ list(
 
   ## Subdivision Potential
   tar_target(subdiv_path, here("data-1-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx"), format = "file"),
-  tar_target(parcelmap_subdiv, parcel_subdiv(parcelmap, subdiv_path)),
+  tar_target(parcelmap_subdiv, create_parcel_subdiv(parcelmap, subdiv_path)),
+
+  ## Biodiversity Value by Subdividable Parcels
+  tar_target(biod_val_parcel, compute_parcel_biod_val(parcelmap_subdiv, rankmap)),
 
   ## Wildland Urban Interface
   tar_target(wui_path, here("data-1-raw/datasets/bc_wui/wui.gpkg"), format = "file"),
@@ -155,23 +159,25 @@ list(
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- wvi_plot(fire_index, tmpl, overlay)
+      p <- wildfire_vulnerability_plot(fire_index, tmpl, overlay)
       path <- here(output_dir_annotated, "6_3_wildfire_vulnerability.png")
-      ggsave_drive(path, add_annotation(p), drive_folder_id_annotated)
+      ggsave_template(path, add_annotation(p))
     },
     format = "file"
   ),
+  tar_target(fire_index_plot_annotated_upload, upload_gdrive(fire_index_plot_annotated, fire_index_plot_annotated, drive_folder_id_annotated), format = "file"),
   tar_target(
     fire_index_plot_unannotated,
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- wvi_plot(fire_index, tmpl, overlay)
+      p <- wildfire_vulnerability_plot(fire_index, tmpl, overlay)
       path <- here(output_dir_unannotated, "6_3_wildfire_vulnerability_no_annotation.png")
-      ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
+      ggsave_template(path, remove_annotation(p))
     },
     format = "file"
   ),
+  tar_target(fire_index_plot_unannotated_upload, upload_gdrive(fire_index_plot_unannotated, fire_index_plot_unannotated, drive_folder_id_unannotated), format = "file"),
 
   # Wildfire Vulnerability Index: Top 30% Biodiversity Value
   tar_target(
@@ -179,23 +185,25 @@ list(
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- wvi_top30_plot(fire_index, rankmap, ocean_sf, tmpl, overlay)
+      p <- wildfire_vulnerability_top30_plot(fire_index, rankmap, ocean_sf, tmpl, overlay)
       path <- here(output_dir_annotated, "6_4_wildfire_vulnerability_top30.png")
-      ggsave_drive(path, add_annotation(p), drive_folder_id_annotated)
+      ggsave_template(path, add_annotation(p))
     },
     format = "file"
   ),
+  tar_target(wvi_top30_annotated_upload, upload_gdrive(wvi_top30_annotated, wvi_top30_annotated, drive_folder_id_annotated), format = "file"),
   tar_target(
     wvi_top30_unannotated,
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- wvi_top30_plot(fire_index, rankmap, ocean_sf, tmpl, overlay)
+      p <- wildfire_vulnerability_top30_plot(fire_index, rankmap, ocean_sf, tmpl, overlay)
       path <- here(output_dir_unannotated, "6_4_wildfire_vulnerability_top30_no_annotation.png")
-      ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
+      ggsave_template(path, remove_annotation(p))
     },
     format = "file"
   ),
+  tar_target(wvi_top30_unannotated_upload, upload_gdrive(wvi_top30_unannotated, wvi_top30_unannotated, drive_folder_id_unannotated), format = "file"),
 
   # Wildland Urban Interface
   tar_target(
@@ -203,23 +211,25 @@ list(
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- wui_plot(wui, tmpl, overlay)
+      p <- wildland_urban_interface_plot(wui, tmpl, overlay)
       path <- here(output_dir_annotated, "6_5_wildland_urban_interface.png")
-      ggsave_drive(path, add_annotation(p), drive_folder_id_annotated)
+      ggsave_template(path, add_annotation(p))
     },
     format = "file"
   ),
+  tar_target(wui_annotated_upload, upload_gdrive(wui_annotated, wui_annotated, drive_folder_id_annotated), format = "file"),
   tar_target(
     wui_unannotated,
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- wui_plot(wui, tmpl, overlay)
+      p <- wildland_urban_interface_plot(wui, tmpl, overlay)
       path <- here(output_dir_unannotated, "6_5_wildland_urban_interface_no_annotation.png")
-      ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
+      ggsave_template(path, remove_annotation(p))
     },
     format = "file"
   ),
+  tar_target(wui_unannotated_upload, upload_gdrive(wui_unannotated, wui_unannotated, drive_folder_id_unannotated), format = "file"),
 
   # Subdivision Potential
   tar_target(
@@ -227,48 +237,51 @@ list(
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- subd_capacity_plot(parcelmap_subdiv, parcelmap, tmpl, overlay)
+      p <- subdivision_capacity_plot(parcelmap_subdiv, parcelmap, tmpl, overlay)
       path <- here(output_dir_annotated, "7_2_subdivision_potential.png")
-      ggsave_drive(path, add_annotation(p), drive_folder_id_annotated)
+      ggsave_template(path, add_annotation(p))
     },
     format = "file"
   ),
+  tar_target(subd_capacity_annotated_upload, upload_gdrive(subd_capacity_annotated, subd_capacity_annotated, drive_folder_id_annotated), format = "file"),
   tar_target(
     subd_capacity_unannotated,
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- subd_capacity_plot(parcelmap_subdiv, parcelmap, tmpl, overlay)
+      p <- subdivision_capacity_plot(parcelmap_subdiv, parcelmap, tmpl, overlay)
       path <- here(output_dir_unannotated, "7_2_subdivision_potential_no_annotation.png")
-      ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
+      ggsave_template(path, remove_annotation(p))
     },
     format = "file"
   ),
+  tar_target(subd_capacity_unannotated_upload, upload_gdrive(subd_capacity_unannotated, subd_capacity_unannotated, drive_folder_id_unannotated), format = "file"),
 
   # Biodiversity Values by Parcel
-  tar_target(biod_val_parcel, parcel_biod_val(parcelmap_subdiv, rankmap)),
   tar_target(
     biod_val_parcel_annotated,
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- biod_val_parcel_plot(biod_val_parcel, tmpl, overlay)
+      p <- parcel_biodiversity_plot(biod_val_parcel, tmpl, overlay)
       path <- here(output_dir_annotated, "7_1_parcel_biodiversity_values.png")
-      ggsave_drive(path, add_annotation(p), drive_folder_id_annotated)
+      ggsave_template(path, add_annotation(p))
     },
     format = "file"
   ),
+  tar_target(biod_val_parcel_annotated_upload, upload_gdrive(biod_val_parcel_annotated, biod_val_parcel_annotated, drive_folder_id_annotated), format = "file"),
   tar_target(
     biod_val_parcel_unannotated,
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
-      p <- biod_val_parcel_plot(biod_val_parcel, tmpl, overlay)
+      p <- parcel_biodiversity_plot(biod_val_parcel, tmpl, overlay)
       path <- here(output_dir_unannotated, "7_1_parcel_biodiversity_values_no_annotation.png")
-      ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
+      ggsave_template(path, remove_annotation(p))
     },
     format = "file"
   ),
+  tar_target(biod_val_parcel_unannotated_upload, upload_gdrive(biod_val_parcel_unannotated, biod_val_parcel_unannotated, drive_folder_id_unannotated), format = "file"),
 
   # Candidate Protected Areas
   tar_target(
@@ -278,10 +291,11 @@ list(
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
       p <- candidate_pa_plot(pa, pa_candidates, tmpl, overlay)
       path <- here(output_dir_annotated, "7_8_candidate_protected_areas.png")
-      ggsave_drive(path, add_annotation(p), drive_folder_id_annotated)
+      ggsave_template(path, add_annotation(p))
     },
     format = "file"
   ),
+  tar_target(candidate_pa_plot_annotated_upload, upload_gdrive(candidate_pa_plot_annotated, candidate_pa_plot_annotated, drive_folder_id_annotated), format = "file"),
   tar_target(
     candidate_pa_plot_unannotated,
     {
@@ -289,10 +303,11 @@ list(
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
       p <- candidate_pa_plot(pa, pa_candidates, tmpl, overlay)
       path <- here(output_dir_unannotated, "7_8_candidate_protected_areas_no_annotation.png")
-      ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
+      ggsave_template(path, remove_annotation(p))
     },
     format = "file"
   ),
+  tar_target(candidate_pa_plot_unannotated_upload, upload_gdrive(candidate_pa_plot_unannotated, candidate_pa_plot_unannotated, drive_folder_id_unannotated), format = "file"),
 
   # Land Ownership / Authority
   tar_terra_rast(
@@ -314,10 +329,11 @@ list(
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
       p <- land_ownership_plot(land_ownership_rast, ocean_sf, tmpl, overlay)
       path <- here(output_dir_annotated, "7_6_land_ownership.png")
-      ggsave_drive(path, add_annotation(p), drive_folder_id_annotated)
+      ggsave_template(path, add_annotation(p))
     },
     format = "file"
   ),
+  tar_target(land_ownership_annotated_upload, upload_gdrive(land_ownership_annotated, land_ownership_annotated, drive_folder_id_annotated), format = "file"),
   tar_target(
     land_ownership_unannotated,
     {
@@ -325,8 +341,9 @@ list(
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
       p <- land_ownership_plot(land_ownership_rast, ocean_sf, tmpl, overlay)
       path <- here(output_dir_unannotated, "7_6_land_ownership_no_annotation.png")
-      ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
+      ggsave_template(path, remove_annotation(p))
     },
     format = "file"
-  )
+  ),
+  tar_target(land_ownership_unannotated_upload, upload_gdrive(land_ownership_unannotated, land_ownership_unannotated, drive_folder_id_unannotated), format = "file")
 )

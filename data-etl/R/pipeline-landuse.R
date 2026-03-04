@@ -116,7 +116,7 @@ load_parcelmap <- function(parcelmap_path, project_crs) {
     filter(OBJECTID != 2096841) # Remove ferry route
 }
 
-parcel_subdiv <- function(parcelmap, subdiv_path) {
+create_parcel_subdiv <- function(parcelmap, subdiv_path) {
   #### Preparing layers for plotting ####
   # RR1 and RR2 (Rural Residential 1 and 2 Zoning)
   rr1_rr2 <- readxl::read_xlsx(subdiv_path, sheet = "RR1,RR2")
@@ -189,7 +189,7 @@ parcel_subdiv <- function(parcelmap, subdiv_path) {
   ocp_subdivision_parcelmap_fdr
 }
 
-parcel_biod_val <- function(parcelmap, rankmap) {
+compute_parcel_biod_val <- function(parcelmap, rankmap) {
   # Match parcelmap projection to the Zonation rast
   parcelmap_vect <- parcelmap %>%
     vect() %>%

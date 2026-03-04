@@ -1,10 +1,10 @@
 ## Example Candidate Locations for Protected Areas
-candidate_pa_plot <- function(pa, pa_candidates, template_plot, template_plot_overlay) {
+candidate_pa_plot <- function(pa, pa_candidates, tmpl, overlay) {
   #### Plotting ####
   protected_colour <- "purple"
   ogma_colour <- "#a1d76a"
   new_colour <- "orange"
-  template_plot +
+  tmpl +
   geom_sf(
     data = pa,
     aes(fill = protected_colour, color = protected_colour),
@@ -22,7 +22,7 @@ candidate_pa_plot <- function(pa, pa_candidates, template_plot, template_plot_ov
     breaks = c(protected_colour, new_colour),
     labels = c(
       "Existing Protected Areas",
-      "Candidate Protected Areas"
+      "Candidate Protected Areas (Crown Lands Only)"
     ),
     guide = guide_legend(order = 1)
   ) +
@@ -31,11 +31,11 @@ candidate_pa_plot <- function(pa, pa_candidates, template_plot, template_plot_ov
     breaks = c(protected_colour, new_colour),
     labels = c(
       "Existing Protected Areas",
-      "Candidate Protected Areas"
+      "Candidate Protected Areas (Crown Lands Only)"
     ),
     guide = guide_legend(order = 1)
   ) +
-  template_plot_overlay +
+  overlay +
   ggplot2::theme(
     legend.margin = margin(-9, 6, 6, 6),
     legend.key.width = ggplot2::unit(0.5, "cm"),
@@ -53,7 +53,7 @@ candidate_pa_plot <- function(pa, pa_candidates, template_plot, template_plot_ov
 }
 
 # Wildfire Vulnerability Index
-wvi_plot <- function(wvi, template_plot, template_plot_overlay) {
+wildfire_vulnerability_plot <- function(wvi, tmpl, overlay) {
   #### Preparing raster for plotting ####
   fire_index_mp <- wvi %>%
     project("EPSG: 3857") %>%
@@ -61,7 +61,7 @@ wvi_plot <- function(wvi, template_plot, template_plot_overlay) {
     terra::scale_linear()
   #### Plotting ####
   # TODO: change colour palette from cool to warm
-  template_plot +
+  tmpl +
     tidyterra::geom_spatraster(data = fire_index_mp) +
     colorspace::scale_fill_continuous_sequential(
       na.value = NA,
@@ -80,11 +80,11 @@ wvi_plot <- function(wvi, template_plot, template_plot_overlay) {
       ),
       name = "Wildfire Vulnerability Index"
     ) +
-    template_plot_overlay
+    overlay
 }
 
 # Wildland Urban Interface
-wui_plot <- function(wui, template_plot, template_plot_overlay) {
+wildland_urban_interface_plot <- function(wui, tmpl, overlay) {
   #### Prepare layers for plotting ####
   bowen_wui <- wui %>%
     select(Name, PSTA) %>%
@@ -105,7 +105,7 @@ wui_plot <- function(wui, template_plot, template_plot_overlay) {
   names(wui_factor_cols) <- wui_factor_lvls
 
   #### Plotting ####
-  template_plot +
+  tmpl +
     geom_sf(data = bowen_wui, aes(fill = WUI_PSTA), colour = NA) +
     scale_fill_manual(
       values = wui_factor_cols,
@@ -114,7 +114,7 @@ wui_plot <- function(wui, template_plot, template_plot_overlay) {
     ) +
     ggnewscale::new_scale_fill() +
     ggnewscale::new_scale_colour() +
-    template_plot_overlay +
+    overlay +
     ggplot2::theme(
       legend.margin = margin(-9, 6, 6, 6),
       legend.key.width = ggplot2::unit(0.5, "cm"),
@@ -132,8 +132,8 @@ wui_plot <- function(wui, template_plot, template_plot_overlay) {
 }
 
 # Subdivision Capacity
-subd_capacity_plot <- function(parcelmap_subdiv, parcelmap, template_plot, template_plot_overlay) {
-  template_plot +
+subdivision_capacity_plot <- function(parcelmap_subdiv, parcelmap, tmpl, overlay) {
+  tmpl +
     # geom_sf(
     #   data = parcelmap,
     #   aes(geometry = geom, fill = "grey"),
@@ -165,12 +165,12 @@ subd_capacity_plot <- function(parcelmap_subdiv, parcelmap, template_plot, templ
         # title.hjust = 0.5
       )
     ) +
-    template_plot_overlay
+    overlay
 }
 
 # Biodiversity Value by Parcel
-biod_val_parcel_plot <- function(biod_val_parcel, template_plot, template_plot_overlay) {
-  template_plot +
+parcel_biodiversity_plot <- function(biod_val_parcel, tmpl, overlay) {
+  tmpl +
     geom_sf(
       data = biod_val_parcel,
       aes(fill = rankmap),
@@ -193,14 +193,14 @@ biod_val_parcel_plot <- function(biod_val_parcel, template_plot, template_plot_o
         # title.hjust = 0.5
       )
     ) +
-    template_plot_overlay
+    overlay
 }
 
 
 # Wildfire Vulnerability Index: Top 30% Biodiversity Value overlapping Top 30% WVI
 # ocean_sf is passed explicitly because higher_res_edges() references bowen_ocean_sf
 # as a global, which is not available inside a targets execution.
-wvi_top30_plot <- function(wvi, rankmap, ocean_sf, template_plot, template_plot_overlay) {
+wildfire_vulnerability_top30_plot <- function(wvi, rankmap, ocean_sf, tmpl, overlay) {
   top30_wvi <- wvi %>%
     terra::project("EPSG: 3857") %>%
     terra::subst(4294967296, NA) %>%
@@ -226,7 +226,7 @@ wvi_top30_plot <- function(wvi, rankmap, ocean_sf, template_plot, template_plot_
   fire_biod_val <- terra::mask(top30_wvi, rankmap_mask_re)
   fire_range    <- as.numeric(terra::minmax(fire_biod_val))
 
-  template_plot +
+  tmpl +
     tidyterra::geom_spatraster(data = grey_rast) +
     ggplot2::scale_fill_manual(
       values = c("grey40"),
@@ -258,12 +258,12 @@ wvi_top30_plot <- function(wvi, rankmap, ocean_sf, template_plot, template_plot_
       ),
       name = "Wildfire Vulnerability Index"
     ) +
-    template_plot_overlay
+    overlay
 }
 
 # Land Ownership / Authority
 # ocean_sf passed explicitly to replace higher_res_edges() global reference.
-land_ownership_plot <- function(land_ownership_rast, ocean_sf, template_plot, template_plot_overlay) {
+land_ownership_plot <- function(land_ownership_rast, ocean_sf, tmpl, overlay) {
   comb_rast_for_map <- land_ownership_rast %>%
     terra::as.factor() %>%
     terra::project("EPSG: 3857") %>%
@@ -275,9 +275,9 @@ land_ownership_plot <- function(land_ownership_rast, ocean_sf, template_plot, te
   authority_factor_cols <- c("brown", "purple", "lightgreen", "blue")
   names(authority_factor_cols) <- authority_factor_lvls
 
-  # TODO: investigate why gaps between the land ownership types appear 
+  # TODO: investigate why gaps between the land ownership types appear
   # When terra::plot(), the comb_rast_for_map looks as expected
-  template_plot +
+  tmpl +
     tidyterra::geom_spatraster(
       data = comb_rast_for_map,
       aes(fill = layer),
@@ -293,7 +293,7 @@ land_ownership_plot <- function(land_ownership_rast, ocean_sf, template_plot, te
       na.translate = FALSE,
       guide = guide_legend(order = 1)
     ) +
-    template_plot_overlay +
+    overlay +
     ggplot2::theme(
       legend.margin = margin(-9, 6, 6, 6),
       legend.key.width = ggplot2::unit(0.5, "cm"),
@@ -309,19 +309,3 @@ land_ownership_plot <- function(land_ownership_rast, ocean_sf, template_plot, te
       legend.box.just = "left"
     )
 }
-
-#### Loading layers ####
-# bowen_pa <- here(
-#   "output-data/7_protected_areas/existing_protected_areas.gpkg"
-# ) %>%
-#   st_read()
-# bowen_ogma <- ogma %>%
-#   st_transform(st_crs(bowen_pa))
-# bowen_new_pa <- here(
-#   "output-data/7_protected_areas/new_protected_areas.gpkg"
-# ) %>%
-#   st_read() %>%
-#   st_transform(st_crs(bowen_pa))
-#### Statistics ####
-# TODO: calculate % of orange protential protected areas coverage of bowen island
-
