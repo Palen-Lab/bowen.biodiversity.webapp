@@ -103,6 +103,7 @@ list(
 
   ## Subdivision Potential
   tar_target(subdiv_path, here("data-1-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx"), format = "file"),
+  tar_target(parcelmap_subdiv, parcel_subdiv(parcelmap, subdiv_path)),
 
   ## Wildland Urban Interface
   tar_target(wui_path, here("data-1-raw/datasets/bc_wui/wui.gpkg"), format = "file"),
@@ -221,7 +222,6 @@ list(
   ),
 
   # Subdivision Potential
-  tar_target(parcelmap_subdiv, parcel_subdiv(parcelmap, subdiv_path)),
   tar_target(
     subd_capacity_annotated,
     {
@@ -239,7 +239,7 @@ list(
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
       p <- subd_capacity_plot(parcelmap_subdiv, parcelmap, tmpl, overlay)
-      path <- here(output_dir_annotated, "7_2_subdivision_potential_no_annotation.png")
+      path <- here(output_dir_unannotated, "7_2_subdivision_potential_no_annotation.png")
       ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
     },
     format = "file"
@@ -264,7 +264,7 @@ list(
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
       p <- biod_val_parcel_plot(biod_val_parcel, tmpl, overlay)
-      path <- here(output_dir_annotated, "7_1_parcel_biodiversity_values_no_annotation.png")
+      path <- here(output_dir_unannotated, "7_1_parcel_biodiversity_values_no_annotation.png")
       ggsave_drive(path, remove_annotation(p), drive_folder_id_unannotated)
     },
     format = "file"

@@ -1,11 +1,8 @@
 # Pipeline functions: Phase 2 — Landuse Data
 # Zoning, protected areas, parcels, private land
 
-load_zoning <- function(project_crs) {
-  sf::st_read(
-    here::here("data-1-raw/datasets/zoning/BM_ZONING.shp"),
-    quiet = TRUE
-  ) %>%
+load_zoning <- function(zoning_path, project_crs) {
+  sf::st_read(zoning_path, quiet = TRUE) %>%
     sf::st_transform(crs = project_crs)
 }
 
@@ -87,8 +84,7 @@ load_ogma <- function(project_crs) {
   ogma
 }
 
-load_crown <- function(project_crs) {
-  crown_path <- here::here("data-1-raw/datasets/protectedareas/Crown-Land-JD.gpkg")
+load_crown <- function(crown_path, project_crs) {
   crown <- sf::st_read(crown_path, quiet = TRUE) %>%
     sf::st_transform(project_crs) %>%
     dplyr::select(name = parkname)
@@ -108,9 +104,9 @@ create_unprotected_crown <- function(crown, dissolved_protectedareas) {
   unprotected_crown[!rownames(unprotected_crown) %in% c("1", "74"), ]
 }
 
-load_parcelmap <- function(project_crs) {
+load_parcelmap <- function(parcelmap_path, project_crs) {
   sf::st_read(
-    here::here("data-1-raw/datasets/parcelmap_bowen/parcelmap_bowen.gpkg"),
+    parcelmap_path,
     layer = "pmbc_parcel_fabric_poly_svw",
     quiet = TRUE
   ) %>%
@@ -120,23 +116,14 @@ load_parcelmap <- function(project_crs) {
     filter(OBJECTID != 2096841) # Remove ferry route
 }
 
-parcel_subdiv <- function(parcelmap) {
+parcel_subdiv <- function(parcelmap, subdiv_path) {
   #### Preparing layers for plotting ####
   # RR1 and RR2 (Rural Residential 1 and 2 Zoning)
-  rr1_rr2 <- here(
-    "data-1-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx"
-  ) %>%
-  readxl::read_xlsx(sheet = "RR1,RR2")
+  rr1_rr2 <- readxl::read_xlsx(subdiv_path, sheet = "RR1,RR2")
   # RR3 (Rural Residential 3 Zoning)
-  rr3 <- here(
-    "data-1-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx"
-  ) %>%
-  readxl::read_xlsx(sheet = "RR3 properties")
+  rr3 <- readxl::read_xlsx(subdiv_path, sheet = "RR3 properties")
   # SR (Settlement Residential zoning)
-  sr <- here(
-    "data-1-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx"
-  ) %>%
-  readxl::read_xlsx(sheet = "SR properties")
+  sr <- readxl::read_xlsx(subdiv_path, sheet = "SR properties")
   # CD (Comprehensive Development Zones)
   ## Deal with these separately, need to do some wrangling
   ocp_subdivision <- rbind(rr1_rr2, rr3, sr) %>%
@@ -189,10 +176,15 @@ parcel_subdiv <- function(parcelmap) {
         objectid
       )
     )
-  # Remove outlier and duplicate PID
+  
   unique(ocp_subdivision_parcelmap_fd$PID_NUMBER) %>% length() # 1755, so one fewer than than nrows
   ocp_subdivision_parcelmap_fdr <- ocp_subdivision_parcelmap_fd %>%
+    # Remove outlier
     filter(`Can Subdivide?` != 46)
+  
+  # Remove VAS2806
+  # Not subdividable, average plot size is too small across strata properties for subdivision
+  ocp_subdivision_parcelmap_fdr <- ocp_subdivision_parcelmap_fdr[!stringr::str_detect(ocp_subdivision_parcelmap_fdr$legaldescription, "VAS2806" ),]
 
   ocp_subdivision_parcelmap_fdr
 }
@@ -229,12 +221,9 @@ create_privateland <- function(parcelmap_bowen, dissolved_protectedareas) {
     rmapshaper::ms_simplify(keep = 0.03, keep_shapes = FALSE)
 }
 
-load_pa_candidates <- function(project_crs) {
-  here(
-    "data-3-outputs/7_protected_areas/new_protected_areas.gpkg"
-  ) %>%
-    st_read() %>%
-    st_transform(st_crs(project_crs))
+load_pa_candidates <- function(pa_candidates_path, project_crs) {
+  sf::st_read(pa_candidates_path, quiet = TRUE) %>%
+    sf::st_transform(st_crs(project_crs))
 }
 
 # Creates a categorical raster of land ownership/authority:

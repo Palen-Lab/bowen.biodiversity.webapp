@@ -9,14 +9,14 @@ load_project_crs <- function() {
   "+proj=aea +lat_0=45 +lon_0=-126 +lat_1=50 +lat_2=58.5 +x_0=1000000 +y_0=0 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs"
 }
 
-load_boundary <- function(project_crs) {
-  sf::st_read(here::here("data-1-raw/datasets/boundary"), quiet = TRUE) %>%
+load_boundary <- function(boundary_path, project_crs) {
+  sf::st_read(boundary_path, quiet = TRUE) %>%
     sf::st_transform(project_crs)
 }
 
-load_shoreline <- function(project_crs) {
+load_shoreline <- function(shoreline_path, project_crs) {
   sf::st_read(
-    here::here("data-1-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"),
+    shoreline_path,
     layer = "bowen_island_shoreline_w_hutt__bowen_islands",
     quiet = TRUE
   ) %>%
@@ -63,18 +63,12 @@ create_ocean <- function(mask, shoreline) {
   )
 }
 
-load_roads <- function(project_crs) {
-  sf::st_read(
-    here::here("data-1-raw/datasets/roads/Bowen_Road_Inventory.shp"),
-    quiet = TRUE
-  ) %>%
+load_roads <- function(roads_path, project_crs) {
+  sf::st_read(roads_path, quiet = TRUE) %>%
     sf::st_transform(project_crs)
 }
 
-load_trails <- function(project_crs) {
-  sf::st_read(
-    here::here("data-1-raw/datasets/trails/Trails.shp"),
-    quiet = TRUE
-  ) %>%
+load_trails <- function(trails_path, project_crs) {
+  sf::st_read(trails_path, quiet = TRUE) %>%
     sf::st_transform(project_crs)
 }
