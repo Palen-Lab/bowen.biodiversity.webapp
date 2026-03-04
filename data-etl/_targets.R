@@ -36,14 +36,14 @@ list(
   tar_target(drive_folder_id_threats, {"1eA-6hmVSRO8ZuQMdIlQ5t4XF2xYEnMs3"}),
   tar_target(drive_folder_id_annotated, {"1mi0iC0OKSJ-x3nC0AI0tZjpJy_yN7-JJ"}),
   tar_target(drive_folder_id_unannotated, {"1XkDA2Oc4zNQquNM3MbNV9To7GyE8BKA8"}),
-  tar_target(drive_folder_id_pa_candidates, {"1NXFNGKnioc1S-MJI6qZlweQBBoh_Bbvr"}),
+  tar_target(drive_folder_id_land_management, {"1c7T_1GLAAylUPByJRZhSnWNg-kyH2UNq"}), 
 
   #### Plot Output Directories ####
   tar_target(output_dir, here("output-figures/data-atlas")),
   tar_target(output_dir_annotated, here(output_dir, "annotated")),
   tar_target(output_dir_unannotated, here(output_dir, "unannotated")),
 
-  # Phase 1: Foundation Layers
+  # 1: BASE ####
   ## format = "file" on path targets triggers downstream re-runs on file changes
   ## Boundary
   tar_target(boundary_path, here("data-1-raw/datasets/boundary/Bowen_boundary.shp"), format = "file"),
@@ -88,7 +88,7 @@ list(
   ## TODO: manual step, move this to post Zonation calculation
   tar_target(pa_candidates_path, here("data-3-outputs/7_protected_areas/new_protected_areas.gpkg"), format = "file"),
   tar_target(pa_candidates, load_pa_candidates(pa_candidates_path, project_crs)),
-  tar_target(pa_candidates_upload, upload_gdrive(pa_candidates, pa_candidates_path, drive_folder_id_pa_candidates), format = "file"),
+  tar_target(pa_candidates_upload, upload_gdrive(pa_candidates, pa_candidates_path, drive_folder_id_land_management, name = "candidate_protected_areas.gpkg"), format = "file"),
 
   ## Crown (Public) Land
   tar_target(crown_path, here("data-1-raw/datasets/protectedareas/Crown-Land-JD.gpkg"), format = "file"),
@@ -114,29 +114,54 @@ list(
   tar_target(wui, {st_read(wui_path, quiet = TRUE)}),
   tar_target(wui_upload, upload_gdrive(wui, wui_path, drive_folder_id_threats), format = "file"),
 
-  # Phase 3: Species
+  # 2: SPECIES ####
   ## iNaturalist
   # tar_target(inat_raw, here::here("data-1-raw/datasets/inat/observations-610962.csv.zip"), format = "file"),
   # tar_target(inat_gpkg, process_inat(inat_raw), format = "file"),
   # tar_terra_rast(inat_rast, rasterize_inat(inat_gpkg, mask)),
+  
+  ## Species Richness
 
-  # Phase 4: Habitats
+  # 3: HABITATS ####
   ## Whitehead consultant datasets — written to data-2-processed/04_habitats/
   # tar_target(ponds_wc, process_whitehead_ponds(), format = "file"),
   # tar_target(wetlands_wc, process_whitehead_wetlands(), format = "file"),
   # tar_target(fish_streams_wc, process_whitehead_fish(), format = "file"),
 
-  # Phase 5: Conservation Value
+  # 4: PEOPLE ####
+
+  # 5: CONSERVATION VALUE ####
   ## Zonation rankmap
   tar_target(rankmap_path, here("data-3-outputs/5_values/rankmap.tif"), format = "file"),
   tar_terra_rast(rankmap, load_rankmap(rankmap_path, project_crs)),
   tar_target(rankmap_upload, upload_gdrive(rankmap, rankmap_path, drive_folder_id_values, name = "conservation_values.tif"), format = "file"),
 
-  # Phase 6: Threats
+  # 6: THREATS ####
   ## Wildfire Vulnerability Index
   tar_target(fire_index_path, here("data-3-outputs/6_threats/fire_index_40m.tif"), format = "file"),
   tar_terra_rast(fire_index, {rast(fire_index_path)}),
   tar_target(fire_index_upload, upload_gdrive(fire_index, fire_index_path, drive_folder_id_threats, name = "wildfire_vulnerability_index.tif"), format = "file"),
+
+  # 7: LAND MANAGEMENT ####
+
+  ## Protected Areas: Top 30% Biodiversity Values
+  
+
+  ## Land Ownership / Authority
+  tar_terra_rast(land_ownership_rast, create_land_ownership_rast(pa, unprotected_crown, privateland, rankmap)),
+  ## Calculate n cells and percent coverage for each land ownership type 
+  tar_target(land_ownership_combined_stats, {
+    land_ownership_stats <- compute_land_ownership_stats(land_ownership_rast)
+    land_ownership_top30_stats <- compute_land_ownership_top30_stats(land_ownership_rast, rankmap)
+    
+    combined <- bind_rows(land_ownership_stats, land_ownership_top30_stats)
+    combined$description <- c("total", "top_30%_conservation_values")
+    combined
+  }),
+  ## Save raster 
+  tar_target(land_ownership_rast_path, {here("data-3-outputs/7_land_management/land_ownership_rast.tif")}), 
+  tar_target(land_ownership_rast_save, {writeRaster(land_ownership_rast, land_ownership_rast_path, overwrite=T)}),
+  tar_target(land_ownership_rast_upload, {upload_gdrive(land_ownership_rast, land_ownership_rast_path, drive_folder_id_land_management, name = "land_ownership.tif")}, format = "file"),
 
   #### Output Figures ####
   # Base map
@@ -154,8 +179,7 @@ list(
   ),
 
   # Wildfire Vulnerability Index
-  tar_target(
-    fire_index_plot_annotated,
+  tar_target(fire_index_plot_annotated,
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
@@ -166,8 +190,7 @@ list(
     format = "file"
   ),
   tar_target(fire_index_plot_annotated_upload, upload_gdrive(fire_index_plot_annotated, fire_index_plot_annotated, drive_folder_id_annotated), format = "file"),
-  tar_target(
-    fire_index_plot_unannotated,
+  tar_target(fire_index_plot_unannotated,
     {
       tmpl <- template_plot(mask, ocean_sf, basemap)
       overlay <- template_plot_overlay(ocean_sf, trails, roads)
@@ -310,18 +333,6 @@ list(
   tar_target(candidate_pa_plot_unannotated_upload, upload_gdrive(candidate_pa_plot_unannotated, candidate_pa_plot_unannotated, drive_folder_id_unannotated), format = "file"),
 
   # Land Ownership / Authority
-  tar_terra_rast(
-    land_ownership_rast,
-    create_land_ownership_rast(pa, unprotected_crown, privateland, rankmap)
-  ),
-  tar_target(
-    land_ownership_stats,
-    compute_land_ownership_stats(land_ownership_rast)
-  ),
-  tar_target(
-    land_ownership_top30_stats,
-    compute_land_ownership_top30_stats(land_ownership_rast, rankmap)
-  ),
   tar_target(
     land_ownership_annotated,
     {
