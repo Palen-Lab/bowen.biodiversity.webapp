@@ -108,6 +108,22 @@ list(
     format = "file"
   ),
 
+  # Threats 
+  ## Wildfire Vulnerability Index
+  tar_target(drive_folder_id_threats, {"1eA-6hmVSRO8ZuQMdIlQ5t4XF2xYEnMs3"}),
+  tar_target(fire_index_path, {here("data-3-outputs/6_threats/fire_index_40m.tif")}),
+  tar_terra_rast(fire_index, {rast(fire_index_path)}),
+  tar_target(
+    fire_index_upload, 
+    upload_gdrive(
+      fire_index,
+      fire_index_path,
+      drive_folder_id_threats,
+      name = "wildfire_vulnerability_index.tif"
+    ), 
+    format = "file" 
+  ),
+
   #### Output Figures ####
   # Base map
   tar_terra_rast(
@@ -123,7 +139,6 @@ list(
     }
   ),
   # Wildfire Vulnerability Index
-  tar_terra_rast(fire_index, {rast(here("data-3-outputs/6_threats/fire_index_40m.tif"))}),
   tar_target(
     fire_index_plot_annotated,
     {
