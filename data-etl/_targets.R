@@ -58,22 +58,26 @@ list(
   ## Boundary
   tar_target(boundary_path, here("data-1-raw/datasets/boundary/Bowen_boundary.shp"), format = "file"),
   tar_target(boundary, load_boundary(boundary_path, project_crs)),
-  tar_target(boundary_upload, upload_gdrive(boundary, boundary_path, drive_folder_id_base), format = "file"),
+  tar_target(boundary_shp_folder, write_shapefile_folder(boundary, here("data-3-outputs/1_base/boundary")), format = "file"),
+  tar_target(boundary_upload, upload_shapefile_folder_gdrive(boundary_shp_folder, here("data-3-outputs/1_base/boundary"), drive_folder_id_base), format = "file"),
 
   ## Shoreline
   tar_target(shoreline_path, here("data-1-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"), format = "file"),
   tar_target(shoreline, load_shoreline(shoreline_path, project_crs)),
-  tar_target(shoreline_upload, upload_gdrive(shoreline, shoreline_path, drive_folder_id_base), format = "file"),
+  tar_target(shoreline_shp_folder, write_shapefile_folder(shoreline, here("data-3-outputs/1_base/shoreline")), format = "file"),
+  tar_target(shoreline_upload, upload_shapefile_folder_gdrive(shoreline_shp_folder, here("data-3-outputs/1_base/shoreline"), drive_folder_id_base), format = "file"),
 
   ## Roads
   tar_target(roads_path, here("data-1-raw/datasets/roads/Bowen_Road_Inventory.shp"), format = "file"),
   tar_target(roads, load_roads(roads_path, project_crs)),
-  tar_target(roads_upload, upload_gdrive(roads, roads_path, drive_folder_id_base), format = "file"),
+  tar_target(roads_shp_folder, write_shapefile_folder(roads, here("data-3-outputs/1_base/roads")), format = "file"),
+  tar_target(roads_upload, upload_shapefile_folder_gdrive(roads_shp_folder, here("data-3-outputs/1_base/roads"), drive_folder_id_base), format = "file"),
 
   ## Trails
   tar_target(trails_path, here("data-1-raw/datasets/trails/Trails.shp"), format = "file"),
   tar_target(trails, load_trails(trails_path, project_crs)),
-  tar_target(trails_upload, upload_gdrive(trails, trails_path, drive_folder_id_base), format = "file"),
+  tar_target(trails_shp_folder, write_shapefile_folder(trails, here("data-3-outputs/1_base/trails")), format = "file"),
+  tar_target(trails_upload, upload_shapefile_folder_gdrive(trails_shp_folder, here("data-3-outputs/1_base/trails"), drive_folder_id_base), format = "file"),
 
   ## Derived — raster mask and ocean polygon used as plot backgrounds
   tar_terra_rast(mask, create_mask(shoreline, zoning, project_crs)),
@@ -140,7 +144,8 @@ list(
   ## Wildland Urban Interface (→ figure 6_5)
   tar_target(wui_path, here("data-1-raw/datasets/bc_wui/wui.gpkg"), format = "file"),
   tar_target(wui, {st_read(wui_path, quiet = TRUE)}),
-  tar_target(wui_upload, upload_gdrive(wui, wui_path, drive_folder_id_threats), format = "file"),
+  tar_target(wui_shp_folder, write_shapefile_folder(wui, here("data-3-outputs/6_threats/wui")), format = "file"),
+  tar_target(wui_upload, upload_shapefile_folder_gdrive(wui_shp_folder, here("data-3-outputs/6_threats/wui"), drive_folder_id_threats), format = "file"),
 
   # 7: LAND MANAGEMENT ####
   # Zoning, protected areas, crown land, private parcels, subdivision potential,
@@ -149,7 +154,8 @@ list(
   ## Zoning
   tar_target(zoning_path, here("data-1-raw/datasets/zoning/BM_ZONING.shp"), format = "file"),
   tar_target(zoning, load_zoning(zoning_path, project_crs)),
-  tar_target(zoning_upload, upload_gdrive(zoning, zoning_path, drive_folder_id_land_management), format = "file"),
+  tar_target(zoning_shp_folder, write_shapefile_folder(zoning, here("data-3-outputs/7_land_management/zoning")), format = "file"),
+  tar_target(zoning_upload, upload_shapefile_folder_gdrive(zoning_shp_folder, here("data-3-outputs/7_land_management/zoning"), drive_folder_id_land_management), format = "file"),
 
   ## Protected Areas
   tar_target(pa, load_protected_areas(project_crs)),
@@ -164,13 +170,15 @@ list(
   ## Crown (Public) Land
   tar_target(crown_path, here("data-1-raw/datasets/protectedareas/Crown-Land-JD.gpkg"), format = "file"),
   tar_target(crown, load_crown(crown_path, project_crs)),
-  tar_target(crown_upload, upload_gdrive(crown, crown_path, drive_folder_id_land_management), format = "file"),
+  tar_target(crown_shp_folder, write_shapefile_folder(crown, here("data-3-outputs/7_land_management/crown")), format = "file"),
+  tar_target(crown_upload, upload_shapefile_folder_gdrive(crown_shp_folder, here("data-3-outputs/7_land_management/crown"), drive_folder_id_land_management), format = "file"),
   tar_target(unprotected_crown, create_unprotected_crown(crown, dissolved_pa)),
 
   ## Parcelmap (Private Land)
   tar_target(parcelmap_path, here("data-1-raw/datasets/parcelmap_bowen/parcelmap_bowen.gpkg"), format = "file"),
   tar_target(parcelmap, load_parcelmap(parcelmap_path, project_crs)),
-  tar_target(parcelmap_upload, upload_gdrive(parcelmap, parcelmap_path, drive_folder_id_land_management), format = "file"),
+  tar_target(parcelmap_shp_folder, write_shapefile_folder(parcelmap, here("data-3-outputs/7_land_management/parcelmap")), format = "file"),
+  tar_target(parcelmap_upload, upload_shapefile_folder_gdrive(parcelmap_shp_folder, here("data-3-outputs/7_land_management/parcelmap"), drive_folder_id_land_management), format = "file"),
   tar_target(privateland, create_privateland(parcelmap, dissolved_pa)),
 
   ## Biodiversity Value by Parcel (→ figure 7_1)
@@ -187,7 +195,8 @@ list(
   ## TODO: manual step — move this to post-Zonation calculation
   tar_target(pa_candidates_path, here("data-3-outputs/7_protected_areas/new_protected_areas.gpkg"), format = "file"),
   tar_target(pa_candidates, load_pa_candidates(pa_candidates_path, project_crs)),
-  tar_target(pa_candidates_upload, upload_gdrive(pa_candidates, pa_candidates_path, drive_folder_id_land_management, name = "candidate_protected_areas.gpkg"), format = "file"),
+  tar_target(pa_candidates_shp_folder, write_shapefile_folder(pa_candidates, here("data-3-outputs/7_land_management/pa_candidates")), format = "file"),
+  tar_target(pa_candidates_upload, upload_shapefile_folder_gdrive(pa_candidates_shp_folder, here("data-3-outputs/7_land_management/pa_candidates"), drive_folder_id_land_management), format = "file"),
 
   ## Land Ownership / Authority Raster (→ figures 7_6, 7_7)
   # Categories: 1 = Private, 2 = Protected Areas, 3 = Crown Land, 4 = Mixed
