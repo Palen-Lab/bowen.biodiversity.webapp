@@ -34,6 +34,18 @@ load_protected_areas <- function(project_crs) {
   mvparks_path <- file.path(pa_dir, "Bowen-Metro-Parks-JD.gpkg")
   mvparks <- sf::st_read(mvparks_path, quiet = TRUE) %>%
     dplyr::select(name = NAME)
+  # Split Cape Roger Curtis Regional Park (fid=61) multipolygon and keep only
+  # the smaller southern section, removing the larger northern polygon.
+  cape_roger_curtis <- mvparks %>%
+    dplyr::filter(name == "Cape Roger Curtis Regional Park") %>%
+    sf::st_cast("POLYGON") %>%
+    dplyr::mutate(area = sf::st_area(.)) %>%
+    dplyr::slice_min(area, n = 1) %>%
+    dplyr::select(-area)
+  mvparks <- mvparks %>%
+    dplyr::filter(name != "Cape Roger Curtis Regional Park") %>%
+    rbind(cape_roger_curtis)
+
   mvparks <- mvparks[!sf::st_is_empty(mvparks$geom), ]
   mvparks$type <- "MetroVancouver Park"
   mvparks$filepath <- mvparks_path
