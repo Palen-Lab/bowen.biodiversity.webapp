@@ -200,6 +200,10 @@ list(
     combined$description <- c("total", "top_30%_conservation_values")
     combined
   }),
+  ## Save stats CSV to disk and upload
+  tar_target(land_ownership_stats_path, here("data-3-outputs/7_land_management/land_ownership_stats.csv")),
+  tar_target(land_ownership_stats_save, {write.csv(land_ownership_combined_stats, land_ownership_stats_path, row.names = FALSE); land_ownership_stats_path}, format = "file"),
+  tar_target(land_ownership_stats_upload, upload_gdrive(land_ownership_stats_save, land_ownership_stats_path, drive_folder_id_land_management, name = "land_ownership_stats.csv"), format = "file"),
   ## Save raster to disk and upload
   tar_target(land_ownership_rast_path, {here("data-3-outputs/7_land_management/land_ownership_rast.tif")}),
   tar_target(land_ownership_rast_save, {writeRaster(land_ownership_rast, land_ownership_rast_path, overwrite = T)}),
