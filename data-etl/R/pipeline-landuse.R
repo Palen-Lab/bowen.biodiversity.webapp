@@ -6,6 +6,13 @@ load_zoning <- function(zoning_path, project_crs) {
     sf::st_transform(crs = project_crs)
 }
 
+load_wui <- function(wui_path, project_crs) {
+  sf::st_read(wui_path, quiet = TRUE) %>%
+    sf::st_transform(crs = project_crs) %>%
+    sf::st_zm(drop = TRUE) %>%
+    sf::st_cast("MULTIPOLYGON")
+}
+
 load_protected_areas <- function(project_crs) {
   pa_dir <- here::here("data-1-raw/datasets/protectedareas")
 

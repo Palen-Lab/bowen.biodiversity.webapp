@@ -4,6 +4,7 @@ library(geotargets)
 library(here)
 
 tar_option_set(
+  error = "continue",
   packages = c(
     "sf",
     "terra",
@@ -40,6 +41,7 @@ list(
   tar_target(drive_folder_id_values,          {"1pYZjm8dyazPm8lvZCAXn46RT0Rx_4w5L"}),
   tar_target(drive_folder_id_threats,         {"1eA-6hmVSRO8ZuQMdIlQ5t4XF2xYEnMs3"}),
   tar_target(drive_folder_id_land_management, {"1c7T_1GLAAylUPByJRZhSnWNg-kyH2UNq"}),
+  tar_target(drive_folder_id_not_public_data, {"1MIzTo9cJL6fJRLReECERPRQUVA1NQkEx"}),
 
   ## Output figure folder IDs — annotated and unannotated versions ####
   tar_target(drive_folder_id_annotated,   {"1mi0iC0OKSJ-x3nC0AI0tZjpJy_yN7-JJ"}),
@@ -143,9 +145,8 @@ list(
 
   ## Wildland Urban Interface (→ figure 6_5)
   tar_target(wui_path, here("data-1-raw/datasets/bc_wui/wui.gpkg"), format = "file"),
-  tar_target(wui, {st_read(wui_path, quiet = TRUE)}),
-  tar_target(wui_shp_folder, write_shapefile_folder(wui, here("data-3-outputs/6_threats/wui")), format = "file"),
-  tar_target(wui_upload, upload_shapefile_folder_gdrive(wui_shp_folder, here("data-3-outputs/6_threats/wui"), drive_folder_id_threats), format = "file"),
+  tar_target(wui, load_wui(wui_path, project_crs)),
+  tar_target(wui_upload, upload_gdrive(wui, wui_path, drive_folder_id_not_public_data, name = "wui.gpkg"), format = "file"),
 
   # 7: LAND MANAGEMENT ####
   # Zoning, protected areas, crown land, private parcels, subdivision potential,
@@ -170,16 +171,16 @@ list(
   ## Crown (Public) Land
   tar_target(crown_path, here("data-1-raw/datasets/protectedareas/Crown-Land-JD.gpkg"), format = "file"),
   tar_target(crown, load_crown(crown_path, project_crs)),
-  tar_target(crown_shp_folder, write_shapefile_folder(crown, here("data-3-outputs/7_land_management/crown")), format = "file"),
-  tar_target(crown_upload, upload_shapefile_folder_gdrive(crown_shp_folder, here("data-3-outputs/7_land_management/crown"), drive_folder_id_land_management), format = "file"),
   tar_target(unprotected_crown, create_unprotected_crown(crown, dissolved_pa)),
+  tar_target(crown_shp_folder, write_shapefile_folder(unprotected_crown, here("data-3-outputs/7_land_management/unprotected_crown")), format = "file"),
+  tar_target(crown_upload, upload_shapefile_folder_gdrive(crown_shp_folder, here("data-3-outputs/7_land_management/unprotected_crown"), drive_folder_id_land_management), format = "file"),
 
   ## Parcelmap (Private Land)
   tar_target(parcelmap_path, here("data-1-raw/datasets/parcelmap_bowen/parcelmap_bowen.gpkg"), format = "file"),
   tar_target(parcelmap, load_parcelmap(parcelmap_path, project_crs)),
-  tar_target(parcelmap_shp_folder, write_shapefile_folder(parcelmap, here("data-3-outputs/7_land_management/parcelmap")), format = "file"),
-  tar_target(parcelmap_upload, upload_shapefile_folder_gdrive(parcelmap_shp_folder, here("data-3-outputs/7_land_management/parcelmap"), drive_folder_id_land_management), format = "file"),
   tar_target(privateland, create_privateland(parcelmap, dissolved_pa)),
+  tar_target(privateland_shp_folder, write_shapefile_folder(privateland, here("data-3-outputs/7_land_management/privateland")), format = "file"),
+  tar_target(privateland_upload, upload_shapefile_folder_gdrive(privateland_shp_folder, here("data-3-outputs/7_land_management/privateland"), drive_folder_id_land_management), format = "file"),
 
   ## Biodiversity Value by Parcel (→ figure 7_1)
   tar_target(biod_val_parcel, compute_parcel_biod_val(parcelmap_subdiv, rankmap)),
@@ -187,6 +188,12 @@ list(
   ## Subdivision Potential (→ figure 7_2)
   tar_target(subdiv_path, here("data-1-raw/datasets/development_potential_danielmartin/zoning subdivision potential.xlsx"), format = "file"),
   tar_target(parcelmap_subdiv, create_parcel_subdiv(parcelmap, subdiv_path)),
+  tar_target(biod_val_parcel_gpkg_path, here("data-3-outputs/7_land_management/biod_val_parcel.gpkg")),
+  tar_target(biod_val_parcel_gpkg_save, {sf::st_write(biod_val_parcel, biod_val_parcel_gpkg_path, delete_dsn = TRUE); biod_val_parcel_gpkg_path}, format = "file"),
+  tar_target(biod_val_parcel_upload, upload_gdrive(biod_val_parcel_gpkg_save, biod_val_parcel_gpkg_path, drive_folder_id_not_public_data, name = "biod_val_parcel.gpkg"), format = "file"),
+  tar_target(biod_val_parcel_csv_path, here("data-3-outputs/7_land_management/biod_val_parcel.csv")),
+  tar_target(biod_val_parcel_csv_save, {write.csv(sf::st_drop_geometry(biod_val_parcel), biod_val_parcel_csv_path, row.names = FALSE); biod_val_parcel_csv_path}, format = "file"),
+  tar_target(biod_val_parcel_csv_upload, upload_gdrive(biod_val_parcel_csv_save, biod_val_parcel_csv_path, drive_folder_id_not_public_data, name = "biod_val_parcel.csv"), format = "file"),
 
   ## Protected Areas: Top 30% Coverage Stats (→ figure 7_3)
   tar_target(pa_top30_coverage, compute_pa_top30_coverage(pa, rankmap)),

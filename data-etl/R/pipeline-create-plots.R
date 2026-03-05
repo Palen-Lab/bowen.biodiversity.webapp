@@ -229,9 +229,9 @@ wildfire_vulnerability_top30_plot <- function(wvi, rankmap, ocean_sf, tmpl, over
       labels = c(""),
       na.value = NA,
       na.translate = FALSE,
-      guide = "none",
-      # guide = ggplot2::guide_legend(title.position = "top", order = 2),
-      name = ""
+      # guide = "none",
+      guide = ggplot2::guide_legend(title.position = "top", order = 2),
+      name = "Low Vulnerability"
     ) +
     ggnewscale::new_scale_fill() +
     ggnewscale::new_scale_colour() +
@@ -414,6 +414,7 @@ ecological_intactness_plot <- function(human_footprint, ocean_sf, tmpl, overlay)
       name = "Intactness",
       na.value = NA,
       palette = "Inferno",
+      rev = FALSE,
       limits = c(min_hfp, max_hfp),
       breaks = c(min_hfp, max_hfp),
       labels = c("Higher", "Lower"),
