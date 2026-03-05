@@ -225,6 +225,9 @@ compute_parcel_biod_val <- function(parcelmap, rankmap) {
 create_privateland <- function(parcelmap_bowen, dissolved_protectedareas) {
   parcelmap_bowen %>%
     dplyr::filter(OWNER_TYPE %in% c("Private", "Unclassified")) %>%
+    # Remove conservancies
+    # David Otter Nature Reserve, Fairy Fen Nature Reserve, Singing Woods Nature Reserve, Wild Coast Nature Refuge
+    dplyr::filter(!PARCEL_NAME %in% c("011875071", "028273915", "010931422", "032696418")) %>%
     sf::st_make_valid() %>%
     sf::st_union() %>%
     sf::st_difference(dissolved_protectedareas) %>%
