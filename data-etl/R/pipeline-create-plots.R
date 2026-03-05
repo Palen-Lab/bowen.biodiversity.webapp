@@ -8,14 +8,14 @@ candidate_pa_plot <- function(pa, pa_candidates, tmpl, overlay) {
   geom_sf(
     data = pa,
     aes(fill = protected_colour, color = protected_colour),
-    alpha = 0.1,
-    linewidth = 0.5
+    alpha = 0.4,
+    linewidth = 0.7
   ) +
   geom_sf(
     data = pa_candidates,
     aes(fill = new_colour, color = new_colour),
-    alpha = 0.3,
-    linewidth = 0.5
+    alpha = 0.4,
+    linewidth = 0.7
   ) +
   scale_fill_identity(
     name = "",
@@ -292,8 +292,8 @@ protected_areas_top30_plot <- function(rankmap, pa, ocean_sf, tmpl, overlay) {
     ggplot2::geom_sf(
       data = union_pa,
       aes(fill = protectedareas_colour, color = protectedareas_colour),
-      alpha = 0.1,
-      linewidth = 0.5
+      alpha = 0.4,
+      linewidth = 0.7
     ) +
     ggplot2::scale_fill_identity(
       name = "",
@@ -490,8 +490,8 @@ private_land_top30_plot <- function(privateland, rankmap, ocean_sf, tmpl, overla
     ggplot2::geom_sf(
       data = privateland,
       aes(fill = properties_colour, color = properties_colour),
-      alpha = 0.2,
-      linewidth = 0.5
+      alpha = 0.4,
+      linewidth = 0.7
     ) +
     ggplot2::scale_fill_identity(
       name = "",
@@ -537,8 +537,8 @@ public_land_top30_plot <- function(unprotected_crown, rankmap, ocean_sf, tmpl, o
     ggplot2::geom_sf(
       data = unprotected_crown,
       aes(fill = crown_colour, color = crown_colour),
-      alpha = 0.2,
-      linewidth = 0.5
+      alpha = 0.4,
+      linewidth = 0.7
     ) +
     ggplot2::scale_fill_identity(
       name = "",
