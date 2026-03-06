@@ -45,37 +45,3 @@ upload_supabase <- function(dependency_obj, file_path,
   invisible(file_path)
 }
 
-# Upload all files in a shapefile folder to Supabase Storage.
-# Set `prefix` to the category subfolder (e.g. "1_base") so the key layout
-# mirrors inst/extdata/ (e.g. "1_base/boundary/boundary.shp").
-upload_shapefile_folder_supabase <- function(dependency_obj, folder_path,
-                                             prefix = "",
-                                             bucket = SUPABASE_BUCKET) {
-  s3         <- .supabase_s3()
-  layer_name <- basename(folder_path)
-  files      <- list.files(folder_path, full.names = TRUE)
-  lapply(files, function(f) {
-    key <- if (nzchar(prefix)) {
-      paste(prefix, layer_name, basename(f), sep = "/")
-    } else {
-      paste(layer_name, basename(f), sep = "/")
-    }
-    s3$put_object(Bucket = bucket, Key = key, Body = f)
-  })
-  invisible(folder_path)
-}
-
-# Upload a single GeoPackage file to Supabase Storage.
-# Set `prefix` to the category subfolder (e.g. "7_land_management") so the key
-# layout mirrors inst/extdata/ (e.g. "7_land_management/zoning.gpkg").
-upload_gpkg_supabase <- function(dependency_obj, file_path,
-                                 prefix = "",
-                                 bucket = SUPABASE_BUCKET) {
-  key <- if (nzchar(prefix)) {
-    paste(prefix, basename(file_path), sep = "/")
-  } else {
-    basename(file_path)
-  }
-  .supabase_s3()$put_object(Bucket = bucket, Key = key, Body = file_path)
-  invisible(file_path)
-}

@@ -64,7 +64,7 @@ list(
   tar_target(boundary_upload, upload_shapefile_folder_gdrive(boundary_shp_folder, here("data-3-outputs/1_base/boundary"), drive_folder_id_base), format = "file"),
   tar_target(boundary_gpkg, {path <- here("data-3-outputs/1_base/boundary.gpkg"); sf::st_write(boundary, path, delete_dsn = TRUE); path}, format = "file"),
   tar_target(boundary_gpkg_upload_gdrive, upload_gdrive(boundary_gpkg, boundary_gpkg, drive_folder_id_base, name = "boundary.gpkg"), format = "file"),
-  tar_target(boundary_gpkg_upload_supabase, upload_gpkg_supabase(boundary_gpkg, boundary_gpkg, prefix = "1_base"), format = "file"),
+  tar_target(boundary_gpkg_upload_supabase, upload_supabase(boundary_gpkg, boundary_gpkg, key = "1_base/boundary.gpkg"), format = "file"),
 
   ## Shoreline
   tar_target(shoreline_path, here("data-1-raw/datasets/bowen_island_shoreline_w_hutt.gpkg"), format = "file"),
@@ -73,7 +73,7 @@ list(
   tar_target(shoreline_upload, upload_shapefile_folder_gdrive(shoreline_shp_folder, here("data-3-outputs/1_base/shoreline"), drive_folder_id_base), format = "file"),
   tar_target(shoreline_gpkg, {path <- here("data-3-outputs/1_base/shoreline.gpkg"); sf::st_write(shoreline, path, delete_dsn = TRUE); path}, format = "file"),
   tar_target(shoreline_gpkg_upload_gdrive, upload_gdrive(shoreline_gpkg, shoreline_gpkg, drive_folder_id_base, name = "shoreline.gpkg"), format = "file"),
-  tar_target(shoreline_gpkg_upload_supabase, upload_gpkg_supabase(shoreline_gpkg, shoreline_gpkg, prefix = "1_base"), format = "file"),
+  tar_target(shoreline_gpkg_upload_supabase, upload_supabase(shoreline_gpkg, shoreline_gpkg, key = "1_base/shoreline.gpkg"), format = "file"),
 
   ## Roads
   tar_target(roads_path, here("data-1-raw/datasets/roads/Bowen_Road_Inventory.shp"), format = "file"),
@@ -82,7 +82,7 @@ list(
   tar_target(roads_upload, upload_shapefile_folder_gdrive(roads_shp_folder, here("data-3-outputs/1_base/roads"), drive_folder_id_base), format = "file"),
   tar_target(roads_gpkg, {path <- here("data-3-outputs/1_base/roads.gpkg"); sf::st_write(roads, path, delete_dsn = TRUE); path}, format = "file"),
   tar_target(roads_gpkg_upload_gdrive, upload_gdrive(roads_gpkg, roads_gpkg, drive_folder_id_base, name = "roads.gpkg"), format = "file"),
-  tar_target(roads_gpkg_upload_supabase, upload_gpkg_supabase(roads_gpkg, roads_gpkg, prefix = "1_base"), format = "file"),
+  tar_target(roads_gpkg_upload_supabase, upload_supabase(roads_gpkg, roads_gpkg, key = "1_base/roads.gpkg"), format = "file"),
 
   ## Trails
   tar_target(trails_path, here("data-1-raw/datasets/trails/Trails.shp"), format = "file"),
@@ -91,7 +91,7 @@ list(
   tar_target(trails_upload, upload_shapefile_folder_gdrive(trails_shp_folder, here("data-3-outputs/1_base/trails"), drive_folder_id_base), format = "file"),
   tar_target(trails_gpkg, {path <- here("data-3-outputs/1_base/trails.gpkg"); sf::st_write(trails, path, delete_dsn = TRUE); path}, format = "file"),
   tar_target(trails_gpkg_upload_gdrive, upload_gdrive(trails_gpkg, trails_gpkg, drive_folder_id_base, name = "trails.gpkg"), format = "file"),
-  tar_target(trails_gpkg_upload_supabase, upload_gpkg_supabase(trails_gpkg, trails_gpkg, prefix = "1_base"), format = "file"),
+  tar_target(trails_gpkg_upload_supabase, upload_supabase(trails_gpkg, trails_gpkg, key = "1_base/trails.gpkg"), format = "file"),
 
   ## Derived — raster mask and ocean polygon used as plot backgrounds
   tar_terra_rast(mask, create_mask(shoreline, zoning, project_crs)),
@@ -116,7 +116,7 @@ list(
 
   ## Species Richness (→ figure 3_1)
   tar_target(species_richness_path, here("data-3-outputs/2_species/total_richness.tif"), format = "file"),
-  tar_terra_rast(species_richness, {rast(species_richness_path)}),
+  tar_terra_rast(species_richness, {rast(species_richness_path) %>% project(project_crs)}),
   tar_target(species_richness_upload, upload_gdrive(species_richness, species_richness_path, drive_folder_id_species, name = "species_richness.tif"), format = "file"),
   tar_target(species_richness_upload_supabase, upload_supabase(species_richness, species_richness_path, key = "2_species/total_richness.tif"), format = "file"),
 
@@ -125,13 +125,13 @@ list(
 
   ## Freshwater Habitat Richness (→ figure 4_2)
   tar_target(fw_richness_path, here("data-3-outputs/3_habitats/fw_richness.tif"), format = "file"),
-  tar_terra_rast(fw_richness, {rast(fw_richness_path)}),
+  tar_terra_rast(fw_richness, {rast(fw_richness_path) %>% project(project_crs)}),
   tar_target(fw_richness_upload, upload_gdrive(fw_richness, fw_richness_path, drive_folder_id_habitats, name = "fw_richness.tif"), format = "file"),
   tar_target(fw_richness_upload_supabase, upload_supabase(fw_richness, fw_richness_path, key = "3_habitats/fw_richness.tif"), format = "file"),
 
   ## Total Habitat Richness (→ figure 4_3)
   tar_target(habitat_richness_path, here("data-3-outputs/3_habitats/total_habitat_richness.tif"), format = "file"),
-  tar_terra_rast(habitat_richness, {rast(habitat_richness_path)}),
+  tar_terra_rast(habitat_richness, {rast(habitat_richness_path) %>% project(project_crs)}),
   tar_target(habitat_richness_upload, upload_gdrive(habitat_richness, habitat_richness_path, drive_folder_id_habitats, name = "habitat_richness.tif"), format = "file"),
   tar_target(habitat_richness_upload_supabase, upload_supabase(habitat_richness, habitat_richness_path, key = "3_habitats/total_habitat_richness.tif"), format = "file"),
 
@@ -151,13 +151,13 @@ list(
 
   ## Human Footprint / Ecological Intactness (→ figures 6_1, 6_2)
   tar_target(human_footprint_path, here("data-3-outputs/4_people/bowen_human_footprint.tif"), format = "file"),
-  tar_terra_rast(human_footprint, {rast(human_footprint_path)}),
+  tar_terra_rast(human_footprint, {rast(human_footprint_path) %>% project(project_crs)}),
   tar_target(human_footprint_upload, upload_gdrive(human_footprint, human_footprint_path, drive_folder_id_people, name = "human_footprint.tif"), format = "file"),
   tar_target(human_footprint_upload_supabase, upload_supabase(human_footprint, human_footprint_path, key = "4_people/bowen_human_footprint.tif"), format = "file"),
 
   ## Wildfire Vulnerability Index (→ figures 6_3, 6_4)
   tar_target(fire_index_path, here("data-3-outputs/6_threats/fire_index_40m.tif"), format = "file"),
-  tar_terra_rast(fire_index, {rast(fire_index_path)}),
+  tar_terra_rast(fire_index, {rast(fire_index_path) %>% project(project_crs)}),
   tar_target(fire_index_upload, upload_gdrive(fire_index, fire_index_path, drive_folder_id_threats, name = "wildfire_vulnerability_index.tif"), format = "file"),
   tar_target(fire_index_upload_supabase, upload_supabase(fire_index, fire_index_path, key = "6_threats/fire_index_40m.tif"), format = "file"),
 
@@ -177,7 +177,7 @@ list(
   tar_target(zoning_upload, upload_shapefile_folder_gdrive(zoning_shp_folder, here("data-3-outputs/7_land_management/zoning"), drive_folder_id_land_management), format = "file"),
   tar_target(zoning_gpkg, {path <- here("data-3-outputs/7_land_management/zoning.gpkg"); sf::st_write(zoning, path, delete_dsn = TRUE); path}, format = "file"),
   tar_target(zoning_gpkg_upload_gdrive, upload_gdrive(zoning_gpkg, zoning_gpkg, drive_folder_id_land_management, name = "zoning.gpkg"), format = "file"),
-  tar_target(zoning_gpkg_upload_supabase, upload_gpkg_supabase(zoning_gpkg, zoning_gpkg, prefix = "7_land_management"), format = "file"),
+  tar_target(zoning_gpkg_upload_supabase, upload_supabase(zoning_gpkg, zoning_gpkg, key = "7_land_management/zoning.gpkg"), format = "file"),
 
   ## Protected Areas
   tar_target(pa, load_protected_areas(project_crs)),
@@ -197,7 +197,7 @@ list(
   tar_target(crown_upload, upload_shapefile_folder_gdrive(crown_shp_folder, here("data-3-outputs/7_land_management/unprotected_crown"), drive_folder_id_land_management), format = "file"),
   tar_target(crown_gpkg, {path <- here("data-3-outputs/7_land_management/unprotected_crown.gpkg"); sf::st_write(unprotected_crown, path, delete_dsn = TRUE); path}, format = "file"),
   tar_target(crown_gpkg_upload_gdrive, upload_gdrive(crown_gpkg, crown_gpkg, drive_folder_id_land_management, name = "unprotected_crown.gpkg"), format = "file"),
-  tar_target(crown_gpkg_upload_supabase, upload_gpkg_supabase(crown_gpkg, crown_gpkg, prefix = "7_land_management"), format = "file"),
+  tar_target(crown_gpkg_upload_supabase, upload_supabase(crown_gpkg, crown_gpkg, key = "7_land_management/unprotected_crown.gpkg"), format = "file"),
 
   ## Parcelmap (Private Land)
   tar_target(parcelmap_path, here("data-1-raw/datasets/parcelmap_bowen/parcelmap_bowen.gpkg"), format = "file"),
@@ -207,7 +207,7 @@ list(
   tar_target(privateland_upload, upload_shapefile_folder_gdrive(privateland_shp_folder, here("data-3-outputs/7_land_management/privateland"), drive_folder_id_land_management), format = "file"),
   tar_target(privateland_gpkg, {path <- here("data-3-outputs/7_land_management/privateland.gpkg"); sf::st_write(privateland, path, delete_dsn = TRUE); path}, format = "file"),
   tar_target(privateland_gpkg_upload_gdrive, upload_gdrive(privateland_gpkg, privateland_gpkg, drive_folder_id_land_management, name = "privateland.gpkg"), format = "file"),
-  tar_target(privateland_gpkg_upload_supabase, upload_gpkg_supabase(privateland_gpkg, privateland_gpkg, prefix = "7_land_management"), format = "file"),
+  tar_target(privateland_gpkg_upload_supabase, upload_supabase(privateland_gpkg, privateland_gpkg, key = "7_land_management/privateland.gpkg"), format = "file"),
 
   ## Biodiversity Value by Parcel (→ figure 7_1)
   tar_target(biod_val_parcel, compute_parcel_biod_val(parcelmap_subdiv, rankmap)),
@@ -233,7 +233,7 @@ list(
   tar_target(pa_candidates_upload, upload_shapefile_folder_gdrive(pa_candidates_shp_folder, here("data-3-outputs/7_land_management/pa_candidates"), drive_folder_id_land_management), format = "file"),
   tar_target(pa_candidates_gpkg, {path <- here("data-3-outputs/7_land_management/pa_candidates.gpkg"); sf::st_write(pa_candidates, path, delete_dsn = TRUE); path}, format = "file"),
   tar_target(pa_candidates_gpkg_upload_gdrive, upload_gdrive(pa_candidates_gpkg, pa_candidates_gpkg, drive_folder_id_land_management, name = "pa_candidates.gpkg"), format = "file"),
-  tar_target(pa_candidates_gpkg_upload_supabase, upload_gpkg_supabase(pa_candidates_gpkg, pa_candidates_gpkg, prefix = "7_land_management"), format = "file"),
+  tar_target(pa_candidates_gpkg_upload_supabase, upload_supabase(pa_candidates_gpkg, pa_candidates_gpkg, key = "7_land_management/pa_candidates.gpkg"), format = "file"),
 
   ## Land Ownership / Authority Raster (→ figures 7_6, 7_7)
   # Categories: 1 = Private, 2 = Protected Areas, 3 = Crown Land, 4 = Mixed
