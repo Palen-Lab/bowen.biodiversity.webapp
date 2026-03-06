@@ -110,7 +110,7 @@ app_server <- function(input, output, session) {
 
   #### Init Main Map ####
   #### Add Bowen Admin Boundary ####
-  bowen_boundary_4326 <- bowen_boundary %>%
+  bowen_boundary <- vect_layer("1_base/boundary.gpkg") %>%
     sf::st_transform(crs = 4326)
   bowen_boundary_group <- "Admin Boundary"
 
@@ -142,30 +142,27 @@ app_server <- function(input, output, session) {
         ),
         attribution = 'Map data © <a href="https://www.maptiler.com/">MapTiler</a>'
       ) %>%
-      leaflet::addPolygons(data = bowen_boundary_4326,
+      leaflet::addPolygons(data = bowen_boundary,
                            group = bowen_boundary_group,
                            stroke = TRUE,
                            color = "#333333",
                            fill = FALSE)
   })
 
-  #### Add Bowen Admin Boundary ####
-  bowen_boundary <- bowen_boundary %>%
-    sf::st_transform(crs = 4326)
   #### Add Bowen Island Roads ####
-  bowen_roads <- bowen_roads %>%
+  bowen_roads <- vect_layer("1_base/roads.gpkg") %>%
     sf::st_transform(crs = 4326)
   # addPolylines can't handle multilinestrings for some reason, need to convert to LINESTRINGS
   bowen_roads_ls <- sf::st_cast(bowen_roads, "LINESTRING")
   bowen_roads_group <- "Roads"
 
   #### Add Bowen Island Trails ####
-  bowen_trails <- bowen_trails %>%
+  bowen_trails <- vect_layer("1_base/trails.gpkg") %>%
     sf::st_transform(crs = 4326)
   bowen_trails_group <- "Trails"
 
   #### Add Ocean to hide jagged raster edge ####
-  bowen_ocean_sf <- bowen_ocean_sf %>%
+  bowen_ocean_sf <- vect_layer("1_base/ocean.gpkg") %>%
     sf::st_transform(crs = 4326)
 
   bowen_boundary_group <- "Admin Boundary"

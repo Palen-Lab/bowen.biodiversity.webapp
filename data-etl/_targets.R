@@ -96,6 +96,9 @@ list(
   ## Derived — raster mask and ocean polygon used as plot backgrounds
   tar_terra_rast(mask, create_mask(shoreline, zoning, project_crs)),
   tar_target(ocean_sf, create_ocean(mask, shoreline)),
+  tar_target(ocean_gpkg, {path <- here("data-3-outputs/1_base/ocean.gpkg"); sf::st_write(ocean_sf, path, delete_dsn = TRUE); path}, format = "file"),
+  tar_target(ocean_gpkg_upload_gdrive, upload_gdrive(ocean_gpkg, ocean_gpkg, drive_folder_id_base, name = "ocean.gpkg"), format = "file"),
+  tar_target(ocean_gpkg_upload_supabase, upload_supabase(ocean_gpkg, ocean_gpkg, key = "1_base/ocean.gpkg"), format = "file"),
 
   ## Basemap — cached satellite/backdrop tile used as the background in all map plots
   tar_terra_rast(
