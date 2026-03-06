@@ -10,28 +10,22 @@ License: MIT + file LICENSE
 URL: https://github.com/Palen-Lab/bowen.biodiversity.webapp.git
 BugReports: 
     https://github.com/Palen-Lab/bowen.biodiversity.webapp.git/issues
-Imports: 
-    basemaps,
+Imports:
     bslib,
-    colorspace,
     config,
     dplyr,
     DT,
     foreach,
-    ggplot2,
-    ggtext,
     golem,
-    googlesheets4,
     here,
     leaflet,
     magrittr,
     pkgload,
     sf,
     shiny,
+    shinyjs,
     stringr,
     terra,
-    cartography,
-    shinyjs,
     viridis
 Suggests:
     knitr,
