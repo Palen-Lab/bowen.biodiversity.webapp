@@ -26,8 +26,12 @@ output-figures/*
 output-documents/*
 !output-documents/README.md
 !output-documents/*/
+data-3-outputs/
+output-figures/
 
 # Large raw data files
-data-raw/datasets/species_distribution_models/
-data-raw/datasets/dsm/
-data-raw/datasets/archive/
+data-1-raw/datasets/species_distribution_models/
+data-1-raw/datasets/dsm/
+data-1-raw/datasets/archive/
+
+
