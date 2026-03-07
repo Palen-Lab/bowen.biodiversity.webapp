@@ -33,7 +33,7 @@ app_ui <- function(request) {
             width = "380px",
             bslib::accordion(
               id = "main_accordion",
-              multiple = TRUE,
+              multiple = FALSE,
               bslib::accordion_panel(
                 "Species",
                 icon = icon("dove"),
