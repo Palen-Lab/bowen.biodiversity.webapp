@@ -233,6 +233,9 @@ list(
   tar_target(wui_path, here("data-1-raw/datasets/bc_wui/wui.gpkg"), format = "file"),
   tar_target(wui, load_wui(wui_path, project_crs)),
   tar_target(wui_upload, upload_gdrive(wui, wui_path, drive_folder_id_not_public_data, name = "wui.gpkg"), format = "file"),
+  tar_target(fire_wui_path, here("data-3-outputs/6_threats/fire_wui_40m.tif"), format = "file"),
+  tar_terra_rast(fire_wui, {rast(fire_wui_path)}),
+  tar_target(fire_wui_upload_supabase, upload_supabase(fire_wui, fire_wui_path, key = "6_threats/fire_wui_40m.tif"), format = "file"),
 
   # 7: LAND MANAGEMENT ####
   # Zoning, protected areas, crown land, private parcels, subdivision potential,
@@ -255,6 +258,8 @@ list(
       write.csv(file = here("data-3-outputs/protectedareas.csv"))
   }, format = "file"),
   tar_target(dissolved_pa, dissolve_protected_areas(pa)),
+  tar_target(pa_gpkg, {path <- here("data-3-outputs/7_land_management/existing_protected_areas.gpkg"); sf::st_write(pa, path, delete_dsn = TRUE); path}, format = "file"),
+  tar_target(pa_gpkg_upload_supabase, upload_supabase(pa_gpkg, pa_gpkg, key = "7_land_management/existing_protected_areas.gpkg"), format = "file"),
   # tar_target(ogma, load_ogma(project_crs)),
 
   ## Crown (Public) Land
@@ -289,6 +294,7 @@ list(
   tar_target(biod_val_parcel_csv_path, here("data-3-outputs/7_land_management/biod_val_parcel.csv")),
   tar_target(biod_val_parcel_csv_save, {write.csv(sf::st_drop_geometry(biod_val_parcel), biod_val_parcel_csv_path, row.names = FALSE); biod_val_parcel_csv_path}, format = "file"),
   tar_target(biod_val_parcel_csv_upload, upload_gdrive(biod_val_parcel_csv_save, biod_val_parcel_csv_path, drive_folder_id_not_public_data, name = "biod_val_parcel.csv"), format = "file"),
+  tar_target(biod_val_parcel_gpkg_upload_supabase, upload_supabase(biod_val_parcel_gpkg_save, biod_val_parcel_gpkg_path, key = "7_land_management/biod_val_parcel.gpkg"), format = "file"),
 
   ## Protected Areas: Top 30% Coverage Stats (→ figure 7_3)
   tar_target(pa_top30_coverage, compute_pa_top30_coverage(pa, rankmap)),
