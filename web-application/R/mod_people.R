@@ -29,8 +29,7 @@ mod_people_ui <- function(id) {
         htmlOutput(NS(id, "sidebarInfo")),
         htmlOutput(NS(id, "specific_sidebarInfo"))
       )
-    ),
-    docs_link()
+    )
   )
 }
 

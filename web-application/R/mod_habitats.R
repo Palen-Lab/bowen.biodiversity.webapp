@@ -29,8 +29,7 @@ mod_habitats_ui <- function(id) {
         htmlOutput(NS(id, "sidebarInfo")),
         htmlOutput(NS(id, "specific_sidebarInfo"))
       )
-    ),
-    docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/input_habitats.html")
+    )
   )
 }
 

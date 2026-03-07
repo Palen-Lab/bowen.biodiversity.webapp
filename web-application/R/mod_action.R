@@ -23,8 +23,7 @@ mod_action_ui <- function(id) {
           em(strong("Note: "), "While this map can provide high-level view of biodiversity, this should not replace site-specific environmental assessments and consultation with experts.")
         )
       )
-    ),
-    docs_link()
+    )
   )
 }
 

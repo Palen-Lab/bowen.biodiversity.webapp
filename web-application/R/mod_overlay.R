@@ -37,8 +37,7 @@ mod_overlay_ui <- function(id) {
           DT::DTOutput(NS(id, "sidebarTable")),
         )
       )
-    ),
-    docs_link()
+    )
   )
 }
 
