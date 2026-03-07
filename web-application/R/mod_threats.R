@@ -28,8 +28,7 @@ mod_threats_ui <- function(id) {
         htmlOutput(NS(id, "sidebarInfo")),
         htmlOutput(NS(id, "specific_sidebarInfo"))
       )
-    ),
-    htmlOutput(NS(id, "docs_link"))
+    )
   )
 }
 
@@ -67,9 +66,6 @@ mod_threats_server <- function(id, map_id, parent_session){
                         c("Development", "Development and Biodiversity"), selected = "Development")
           )
         })
-        output$docs_link <- renderUI({
-          docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/threats_development.html")
-        })
       }
       else if (input$selectGroup == "wildfire") {
         output$sidebarInfo <- renderUI({
@@ -78,9 +74,6 @@ mod_threats_server <- function(id, map_id, parent_session){
             selectInput(session$ns("subselectGroup"), "Select wildfire layer",
                         c("Fire Index", "Wildland Urban Interface"), selected = "Fire Index")
           )
-        })
-        output$docs_link <- renderUI({
-          docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/threats_fire.html")
         })
       }
     })

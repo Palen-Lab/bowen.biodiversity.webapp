@@ -29,8 +29,7 @@ mod_species_ui <- function(id) {
       bslib::card_body(
         htmlOutput(NS(id, "sidebarInfo")),
       )
-    ),
-    docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/input_sdm.html")
+    )
   )
 }
 

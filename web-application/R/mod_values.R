@@ -27,8 +27,7 @@ mod_values_ui <- function(id) {
           em(strong("Note: "), "While this map can provide high-level view of biodiversity, this should not replace site-specific environmental assessments and consultation with experts.")
         )
       )
-    ),
-    docs_link("https://palen-lab.github.io/bowen.biodiversity.webapp/vignettes/2025_05_02_output_zonation.html")
+    )
   )
 }
 
