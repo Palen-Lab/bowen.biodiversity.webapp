@@ -160,7 +160,7 @@ list(
 
   ## Wildfire Vulnerability Index (→ figures 6_3, 6_4)
   tar_target(fire_index_path, here("data-3-outputs/6_threats/fire_index_40m.tif"), format = "file"),
-  tar_terra_rast(fire_index, {rast(fire_index_path) %>% project(project_crs)}),
+  tar_terra_rast(fire_index, {rast(fire_index_path)}),
   tar_target(fire_index_upload, upload_gdrive(fire_index, fire_index_path, drive_folder_id_threats, name = "wildfire_vulnerability_index.tif"), format = "file"),
   tar_target(fire_index_upload_supabase, upload_supabase(fire_index, fire_index_path, key = "6_threats/fire_index_40m.tif"), format = "file"),
 
