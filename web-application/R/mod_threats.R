@@ -84,7 +84,7 @@ mod_threats_server <- function(id, map_id, parent_session, active_raster = NULL)
       }
 
       if (group == "threat_fire_index") {
-        fire_index_simple <- terra::rast(here::here("inst/extdata/6_threats/fire_index_40m.tif")) %>%
+        fire_index_simple <- rast_layer("6_threats/fire_index_40m.tif") %>%
           terra::project("epsg:3857", method = "near")
         terra::NAflag(fire_index_simple) <- 4294967296
         raster_domain <- terra::values(fire_index_simple) %>% unique() %>% sort()
@@ -97,7 +97,7 @@ mod_threats_server <- function(id, map_id, parent_session, active_raster = NULL)
                              colors = raster_pal(raster_domain), labels = raster_domain,
                              labFormat = labelFormat(), title = "Relative Wildfire Vuln.")
       } else if (group == "threat_fire_wui") {
-        fire_wui <- terra::rast(here::here("inst/extdata/6_threats/fire_wui_40m.tif")) %>%
+        fire_wui <- rast_layer("6_threats/fire_wui_40m.tif") %>%
           terra::project("epsg:3857", method = "near")
         terra::NAflag(fire_wui) <- 4294967296
         raster_domain <- c(1, 2, 3, 4, 5)

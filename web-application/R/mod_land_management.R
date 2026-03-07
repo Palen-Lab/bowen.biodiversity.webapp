@@ -58,13 +58,11 @@ mod_land_management_server <- function(id, map_id, parent_session){
     ns <- session$ns
 
     #### Load vector layers ####
-    dev_layer <- sf::st_read(here::here("inst/extdata/6_threats/development_potential.gpkg"))
-    bowen_pa <- here::here("inst/extdata/7_protected_areas/existing_protected_areas.gpkg") %>%
-      sf::st_read()
+    dev_layer <- vect_layer("6_threats/development_potential.gpkg")
+    bowen_pa <- vect_layer("7_protected_areas/existing_protected_areas.gpkg")
     # bowen_ogma <- ogma %>%
     #   sf::st_transform(sf::st_crs(bowen_pa))
-    bowen_new_pa <- here::here("inst/extdata/7_protected_areas/new_protected_areas.gpkg") %>%
-      sf::st_read() %>%
+    bowen_new_pa <- vect_layer("7_protected_areas/new_protected_areas.gpkg") %>%
       sf::st_transform(sf::st_crs(bowen_pa))
 
     #### Show / hide existing protected areas ####

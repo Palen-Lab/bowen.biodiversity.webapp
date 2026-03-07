@@ -123,6 +123,30 @@ list(
   tar_target(species_richness_upload, upload_gdrive(species_richness, species_richness_path, drive_folder_id_species, name = "species_richness.tif"), format = "file"),
   tar_target(species_richness_upload_supabase, upload_supabase(species_richness, species_richness_path, key = "2_species/total_richness.tif"), format = "file"),
 
+  ## Threatened Species Richness
+  tar_target(threatened_richness_path, here("data-3-outputs/2_species/threatened_richness.tif"), format = "file"),
+  tar_terra_rast(threatened_richness, {rast(threatened_richness_path) %>% project(project_crs)}),
+  tar_target(threatened_richness_upload, upload_gdrive(threatened_richness, threatened_richness_path, drive_folder_id_species, name = "threatened_richness.tif"), format = "file"),
+  tar_target(threatened_richness_upload_supabase, upload_supabase(threatened_richness, threatened_richness_path, key = "2_species/threatened_richness.tif"), format = "file"),
+
+  ## Bird Species Richness
+  tar_target(birds_richness_path, here("data-3-outputs/2_species/birds_richness.tif"), format = "file"),
+  tar_terra_rast(birds_richness, {rast(birds_richness_path) %>% project(project_crs)}),
+  tar_target(birds_richness_upload, upload_gdrive(birds_richness, birds_richness_path, drive_folder_id_species, name = "birds_richness.tif"), format = "file"),
+  tar_target(birds_richness_upload_supabase, upload_supabase(birds_richness, birds_richness_path, key = "2_species/birds_richness.tif"), format = "file"),
+
+  ## Small Mammal Species Richness
+  tar_target(sm_mammals_richness_path, here("data-3-outputs/2_species/sm_mammals_richness.tif"), format = "file"),
+  tar_terra_rast(sm_mammals_richness, {rast(sm_mammals_richness_path) %>% project(project_crs)}),
+  tar_target(sm_mammals_richness_upload, upload_gdrive(sm_mammals_richness, sm_mammals_richness_path, drive_folder_id_species, name = "sm_mammals_richness.tif"), format = "file"),
+  tar_target(sm_mammals_richness_upload_supabase, upload_supabase(sm_mammals_richness, sm_mammals_richness_path, key = "2_species/sm_mammals_richness.tif"), format = "file"),
+
+  ## Herptile Species Richness
+  tar_target(herptiles_richness_path, here("data-3-outputs/2_species/herptiles_richness.tif"), format = "file"),
+  tar_terra_rast(herptiles_richness, {rast(herptiles_richness_path) %>% project(project_crs)}),
+  tar_target(herptiles_richness_upload, upload_gdrive(herptiles_richness, herptiles_richness_path, drive_folder_id_species, name = "herptiles_richness.tif"), format = "file"),
+  tar_target(herptiles_richness_upload_supabase, upload_supabase(herptiles_richness, herptiles_richness_path, key = "2_species/herptiles_richness.tif"), format = "file"),
+
   # 4: HABITATS ####
   # Richness rasters for freshwater habitats and all habitat types combined.
 
@@ -134,9 +158,44 @@ list(
 
   ## Total Habitat Richness (→ figure 4_3)
   tar_target(habitat_richness_path, here("data-3-outputs/3_habitats/total_habitat_richness.tif"), format = "file"),
-  tar_terra_rast(habitat_richness, {rast(habitat_richness_path) %>% project(project_crs)}),
+  tar_terra_rast(habitat_richness, {rast(habitat_richness_path) %>% project(project_crs, method = "near")}),
   tar_target(habitat_richness_upload, upload_gdrive(habitat_richness, habitat_richness_path, drive_folder_id_habitats, name = "habitat_richness.tif"), format = "file"),
   tar_target(habitat_richness_upload_supabase, upload_supabase(habitat_richness, habitat_richness_path, key = "3_habitats/total_habitat_richness.tif"), format = "file"),
+
+  ## Freshwater individual layers
+  tar_target(fw_lakes_path, here("data-3-outputs/3_habitats/fw_lakes.tif"), format = "file"),
+  tar_target(fw_lakes_upload_supabase, upload_supabase(fw_lakes_path, fw_lakes_path, key = "3_habitats/fw_lakes.tif"), format = "file"),
+
+  tar_target(fw_ponds_path, here("data-3-outputs/3_habitats/fw_ponds.tif"), format = "file"),
+  tar_target(fw_ponds_upload_supabase, upload_supabase(fw_ponds_path, fw_ponds_path, key = "3_habitats/fw_ponds.tif"), format = "file"),
+
+  tar_target(fw_riparian_path, here("data-3-outputs/3_habitats/fw_riparian.tif"), format = "file"),
+  tar_target(fw_riparian_upload_supabase, upload_supabase(fw_riparian_path, fw_riparian_path, key = "3_habitats/fw_riparian.tif"), format = "file"),
+
+  tar_target(fw_streams_path, here("data-3-outputs/3_habitats/fw_streams.tif"), format = "file"),
+  tar_target(fw_streams_upload_supabase, upload_supabase(fw_streams_path, fw_streams_path, key = "3_habitats/fw_streams.tif"), format = "file"),
+
+  tar_target(fw_wetlands_path, here("data-3-outputs/3_habitats/fw_wetlands.tif"), format = "file"),
+  tar_target(fw_wetlands_upload_supabase, upload_supabase(fw_wetlands_path, fw_wetlands_path, key = "3_habitats/fw_wetlands.tif"), format = "file"),
+
+  ## Terrestrial forest layers
+  tar_target(forests_OF_path, here("data-3-outputs/3_habitats/forests_OF.tif"), format = "file"),
+  tar_target(forests_OF_upload_supabase, upload_supabase(forests_OF_path, forests_OF_path, key = "3_habitats/forests_OF.tif"), format = "file"),
+
+  tar_target(forests_MF_path, here("data-3-outputs/3_habitats/forests_MF.tif"), format = "file"),
+  tar_target(forests_MF_upload_supabase, upload_supabase(forests_MF_path, forests_MF_path, key = "3_habitats/forests_MF.tif"), format = "file"),
+
+  tar_target(forests_YF_path, here("data-3-outputs/3_habitats/forests_YF.tif"), format = "file"),
+  tar_target(forests_YF_upload_supabase, upload_supabase(forests_YF_path, forests_YF_path, key = "3_habitats/forests_YF.tif"), format = "file"),
+
+  tar_target(forests_YS_path, here("data-3-outputs/3_habitats/forests_YS.tif"), format = "file"),
+  tar_target(forests_YS_upload_supabase, upload_supabase(forests_YS_path, forests_YS_path, key = "3_habitats/forests_YS.tif"), format = "file"),
+
+  tar_target(other_tem_path, here("data-3-outputs/3_habitats/other_tem.tif"), format = "file"),
+  tar_target(other_tem_upload_supabase, upload_supabase(other_tem_path, other_tem_path, key = "3_habitats/other_tem.tif"), format = "file"),
+
+  tar_target(intertidal_path, here("data-3-outputs/3_habitats/intertidal.tif"), format = "file"),
+  tar_target(intertidal_upload_supabase, upload_supabase(intertidal_path, intertidal_path, key = "3_habitats/intertidal.tif"), format = "file"),
 
   # 5: CONSERVATION VALUES ####
   # Zonation priority rankmap combining species and habitat inputs into a single
@@ -157,6 +216,12 @@ list(
   tar_terra_rast(human_footprint, {rast(human_footprint_path) %>% project(project_crs)}),
   tar_target(human_footprint_upload, upload_gdrive(human_footprint, human_footprint_path, drive_folder_id_people, name = "human_footprint.tif"), format = "file"),
   tar_target(human_footprint_upload_supabase, upload_supabase(human_footprint, human_footprint_path, key = "4_people/bowen_human_footprint.tif"), format = "file"),
+
+  ## iNaturalist Observations
+  tar_target(inat_path, here("data-3-outputs/4_people/bowen_inat.tif"), format = "file"),
+  tar_terra_rast(inat, {rast(inat_path) %>% project(project_crs)}),
+  tar_target(inat_upload, upload_gdrive(inat, inat_path, drive_folder_id_people, name = "bowen_inat.tif"), format = "file"),
+  tar_target(inat_upload_supabase, upload_supabase(inat, inat_path, key = "4_people/bowen_inat.tif"), format = "file"),
 
   ## Wildfire Vulnerability Index (→ figures 6_3, 6_4)
   tar_target(fire_index_path, here("data-3-outputs/6_threats/fire_index_40m.tif"), format = "file"),

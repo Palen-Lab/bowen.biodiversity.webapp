@@ -49,33 +49,33 @@ mod_overlay_server <- function(id, map_id, parent_session){
     ns <- session$ns
 
     #### Load Layers ####
-    zonation_og <- terra::rast(here::here("inst/extdata/5_values/rankmap.tif"))
+    zonation_og <- rast_layer("5_values/rankmap.tif")
     zonation <- zonation_og %>% terra::project("epsg:4326")
     zonation_count <- zonation_og %>%
       terra::not.na(falseNA = TRUE) %>%
       terra::values() %>%
       sum(na.rm = TRUE)
 
-    ## Land Use (loaded lazily inside observer to avoid startup errors if files missing)
-    bowen_pa_path <- here::here("inst/extdata/7_protected_areas/existing_protected_areas.gpkg")
+    ## Land Use
+    bowen_pa <- vect_layer("7_protected_areas/existing_protected_areas.gpkg")
 
     ## Human Disturbance
-    bowen_hd <- terra::rast(here::here("inst/extdata/4_people/bowen_human_footprint_recl.tif"))
+    bowen_hd <- rast_layer("4_people/bowen_human_footprint_recl.tif")
     bowen_hd_p <- bowen_hd %>% terra::project("epsg:3857", method = "near")
 
     ## Habitats
-    bowen_fw <- terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif"))
+    bowen_fw <- rast_layer("3_habitats/fw_richness.tif")
     bowen_fw_p <- bowen_fw %>% terra::project("epsg:4326", method = "near")
-    bowen_te <- terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif"))
+    bowen_te <- rast_layer("3_habitats/total_habitat_richness.tif")
     bowen_te_p <- bowen_te %>% terra::project("epsg:4326", method = "near")
 
     ## Threats - Development
-    bowen_dp <- sf::st_read(here::here("inst/extdata/6_threats/development_potential.gpkg")) %>%
+    bowen_dp <- vect_layer("6_threats/development_potential.gpkg") %>%
       sf::st_transform(4326)
     bowen_dp_r <- bowen_dp %>% terra::vect() %>% terra::rasterize(zonation, cover = TRUE)
 
     ## Threats - Wildfire
-    bowen_wf <- terra::rast(here::here("inst/extdata/6_threats/fire_index_40m.tif")) %>%
+    bowen_wf <- rast_layer("6_threats/fire_index_40m.tif") %>%
       terra::project("epsg:3857", method = "near")
     terra::NAflag(bowen_wf) <- 4294967296
 
@@ -134,7 +134,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
       }
       else if (input$selectGroup == "Land Use") {
         bowen_pm <- vect_layer("1_base/privateland.gpkg") %>% sf::st_transform(4326)
-        bowen_pa <- sf::st_read(bowen_pa_path) %>% sf::st_transform(4326) %>% sf::st_make_valid() %>% sf::st_union()
+        bowen_pa_union <- vect_layer("7_protected_areas/existing_protected_areas.gpkg") %>% sf::st_transform(4326) %>% sf::st_make_valid() %>% sf::st_union()
         bowen_uc <- vect_layer("1_base/unprotected_crown.gpkg") %>%
           sf::st_transform(4326) %>% sf::st_cast("MULTIPOLYGON") %>% sf::st_union()
 
@@ -142,7 +142,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
         zonation_count_d <- zonation_d %>% terra::not.na(falseNA = TRUE) %>% terra::values() %>% sum(na.rm = TRUE)
         top_pct_zonation_count <- top_pct_zonation %>% terra::values() %>% sum(na.rm = TRUE)
 
-        pa_vect <- bowen_pa %>% terra::vect() %>% terra::project(top_pct_zonation)
+        pa_vect <- bowen_pa_union %>% terra::vect() %>% terra::project(top_pct_zonation)
         top_pct_zonation_pa_count <- top_pct_zonation %>% terra::mask(pa_vect) %>% terra::values() %>% sum(na.rm = TRUE)
         uc_vect <- bowen_uc %>% terra::vect() %>% terra::project(top_pct_zonation)
         top_pct_zonation_uc_count <- top_pct_zonation %>% terra::mask(uc_vect) %>% terra::values() %>% sum(na.rm = TRUE)
