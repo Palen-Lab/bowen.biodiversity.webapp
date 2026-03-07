@@ -39,8 +39,7 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
 
     #### Update raster when input changes ####
     select_raster <- reactiveVal({
-      terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
-        terra::project("epsg:4326")
+      terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif"))
     })
     #### Define reactive value for specificselectGroup ####
     subselect <- reactive({
@@ -103,7 +102,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Habitat Richness"
         terra::rast(here::here("inst/extdata/3_habitats/total_habitat_richness.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- terra::values(select_raster()) %>%
           unique() %>%
@@ -127,7 +125,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Other Terrestrial"
         terra::rast(here::here("inst/extdata/3_habitats/other_tem.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         bowen_TEM_habitat_types <- readRDS("inst/extdata/3_habitats/other_tem_types.rds")
 
@@ -150,7 +147,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Coastal"
         terra::rast(here::here("inst/extdata/3_habitats/intertidal.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
 
         raster_domain <- seq(from = 0, to = 4)
@@ -180,7 +176,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         raster_group <- "Freshwater Richness"
         terra::rast(here::here("inst/extdata/3_habitats/fw_richness.tif")) %>%
           # method = "near" or else get mean values from multiple cells
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- terra::values(select_raster()) %>%
           unique()
@@ -217,7 +212,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Lakes"
         terra::rast(here::here("inst/extdata/3_habitats/fw_lakes.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- 1
         raster_labels <- "Present"
@@ -238,7 +232,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Ponds"
         terra::rast(here::here("inst/extdata/3_habitats/fw_ponds.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- 1
         raster_labels <- "Present"
@@ -259,7 +252,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Riparian"
         terra::rast(here::here("inst/extdata/3_habitats/fw_riparian.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- 1
         raster_labels <- "Present"
@@ -280,7 +272,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Streams"
         terra::rast(here::here("inst/extdata/3_habitats/fw_streams.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- c(1, 2, 3)
         raster_labels <- c("non-fish bearing","tributary to fish-bearing","fish-bearing")
@@ -303,7 +294,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Wetlands"
         terra::rast(here::here("inst/extdata/3_habitats/fw_wetlands.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- 1
         raster_labels <- "Present"
@@ -326,7 +316,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Old Forest"
         terra::rast(here::here("inst/extdata/3_habitats/forests_OF.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- 1
         raster_labels <- "Present"
@@ -348,7 +337,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Mature Forest"
         terra::rast(here::here("inst/extdata/3_habitats/forests_MF.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- 1
         raster_labels <- "Present"
@@ -369,7 +357,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Mature Forest"
         terra::rast(here::here("inst/extdata/3_habitats/forests_YF.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- 1
         raster_labels <- "Present"
@@ -390,7 +377,6 @@ mod_multiselect_page_server <- function(id, map_id, parent_session){
         # Update Leaflet Map Parameters
         raster_group <- "Young Forest (small)"
         terra::rast(here::here("inst/extdata/3_habitats/forests_YS.tif")) %>%
-          terra::project("epsg:3857", method = "near") %>%
           select_raster()
         raster_domain <- 1
         raster_labels <- "Present"

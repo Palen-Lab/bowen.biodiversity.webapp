@@ -32,8 +32,7 @@ mod_values_server <- function(id, map_id, parent_session, active_raster = NULL){
     ns <- session$ns
 
     #### Add Zonation Output Raster ####
-    zonation <- rast_layer("5_values/rankmap.tif") %>%
-      terra::project("epsg:4326")
+    zonation <- rast_layer("5_values/rankmap.tif")
 
     #### Cross-module raster exclusivity ####
     observe({

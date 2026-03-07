@@ -14,6 +14,9 @@ run_app <- function(
   uiPattern = "/",
   ...
 ) {
+  env_file <- here::here(".Renviron")
+  if (file.exists(env_file)) readRenviron(env_file)
+
   with_golem_options(
     app = shinyApp(
       ui = app_ui,

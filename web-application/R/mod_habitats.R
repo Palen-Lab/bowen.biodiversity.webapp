@@ -178,102 +178,77 @@ mod_habitats_server <- function(id, map_id, parent_session, active_raster = NULL
 
       if (group == "hab_all") {
         raster_group <- "Habitat Richness"
-        rast_layer("3_habitats/total_habitat_richness.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
-        raster_domain <- terra::values(select_raster()) %>% unique() %>% sort()
+        rast_layer("3_habitats/total_habitat_richness.tif") %>% select_raster()
+        vals <- terra::values(select_raster()) %>% na.omit()
+        raster_domain <- seq(min(vals), max(vals), by = 1)
         raster_labels <- raster_domain
         raster_pal <- leaflet::colorNumeric(
           c('#edf8fb','#b2e2e2','#66c2a4','#2ca25f','#006d2c'),
-          raster_domain, na.color = "transparent"
+          domain = range(raster_domain), na.color = "transparent"
         )
       } else if (group == "hab_fw_richness") {
         raster_group <- "Freshwater Richness"
-        rast_layer("3_habitats/fw_richness.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/fw_richness.tif") %>% select_raster()
         raster_domain <- terra::values(select_raster()) %>% unique()
         raster_labels <- raster_domain
         raster_colour_ramp <- viridis::mako(5, end = 0.8, direction = -1)
         raster_pal <- leaflet::colorNumeric(raster_colour_ramp, raster_domain, na.color = "transparent")
       } else if (group == "hab_fw_lakes") {
         raster_group <- "Lakes"
-        rast_layer("3_habitats/fw_lakes.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/fw_lakes.tif") %>% select_raster()
         raster_domain <- 1; raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(c('#41B6C4'), raster_domain, na.color = "transparent")
       } else if (group == "hab_fw_ponds") {
         raster_group <- "Ponds"
-        rast_layer("3_habitats/fw_ponds.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/fw_ponds.tif") %>% select_raster()
         raster_domain <- 1; raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(c("#2C7FB8"), raster_domain, na.color = "transparent")
       } else if (group == "hab_fw_riparian") {
         raster_group <- "Riparian"
-        rast_layer("3_habitats/fw_riparian.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/fw_riparian.tif") %>% select_raster()
         raster_domain <- 1; raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(c("#A1DAB4"), raster_domain, na.color = "transparent")
       } else if (group == "hab_fw_streams") {
         raster_group <- "Streams"
-        rast_layer("3_habitats/fw_streams.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/fw_streams.tif") %>% select_raster()
         raster_domain <- c(1, 2, 3)
         raster_labels <- c("non-fish bearing", "tributary to fish-bearing", "fish-bearing")
         raster_pal <- leaflet::colorFactor(c('#ece7f2', '#a6bddb', '#2b8cbe'), raster_domain, na.color = "transparent")
       } else if (group == "hab_fw_wetlands") {
         raster_group <- "Wetlands"
-        rast_layer("3_habitats/fw_wetlands.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/fw_wetlands.tif") %>% select_raster()
         raster_domain <- 1; raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(c("#253494"), raster_domain, na.color = "transparent")
       } else if (group == "hab_terr_old") {
         raster_group <- "Old Forest"
-        rast_layer("3_habitats/forests_OF.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/forests_OF.tif") %>% select_raster()
         raster_domain <- 1; raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(c('#2ca25f'), raster_domain, na.color = "transparent")
       } else if (group == "hab_terr_mature") {
         raster_group <- "Mature Forest"
-        rast_layer("3_habitats/forests_MF.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/forests_MF.tif") %>% select_raster()
         raster_domain <- 1; raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(c('#2ca25f'), raster_domain, na.color = "transparent")
       } else if (group == "hab_terr_young") {
         raster_group <- "Young Forest"
-        rast_layer("3_habitats/forests_YF.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/forests_YF.tif") %>% select_raster()
         raster_domain <- 1; raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(c('#2ca25f'), raster_domain, na.color = "transparent")
       } else if (group == "hab_terr_young_small") {
         raster_group <- "Young Forest (small)"
-        rast_layer("3_habitats/forests_YS.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/forests_YS.tif") %>% select_raster()
         raster_domain <- 1; raster_labels <- "Present"
         raster_pal <- leaflet::colorFactor(c('#2ca25f'), raster_domain, na.color = "transparent")
       } else if (group == "hab_terr_other") {
         raster_group <- "Other Terrestrial"
-        rast_layer("3_habitats/other_tem.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/other_tem.tif") %>% select_raster()
         bowen_TEM_habitat_types <- readRDS(here::here("inst/extdata/3_habitats/other_tem_types.rds"))
         raster_domain <- seq(from = 0, to = (length(bowen_TEM_habitat_types$SITEMC_S1_)-1))
         raster_labels <- bowen_TEM_habitat_types$SITE_S1_LA
         raster_pal <- leaflet::colorFactor("viridis", raster_domain, na.color = "transparent")
       } else if (group == "hab_terr_coastal") {
         raster_group <- "Coastal"
-        rast_layer("3_habitats/intertidal.tif") %>%
-          terra::project("epsg:3857", method = "near") %>%
-          select_raster()
+        rast_layer("3_habitats/intertidal.tif") %>% select_raster()
         raster_domain <- seq(from = 0, to = 4)
         raster_labels <- c("Beaches", "Coastal Herbaceous", "Eelgrass", "Mudflats", "Vegetated Shoreline")
         raster_colours <- c("#a6cee3", "#1f78b4", "#b2df8a", "#33a02c", "#fb9a99")

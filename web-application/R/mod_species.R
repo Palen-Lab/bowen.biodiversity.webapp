@@ -101,17 +101,12 @@ mod_species_server <- function(id, map_id, parent_session, active_raster = NULL)
       }
 
       rast <- switch(group,
-        species_all = rast_layer("2_species/total_richness.tif") %>%
-          terra::project("epsg:4326"),
-        species_threatened = rast_layer("2_species/threatened_richness.tif") %>%
-          terra::project("epsg:4326"),
-        species_birds = rast_layer("2_species/birds_richness.tif") %>%
-          terra::project("epsg:4326"),
+        species_all        = rast_layer("2_species/total_richness.tif"),
+        species_threatened = rast_layer("2_species/threatened_richness.tif"),
+        species_birds      = rast_layer("2_species/birds_richness.tif"),
         species_other = {
-          sm <- rast_layer("2_species/sm_mammals_richness.tif") %>%
-            terra::project("epsg:4326")
-          herp <- rast_layer("2_species/herptiles_richness.tif") %>%
-            terra::project("epsg:4326")
+          sm   <- rast_layer("2_species/sm_mammals_richness.tif")
+          herp <- rast_layer("2_species/herptiles_richness.tif")
           sum(sm, herp, na.rm = TRUE)
         }
       )

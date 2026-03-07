@@ -41,10 +41,8 @@ mod_people_server <- function(id, map_id, parent_session, active_raster = NULL){
     ns <- session$ns
 
     #### Load ####
-    human_footprint <- rast_layer("4_people/bowen_human_footprint.tif") %>%
-      terra::project("epsg:4326")
-    inat_obs <- rast_layer("4_people/bowen_inat.tif") %>%
-      terra::project("epsg:4326")
+    human_footprint <- rast_layer("4_people/bowen_human_footprint.tif")
+    inat_obs <- rast_layer("4_people/bowen_inat.tif")
 
     people_boxes <- c("people_inat", "people_disturb")
 

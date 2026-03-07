@@ -50,33 +50,31 @@ mod_overlay_server <- function(id, map_id, parent_session){
 
     #### Load Layers ####
     zonation_og <- rast_layer("5_values/rankmap.tif")
-    zonation <- zonation_og %>% terra::project("epsg:4326")
     zonation_count <- zonation_og %>%
       terra::not.na(falseNA = TRUE) %>%
       terra::values() %>%
       sum(na.rm = TRUE)
 
     ## Land Use
-    bowen_pa <- vect_layer("7_protected_areas/existing_protected_areas.gpkg")
+    bowen_pa <- vect_layer("7_land_management/existing_protected_areas.gpkg") %>%
+      sf::st_transform(4326)
 
     ## Human Disturbance
     bowen_hd <- rast_layer("4_people/bowen_human_footprint_recl.tif")
-    bowen_hd_p <- bowen_hd %>% terra::project("epsg:3857", method = "near")
 
     ## Habitats
     bowen_fw <- rast_layer("3_habitats/fw_richness.tif")
-    bowen_fw_p <- bowen_fw %>% terra::project("epsg:4326", method = "near")
     bowen_te <- rast_layer("3_habitats/total_habitat_richness.tif")
-    bowen_te_p <- bowen_te %>% terra::project("epsg:4326", method = "near")
 
     ## Threats - Development
-    bowen_dp <- vect_layer("6_threats/development_potential.gpkg") %>%
+    bowen_dp <- vect_layer("7_land_management/biod_val_parcel.gpkg") %>%
+      dplyr::filter(subdividable) %>%
+      dplyr::mutate(potential_units = `Can Subdivide?`) %>%
       sf::st_transform(4326)
-    bowen_dp_r <- bowen_dp %>% terra::vect() %>% terra::rasterize(zonation, cover = TRUE)
+    bowen_dp_r <- bowen_dp %>% terra::vect() %>% terra::rasterize(zonation_og, cover = TRUE)
 
     ## Threats - Wildfire
-    bowen_wf <- rast_layer("6_threats/fire_index_40m.tif") %>%
-      terra::project("epsg:3857", method = "near")
+    bowen_wf <- rast_layer("6_threats/fire_index_40m.tif")
     terra::NAflag(bowen_wf) <- 4294967296
 
     #### Zonation palette ####
@@ -128,13 +126,13 @@ mod_overlay_server <- function(id, map_id, parent_session){
         output$sidebarTable <- DT::renderDT(NULL)
         map %>%
           clear_overlay_layers() %>%
-          leaflet::addRasterImage(x = zonation, layerId = "overlay_zonation_raster", colors = zonation_pal) %>%
+          leaflet::addRasterImage(x = zonation_og, layerId = "overlay_zonation_raster", colors = zonation_pal) %>%
           leaflet::addLegend(pal = zonation_pal, layerId = "overlay_zonation_legend",
                              values = c(0, 1), title = "Rel. Conservation Value")
       }
       else if (input$selectGroup == "Land Use") {
         bowen_pm <- vect_layer("1_base/privateland.gpkg") %>% sf::st_transform(4326)
-        bowen_pa_union <- vect_layer("7_protected_areas/existing_protected_areas.gpkg") %>% sf::st_transform(4326) %>% sf::st_make_valid() %>% sf::st_union()
+        bowen_pa_union <- vect_layer("7_land_management/existing_protected_areas.gpkg") %>% sf::st_transform(4326) %>% sf::st_make_valid() %>% sf::st_union()
         bowen_uc <- vect_layer("1_base/unprotected_crown.gpkg") %>%
           sf::st_transform(4326) %>% sf::st_cast("MULTIPOLYGON") %>% sf::st_union()
 
@@ -170,7 +168,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
         strokeWeight <- 3
         map %>%
           clear_overlay_layers() %>%
-          leaflet::addRasterImage(x = zonation, layerId = "overlay_zonation_raster", colors = zonation_pal) %>%
+          leaflet::addRasterImage(x = zonation_og, layerId = "overlay_zonation_raster", colors = zonation_pal) %>%
           leaflet::addLegend(pal = zonation_pal, layerId = "overlay_zonation_legend",
                              values = c(0, 1), title = "Rel. Conservation Value") %>%
           leaflet::addPolygons(data = bowen_pa, layerId = "bowen_pa", group = "overlay_polygons",
@@ -212,7 +210,7 @@ mod_overlay_server <- function(id, map_id, parent_session){
         map %>%
           clear_overlay_layers() %>%
           leaflet::clearGroup("overlay_polygons") %>%
-          leaflet::addRasterImage(x = bowen_hd_p, layerId = "overlay_zonation_raster",
+          leaflet::addRasterImage(x = bowen_hd, layerId = "overlay_zonation_raster",
                                   colors = leaflet::colorFactor(c("#ffeda0", "#feb24c", "#f03b20"), c(1, 2, 3), na.color = "transparent"))
       }
       else if (input$selectGroup == "Habitats - Freshwater") {
@@ -235,15 +233,15 @@ mod_overlay_server <- function(id, map_id, parent_session){
         )
 
         raster_colour_ramp <- viridis::mako(5, end = 0.8, direction = -1)
-        raster_pal <- leaflet::colorNumeric(raster_colour_ramp, terra::values(bowen_fw_p) %>% unique(), na.color = "transparent")
+        raster_pal <- leaflet::colorNumeric(raster_colour_ramp, terra::values(bowen_fw) %>% unique(), na.color = "transparent")
         map %>%
           clear_overlay_layers() %>%
           leaflet::clearGroup("overlay_polygons") %>%
-          leaflet::addRasterImage(x = bowen_fw_p, layerId = "overlay_zonation_raster", colors = raster_pal)
+          leaflet::addRasterImage(x = bowen_fw, layerId = "overlay_zonation_raster", colors = raster_pal)
       }
       else if (input$selectGroup == "Habitats - Terrestrial") {
         top_pct_zonation_vect(map, top_pct_zonation, top_pct)
-        bowen_te_pz <- bowen_te_p %>% terra::project(zonation_og)
+        bowen_te_pz <- bowen_te %>% terra::project(zonation_og)
         res <- values_in_out(zonation_og, top_pct_zonation, bowen_te_pz)
         inside_mean <- mean(res$inside_vals)
         outside_mean <- mean(res$outside_vals)
@@ -257,14 +255,14 @@ mod_overlay_server <- function(id, map_id, parent_session){
                         colnames = c("Mean Habitat Richness"))
         )
 
-        raster_domain <- terra::values(bowen_te_p) %>% unique()
+        raster_domain <- terra::values(bowen_te) %>% unique()
         raster_colours <- c('#ffffcc','#d9f0a3','#addd8e','#78c679','#41ab5d','#238443','#005a32')
         raster_colour_ramp <- colorRampPalette(raster_colours)(length(raster_domain)) %>% rev()
         raster_pal <- leaflet::colorNumeric(raster_colour_ramp, raster_domain, na.color = "transparent")
         map %>%
           clear_overlay_layers() %>%
           leaflet::clearGroup("overlay_polygons") %>%
-          leaflet::addRasterImage(x = bowen_te_p, layerId = "overlay_zonation_raster", colors = raster_pal)
+          leaflet::addRasterImage(x = bowen_te, layerId = "overlay_zonation_raster", colors = raster_pal)
       }
       else if (input$selectGroup == "Threats - Development") {
         top_pct_zonation_vect(map, top_pct_zonation, top_pct)

@@ -58,12 +58,17 @@ mod_land_management_server <- function(id, map_id, parent_session){
     ns <- session$ns
 
     #### Load vector layers ####
-    dev_layer <- vect_layer("6_threats/development_potential.gpkg")
-    bowen_pa <- vect_layer("7_protected_areas/existing_protected_areas.gpkg")
-    # bowen_ogma <- ogma %>%
-    #   sf::st_transform(sf::st_crs(bowen_pa))
-    bowen_new_pa <- vect_layer("7_protected_areas/new_protected_areas.gpkg") %>%
-      sf::st_transform(sf::st_crs(bowen_pa))
+    dev_layer <- vect_layer("7_land_management/biod_val_parcel.gpkg") %>%
+      dplyr::filter(subdividable) %>%
+      dplyr::mutate(
+        potential_units = `Can Subdivide?`,
+        bioval_per_unit = rankmap / potential_units
+      ) %>%
+      sf::st_transform(4326)
+    bowen_pa <- vect_layer("7_land_management/existing_protected_areas.gpkg") %>%
+      sf::st_transform(4326)
+    bowen_new_pa <- vect_layer("7_land_management/pa_candidates.gpkg") %>%
+      sf::st_transform(4326)
 
     #### Show / hide existing protected areas ####
     observeEvent(input$pa_show, {

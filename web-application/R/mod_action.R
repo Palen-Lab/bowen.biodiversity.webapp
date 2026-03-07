@@ -35,8 +35,7 @@ mod_action_server <- function(id, map_id, parent_session){
     ns <- session$ns
 
     #### Add Potential Protected Areas Raster ####
-    protected_areas_raster <- rast_layer("7_action/potential_protected_areas.tif") %>%
-      terra::project("epsg:4326")
+    protected_areas_raster <- rast_layer("7_action/potential_protected_areas.tif")
 
     raster_domain <- seq(from = 1, to = 5)
     raster_labels <- c("Low", "Medium-Low", "Medium", "Medium-High", "High")
@@ -48,7 +47,8 @@ mod_action_server <- function(id, map_id, parent_session){
     )
 
     #### Add Existing Protected Areas Vector ####
-    bowen_pa <- vect_layer("7_action/existing_protected_areas.gpkg")
+    bowen_pa <- vect_layer("7_land_management/existing_protected_areas.gpkg") %>%
+      sf::st_transform(4326)
 
     leaflet::leafletProxy(mapId = map_id,
                           session = parent_session) %>%
