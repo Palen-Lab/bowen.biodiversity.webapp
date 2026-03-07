@@ -18,6 +18,9 @@ $( document ).ready(function() {
     $('#map-loader').hide();
   }
 
+  // Show spinner on initial page load while map initializes
+  showLoader();
+
   // Show spinner whenever a sidebar checkbox is toggled on
   $(document).on('change', '.sidebar input[type="checkbox"]', function() {
     if ($(this).is(':checked')) showLoader();
