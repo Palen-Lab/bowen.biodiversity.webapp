@@ -1,3 +1,10 @@
+#' hover_popover
+#' @description Wrapper around bslib::popover that triggers on hover + focus
+#' @noRd
+hover_popover <- function(...) {
+  bslib::popover(..., options = list(trigger = "hover focus"))
+}
+
 #' util_ui_simple_legend
 #'
 #' @description A utils function

@@ -5,6 +5,11 @@
   position: relative;
 }
 
+/* Remove bottom margin from checkbox inputs inside flex rows */
+.d-flex > .shiny-input-container {
+  margin-bottom: 0;
+}
+
 .selectize-dropdown {
   z-index: 10000;
 }

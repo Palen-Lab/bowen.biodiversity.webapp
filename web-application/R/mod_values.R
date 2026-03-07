@@ -9,32 +9,25 @@
 #' @importFrom shiny NS tagList
 mod_values_ui <- function(id) {
   tagList(
-    checkboxInput(
-      NS(id, "values_show"),
-      "Show layer",
-      value = FALSE
-    ),
-    bslib::card(
-      bslib::card_body(
-        tagList(
-          h1("Conservation Values"),
-          util_ui_simple_legend_element(label = "Relatively Higher Value", colour = viridis::viridis(2)[1]),
-          util_ui_simple_legend_element(label = "Relatively Lower Value", colour = viridis::viridis(2)[2]),
-          sliderInput(NS(id, "top_pct_slider"), label = "Top % Values", min = 10, max = 100, value = 100, step = 5),
-          p("We used ", strong("Zonation5,"), "a robust conservation prioritization software, to calculate relative conservation values from the input layers visualized under the Species, Habitats, and People sections."),
-          p("This can help decide which natural areas are most important for biodiversity, informing how efforts and resources should be used for maximum impact."),
-          p("Note that these values are relative within Bowen Island. When compared to the rest of British Columbia, Bowen Island in general has very high biodiversity. Areas that appear low on this map may still have high biodiversity compared to other places outside of Bowen Island."),
-          em(strong("Note: "), "While this map can provide high-level view of biodiversity, this should not replace site-specific environmental assessments and consultation with experts.")
-        )
+    div(class = "d-flex align-items-center gap-2",
+      checkboxInput(NS(id, "values_show"), "Conservation Values", value = FALSE),
+      hover_popover(
+        icon("circle-info", style = "cursor:pointer;"),
+        title = "Conservation Values",
+        p("We used ", strong("Zonation5,"), "a robust conservation prioritization software, to calculate relative conservation values from the input layers visualized under the Species, Habitats, and People sections."),
+        p("This can help decide which natural areas are most important for biodiversity, informing how efforts and resources should be used for maximum impact."),
+        p("Note that these values are relative within Bowen Island. Areas that appear low on this map may still have high biodiversity compared to other places outside of Bowen Island."),
+        em(strong("Note: "), "While this map can provide a high-level view of biodiversity, it should not replace site-specific environmental assessments and consultation with experts.")
       )
-    )
+    ),
+    sliderInput(NS(id, "top_pct_slider"), label = "Top % Values", min = 10, max = 100, value = 100, step = 5)
   )
 }
 
 #' values Server Functions
 #'
 #' @noRd
-mod_values_server <- function(id, map_id, parent_session){
+mod_values_server <- function(id, map_id, parent_session, active_raster = NULL){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
@@ -42,8 +35,18 @@ mod_values_server <- function(id, map_id, parent_session){
     zonation <- terra::rast(here::here("inst/extdata/5_values/rankmap.tif")) %>%
       terra::project("epsg:4326")
 
+    #### Cross-module raster exclusivity ####
+    observe({
+      if (isTRUE(input$values_show)) active_raster("values")
+    })
+    observeEvent(active_raster(), {
+      if (!is.null(active_raster()) && active_raster() != "values") {
+        updateCheckboxInput(session, "values_show", value = FALSE)
+      }
+    }, ignoreInit = TRUE)
+
     #### Update map each time slider or checkbox is updated ####
-    observeEvent(list(input$values_show, input$top_pct_slider), {
+    observe({
       map <- leaflet::leafletProxy(mapId = map_id, session = parent_session)
 
       if (!isTRUE(input$values_show)) {

@@ -30,6 +30,7 @@ app_ui <- function(request) {
           fillable = TRUE,
           class = "p-0",
           sidebar = bslib::sidebar(
+            open = list(desktop = "always", mobile = "always-above"), 
             width = "380px",
             bslib::accordion(
               id = "main_accordion",
@@ -45,7 +46,7 @@ app_ui <- function(request) {
                 mod_habitats_ui("habitats_1")
               ),
               bslib::accordion_panel(
-                "Human Footprint",
+                "People",
                 icon = icon("person"),
                 mod_people_ui("people_1")
               ),
@@ -60,15 +61,15 @@ app_ui <- function(request) {
                 mod_threats_ui("threats_1")
               ),
               bslib::accordion_panel(
-                "Protected Areas",
+                "Land Management",
                 icon = icon("seedling"),
-                mod_protected_areas_ui("protected_areas_1")
-              ),
-              bslib::accordion_panel(
-                "Overlay",
-                icon = icon("layer-group"),
-                mod_overlay_ui("overlay_1")
+                mod_land_management_ui("land_management_1")
               )
+              # bslib::accordion_panel(
+              #   "Overlay",
+              #   icon = icon("layer-group"),
+              #   mod_overlay_ui("overlay_1")
+              # )
             )
           ),
           tags$style(type = "text/css", "#map {height: calc(100vh - 90px) !important;}"),

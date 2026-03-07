@@ -27,14 +27,17 @@ app_server <- function(input, output, session) {
     showModal(welcome_modal())
   })
 
+  #### Shared raster layer state (only one raster active across all modules) ####
+  active_raster_module <- reactiveVal(NULL)
+
   #### Module Servers ####
-  mod_species_server("species_1", map_id = "map", parent_session = session)
-  mod_habitats_server("habitats_1", map_id = "map", parent_session = session)
-  mod_people_server("people_1", map_id = "map", parent_session = session)
-  mod_values_server("values_1", map_id = "map", parent_session = session)
-  mod_threats_server("threats_1", map_id = "map", parent_session = session)
-  mod_protected_areas_server("protected_areas_1", map_id = "map", parent_session = session)
-  mod_overlay_server("overlay_1", map_id = "map", parent_session = session)
+  mod_species_server("species_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
+  mod_habitats_server("habitats_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
+  mod_people_server("people_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
+  mod_values_server("values_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
+  mod_threats_server("threats_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
+  mod_land_management_server("land_management_1", map_id = "map", parent_session = session)
+  # mod_overlay_server("overlay_1", map_id = "map", parent_session = session)
 
   #### Init Main Map ####
   bowen_boundary <- vect_layer("1_base/boundary.gpkg") %>%

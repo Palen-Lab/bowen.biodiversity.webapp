@@ -11,7 +11,7 @@ mod_species_ui <- function(id) {
   tagList(
     div(class = "d-flex align-items-center gap-2",
       checkboxInput(NS(id, "species_all"), "All Species", value = FALSE),
-      bslib::popover(
+      hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "All Species",
         p("This map shows the Species Richness by 100m resolution cell or pixel on Bowen Island."),
@@ -20,7 +20,7 @@ mod_species_ui <- function(id) {
     ),
     div(class = "d-flex align-items-center gap-2",
       checkboxInput(NS(id, "species_threatened"), "Threatened Species", value = FALSE),
-      bslib::popover(
+      hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Threatened Species",
         p("This map shows the Species Richness by 100m resolution cell or pixel on Bowen Island."),
@@ -29,7 +29,7 @@ mod_species_ui <- function(id) {
     ),
     div(class = "d-flex align-items-center gap-2",
       checkboxInput(NS(id, "species_birds"), "Bird Species", value = FALSE),
-      bslib::popover(
+      hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Bird Species",
         p("This map shows the Species Richness of Birds by 100m resolution cell or pixel on Bowen Island."),
@@ -38,7 +38,7 @@ mod_species_ui <- function(id) {
     ),
     div(class = "d-flex align-items-center gap-2",
       checkboxInput(NS(id, "species_other"), "Other Species", value = FALSE),
-      bslib::popover(
+      hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Other Species",
         p("This map shows the Species Richness of other species, including reptiles, amphibians, and small mammals, by 100m resolution cell or pixel on Bowen Island."),
@@ -51,7 +51,7 @@ mod_species_ui <- function(id) {
 #' species Server Functions
 #'
 #' @noRd
-mod_species_server <- function(id, map_id, parent_session){
+mod_species_server <- function(id, map_id, parent_session, active_raster = NULL){
   moduleServer(id, function(input, output, session){
     ns <- session$ns
 
@@ -77,6 +77,16 @@ mod_species_server <- function(id, map_id, parent_session){
       }
       NULL
     })
+
+    #### Cross-module raster exclusivity ####
+    observe({
+      if (!is.null(active_group())) active_raster("species")
+    })
+    observeEvent(active_raster(), {
+      if (!is.null(active_raster()) && active_raster() != "species") {
+        for (box in species_boxes) updateCheckboxInput(session, box, value = FALSE)
+      }
+    }, ignoreInit = TRUE)
 
     #### Update map when selection changes ####
     observe({
