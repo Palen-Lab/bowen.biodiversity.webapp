@@ -10,106 +10,33 @@ if (interactive()) {
 #' @noRd
 app_server <- function(input, output, session) {
   sf::sf_use_s2(FALSE)
-  #### Active Panel Trigger ####
-  active_panel_options <- c("start", "species", "habitats", "people", "values", "threats", "action", "protected_areas", "overlay")
-  r <- reactiveValues(active_panel = "start")
-  observeEvent(input$start_sidebar_btn, {
-    r$active_panel <- "start"
-  })
-  observeEvent(input$species_sidebar_btn, {
-    r$active_panel <- "species"
-  })
-  observeEvent(input$habitats_sidebar_btn, {
-    r$active_panel <- "habitats"
-  })
-  observeEvent(input$people_sidebar_btn, {
-    r$active_panel <- "people"
-  })
-  observeEvent(input$values_sidebar_btn, {
-    r$active_panel <- "values"
-  })
-  observeEvent(input$threats_sidebar_btn, {
-    r$active_panel <- "threats"
-  })
-  observeEvent(input$protected_areas_sidebar_btn, {
-    r$active_panel <- "protected_areas"
-  })
-  observeEvent(input$overlay_sidebar_btn, {
-    r$active_panel <- "overlay"
-  })
-  observeEvent(r$active_panel, {
-    if(r$active_panel == "start") {
-      mod_start_server("start_1",
-                       map_id = "map",
-                       parent_session = session)
-    }
-    else if (r$active_panel == "species") {
-      mod_species_server("species_1",
-                         map_id = "map",
-                         parent_session = session)
-    }
-    else if (r$active_panel == "habitats") {
-      mod_habitats_server("habitats_1",
-                          map_id = "map",
-                          parent_session = session)
-    }
-    else if (r$active_panel == "people") {
-      mod_people_server("people_1",
-                        map_id = "map",
-                        parent_session = session)
-    }
-    else if (r$active_panel == "values") {
-      mod_values_server("values_1",
-                        map_id = "map",
-                        parent_session = session)
-    }
-    else if (r$active_panel == "threats") {
-      mod_threats_server("threats_1",
-                         map_id = "map",
-                         parent_session = session)
-    }
-    else if (r$active_panel == "protected_areas") {
-      mod_protected_areas_server("protected_areas_1",
-                                 map_id = "map",
-                                 parent_session = session)
-    }
-    else if (r$active_panel == "overlay") {
-      mod_overlay_server("overlay_1",
-                         map_id = "map",
-                         parent_session = session)
-    }
-  })
-  # observeEvent(input$action_sidebar_btn, {
-  #   r$active_panel <- "action"
-  #   mod_action_server("action_1",
-  #                     map_id = "map",
-  #                     parent_session = session)
-  # })
 
-  #### Update Active Panel ####
-  observeEvent(r$active_panel, {
-    # Clear mini sidebar button
-    for(active_panel in active_panel_options) {
-      shinyjs::removeCssClass(id = paste0(active_panel, "_sidebar_btn"), class = "mini_sidebar_btn_selected")
-    }
-    # Highlight mini sidebar button
-    shinyjs::addCssClass(id = paste0(r$active_panel, "_sidebar_btn"), class = "mini_sidebar_btn_selected")
-    # Change page
-    updateTabsetPanel(inputId = "main_sidebar", selected = r$active_panel)
-    # Clean up polygons
-    leaflet::leafletProxy("map") %>%
-      leaflet::clearControls() %>%
-      leaflet::clearGroup("overlap_polygons") %>%
-      leaflet::clearGroup("added_pa") %>%
-      leaflet::clearGroup("highlight_pa")
+  #### Welcome Modal ####
+  welcome_modal <- function() {
+    modalDialog(
+      title = NULL,
+      mod_start_ui("start_1"),
+      footer = modalButton("Get Started"),
+      size = "l",
+      easyClose = TRUE
+    )
+  }
+  showModal(welcome_modal())
+
+  observeEvent(input$about_btn, {
+    showModal(welcome_modal())
   })
-  #### Start Button on First Page ####
-  observeEvent(input$start_page_button, {
-    r$active_panel <- "species"
-  })
+
+  #### Module Servers ####
+  mod_species_server("species_1", map_id = "map", parent_session = session)
+  mod_habitats_server("habitats_1", map_id = "map", parent_session = session)
+  mod_people_server("people_1", map_id = "map", parent_session = session)
+  mod_values_server("values_1", map_id = "map", parent_session = session)
+  mod_threats_server("threats_1", map_id = "map", parent_session = session)
+  mod_protected_areas_server("protected_areas_1", map_id = "map", parent_session = session)
+  mod_overlay_server("overlay_1", map_id = "map", parent_session = session)
 
   #### Init Main Map ####
-  #### Add Bowen Admin Boundary ####
   bowen_boundary <- vect_layer("1_base/boundary.gpkg") %>%
     sf::st_transform(crs = 4326)
   bowen_boundary_group <- "Admin Boundary"
@@ -140,7 +67,7 @@ app_server <- function(input, output, session) {
           "https://api.maptiler.com/maps/backdrop/{z}/{x}/{y}.png?key=",
           maptiler_key
         ),
-        attribution = 'Map data © <a href="https://www.maptiler.com/">MapTiler</a>'
+        attribution = 'Map data \u00a9 <a href="https://www.maptiler.com/">MapTiler</a>'
       ) %>%
       leaflet::addPolygons(data = bowen_boundary,
                            group = bowen_boundary_group,
@@ -149,31 +76,21 @@ app_server <- function(input, output, session) {
                            fill = FALSE)
   })
 
-  #### Add Bowen Island Roads ####
+  #### Add Base Layers ####
   bowen_roads <- vect_layer("1_base/roads.gpkg") %>%
     sf::st_transform(crs = 4326)
-  # addPolylines can't handle multilinestrings for some reason, need to convert to LINESTRINGS
   bowen_roads_ls <- sf::st_cast(bowen_roads, "LINESTRING")
-  bowen_roads_group <- "Roads"
 
-  #### Add Bowen Island Trails ####
   bowen_trails <- vect_layer("1_base/trails.gpkg") %>%
     sf::st_transform(crs = 4326)
-  bowen_trails_group <- "Trails"
 
-  #### Add Ocean to hide jagged raster edge ####
   bowen_ocean_sf <- vect_layer("1_base/ocean.gpkg") %>%
     sf::st_transform(crs = 4326)
 
-  bowen_boundary_group <- "Admin Boundary"
   leaflet::leafletProxy("map") %>%
     leaflet::addMapPane("ocean", 501) %>%
     leaflet::addMapPane("roads", 500) %>%
     leaflet::addMapPane("trails", 499) %>%
-    # leaflet::addPolygons(data = bowen_boundary,
-    #                      stroke = TRUE,
-    #                      color = "darkgrey",
-    #                      fill = FALSE) %>%
     leaflet::addPolygons(data = bowen_ocean_sf,
                          group = "Oceans",
                          stroke = TRUE,

@@ -8,8 +8,12 @@
 #'
 #' @importFrom shiny NS tagList
 mod_values_ui <- function(id) {
-  tabPanel(
-    "values_panel",
+  tagList(
+    checkboxInput(
+      NS(id, "values_show"),
+      "Show layer",
+      value = FALSE
+    ),
     bslib::card(
       bslib::card_body(
         tagList(
@@ -39,33 +43,31 @@ mod_values_server <- function(id, map_id, parent_session){
     zonation <- terra::rast(here::here("inst/extdata/5_values/rankmap.tif")) %>%
       terra::project("epsg:4326")
 
-    #### Update map each time slider is updated ####
-    observeEvent(input$top_pct_slider, {
+    #### Update map each time slider or checkbox is updated ####
+    observeEvent(list(input$values_show, input$top_pct_slider), {
+      map <- leaflet::leafletProxy(mapId = map_id, session = parent_session)
+
+      if (!isTRUE(input$values_show)) {
+        map %>%
+          leaflet::removeImage(layerId = "values_raster") %>%
+          leaflet::removeControl(layerId = "values_legend")
+        return()
+      }
+
       top_pct <- input$top_pct_slider
       zonation_colour_ramp <- viridis::viridis(100)[0:top_pct]
-      # zonation_colour_ramp <- viridis::viridis(100)
       zonation_pal <- leaflet::colorNumeric(
         palette = colorRamp(colors = zonation_colour_ramp),
         domain = c((1 - top_pct/100), 1),
         na.color = "transparent",
         reverse = TRUE
       )
-      leaflet::leafletProxy(mapId = map_id,
-                            session = parent_session) %>%
-        leaflet::clearControls() %>%
-        leaflet::clearImages() %>%
-        leaflet::clearGroup(group = "clear_each_update") %>%
-        leaflet::addRasterImage(
-          x = zonation,
-          layerId = "zonation_raster",
-          colors = zonation_pal
-        ) %>%
-        leaflet::addLegend(
-          pal = zonation_pal,
-          layerId = "zonation_legend",
-          values =  c(0,1),
-          title = "Rel. Conservation Value",
-        )
+      map %>%
+        leaflet::removeImage(layerId = "values_raster") %>%
+        leaflet::removeControl(layerId = "values_legend") %>%
+        leaflet::addRasterImage(x = zonation, layerId = "values_raster", colors = zonation_pal) %>%
+        leaflet::addLegend(pal = zonation_pal, layerId = "values_legend",
+                           values = c(0, 1), title = "Rel. Conservation Value")
     })
   })
 }
