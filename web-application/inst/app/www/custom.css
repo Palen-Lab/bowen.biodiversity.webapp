@@ -37,3 +37,28 @@ body {
 .blink-outline {
   animation: blink 1s infinite;
 }
+
+/* Map loading overlay */
+#map-loader {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(255, 255, 255, 0.45);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+#map-loader .map-spinner {
+  width: 52px;
+  height: 52px;
+  border: 5px solid #ccc;
+  border-top-color: #2ca25f;
+  border-radius: 50%;
+  animation: map-spin 0.75s linear infinite;
+}
+
+@keyframes map-spin {
+  to { transform: rotate(360deg); }
+}

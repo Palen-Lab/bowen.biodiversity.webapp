@@ -73,7 +73,10 @@ app_ui <- function(request) {
             )
           ),
           tags$style(type = "text/css", "#map {height: calc(100vh - 90px) !important;}"),
-          leaflet::leafletOutput("map"),
+          div(style = "position: relative;",
+            leaflet::leafletOutput("map"),
+            div(id = "map-loader", div(class = "map-spinner"))
+          ),
           border_radius = FALSE
         )
       )
