@@ -328,6 +328,7 @@ list(
   tar_target(land_ownership_rast_path, {here("data-3-outputs/7_land_management/land_ownership_rast.tif")}),
   tar_target(land_ownership_rast_save, {writeRaster(land_ownership_rast, land_ownership_rast_path, overwrite = T)}),
   tar_target(land_ownership_rast_upload, {upload_gdrive(land_ownership_rast, land_ownership_rast_path, drive_folder_id_land_management, name = "land_ownership.tif")}, format = "file"),
+  tar_target(land_ownership_rast_upload_supabase, upload_supabase(land_ownership_rast_save, land_ownership_rast_path, key = "7_land_management/land_ownership_rast.tif"), format = "file"),
 
   # OUTPUT FIGURES ####
   # Annotated and unannotated PNG exports for every atlas figure, in atlas section order.
