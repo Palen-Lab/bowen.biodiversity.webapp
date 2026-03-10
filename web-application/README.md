@@ -24,6 +24,9 @@ This web application provides an interactive interface to explore:
 # 1. Restore package environment (first time only)
 renv::restore()
 
+# 2. Update / Create .Renviron
+SUPABASE_URL = "https://wjnyybyvvkaztzgoccny.supabase.co"
+
 # 2. Load and run the application
 pkgload::load_all()
 run_app()
