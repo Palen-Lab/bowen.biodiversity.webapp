@@ -36,7 +36,7 @@ app_server <- function(input, output, session) {
   mod_people_server("people_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
   mod_values_server("values_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
   mod_threats_server("threats_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
-  mod_land_management_server("land_management_1", map_id = "map", parent_session = session)
+  mod_land_management_server("land_management_1", map_id = "map", parent_session = session, active_raster = active_raster_module)
   # mod_overlay_server("overlay_1", map_id = "map", parent_session = session)
 
   #### Init Main Map ####
