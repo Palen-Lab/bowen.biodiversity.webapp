@@ -1,3 +1,27 @@
+# Accordion panel styled as a section header (dark green, white text).
+# Use for top-level section panels (e.g. Biodiversity Values, Planning...).
+section_accordion_panel <- function(title, ..., ico = NULL) {
+  panel <- bslib::accordion_panel(title, ..., icon = ico)
+  htmltools::tagQuery(panel)$
+    find("button.accordion-button")$
+    addAttrs(style = "background-color: #2d6a4f; color: #ffffff;")$
+    allTags()
+}
+
+# Non-interactive accordion-style section heading.
+# Renders with the same visual weight as an accordion panel header but has no
+# collapse behaviour — purely a visual divider/label.
+accordion_section_heading <- function(label, ico = NULL) {
+  tags$div(
+    class = "accordion-item",
+    tags$div(
+      class = "accordion-button pe-none",
+      style = "cursor: default; font-weight: 400; --bs-accordion-btn-icon-width: 0; background-color: #2d6a4f; color: #ffffff;",
+      if (!is.null(ico)) tagList(ico, tags$span(label, class = "ms-2")) else label
+    )
+  )
+}
+
 #' hover_popover
 #' @description Wrapper around bslib::popover that triggers on hover + focus
 #' @noRd

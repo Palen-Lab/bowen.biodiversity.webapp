@@ -35,6 +35,7 @@ app_ui <- function(request) {
             bslib::accordion(
               id = "main_accordion",
               multiple = FALSE,
+              accordion_section_heading("Patterns of Biodiversity", icon("leaf")),
               bslib::accordion_panel(
                 "Species",
                 icon = icon("dove"),
@@ -50,21 +51,9 @@ app_ui <- function(request) {
                 icon = icon("person"),
                 mod_people_ui("people_1")
               ),
-              bslib::accordion_panel(
-                "Conservation Values",
-                icon = icon("chart-simple"),
-                mod_values_ui("values_1")
-              ),
-              bslib::accordion_panel(
-                "Threats",
-                icon = icon("triangle-exclamation"),
-                mod_threats_ui("threats_1")
-              ),
-              bslib::accordion_panel(
-                "Land Management",
-                icon = icon("seedling"),
-                mod_land_management_ui("land_management_1")
-              )
+              section_accordion_panel("Conservation Analysis", mod_values_ui("values_1"), ico = icon("chart-simple")),
+              section_accordion_panel("Threats to Biodiversity", mod_threats_ui("threats_1"), ico = icon("triangle-exclamation")),
+              section_accordion_panel("Planning for a Biodiverse Future", mod_land_management_ui("land_management_1"), ico = icon("seedling"))
               # bslib::accordion_panel(
               #   "Overlay",
               #   icon = icon("layer-group"),
@@ -72,7 +61,7 @@ app_ui <- function(request) {
               # )
             )
           ),
-          tags$style(type = "text/css", "#map {height: calc(100vh - 90px) !important;}"),
+          tags$style(type = "text/css", "#map {height: calc(100vh - 90px) !important;} .accordion-button[style*='2d6a4f']::after { filter: invert(1); }"),
           div(style = "position: relative;",
             leaflet::leafletOutput("map"),
             div(id = "map-loader", div(class = "map-spinner"))
