@@ -15,8 +15,8 @@ mod_people_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "iNaturalist Observations",
-        p("iNaturalist is a community science platform where people can record and share observations of plants, animals, and other organisms, with identifications aided by experts and AI."),
-        p("While useful, iNaturalist is subject to observer bias — we have the most observations in places that are easy for people to get to, but not necessarily where organisms prefer to live."),
+        p("iNaturalist is a citizen science platform where people record and share observations of plants, animals, fungi, and other organisms, with identifications aided by experts and AI. Over 36,000 iNaturalist observations have been made on Bowen Island."),
+        p("While tremendously helpful for engaging the public in the observation and appreciation of nature, iNaturalist data are subject to observer bias — observations are concentrated where people go, not necessarily where organisms prefer to live."),
         a(icon("up-right-from-square"), "iNaturalist Observations on Bowen Island",
           href = "https://www.inaturalist.org/observations?place_id=53787",
           target = "_blank")
@@ -27,7 +27,7 @@ mod_people_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Ecological Intactness",
-        p("Human disturbance on Bowen Island, including development, recreation, and habitat fragmentation, has impacted native ecosystems by altering land cover, increasing pollution, and putting pressure on sensitive habitats like wetlands, forests, and shorelines.")
+        p("Human disturbance on Bowen Island — including development, recreation, and habitat fragmentation — has affected native ecosystems by altering land cover, increasing pollution, and putting pressure on sensitive habitats such as wetlands, forests, and shorelines. Lower values indicate greater disturbance and reduced ecological intactness.")
       )
     )
   )

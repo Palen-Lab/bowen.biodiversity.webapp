@@ -14,8 +14,8 @@ mod_species_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "All Species",
-        p("This map shows the Species Richness by 100m resolution cell or pixel on Bowen Island."),
-        p("Presence in each pixel is based on the species' probability of occurrence in Species Distribution Models (SDM). There are 193 of these species present on Bowen Island with species distribution models available.")
+        p("This map shows vertebrate species richness at 100m resolution across Bowen Island — the first wall-to-wall species richness map of its kind for the island."),
+        p("Species Distribution Models (SDMs) from the Palen Lab at Simon Fraser University were used to estimate the distribution of 193 vertebrate species, combined with locally-counted heron and raptor nest data, for 195 data layers in total.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -23,8 +23,8 @@ mod_species_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Threatened Species",
-        p("This map shows the Species Richness by 100m resolution cell or pixel on Bowen Island."),
-        p("Species listed under the Red or Blue Lists according to the British Columbia Conservation Data Centre are included. There are 24 of these species present on Bowen Island with species distribution models available.")
+        p("This map shows the richness of species at risk at 100m resolution across Bowen Island."),
+        p("Species listed on the Red or Blue Lists of the British Columbia Conservation Data Centre are included. There are 24 of these species present on Bowen Island with Species Distribution Models available.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -32,8 +32,8 @@ mod_species_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Bird Species",
-        p("This map shows the Species Richness of Birds by 100m resolution cell or pixel on Bowen Island."),
-        p("There are 176 of these species present on Bowen Island based on eBird citizen science databases.")
+        p("This map shows bird species richness at 100m resolution across Bowen Island."),
+        p("There are 176 bird species recorded on Bowen Island, based on citizen science data from eBird.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -41,8 +41,8 @@ mod_species_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Other Species",
-        p("This map shows the Species Richness of other species, including reptiles, amphibians, and small mammals, by 100m resolution cell or pixel on Bowen Island."),
-        p("There are 17 of these species present on Bowen Island based on iNaturalist and previous environmental reports.")
+        p("This map shows the richness of reptiles, amphibians, and small mammals at 100m resolution across Bowen Island."),
+        p("There are 17 of these species recorded on Bowen Island, based on iNaturalist citizen science data and previous environmental reports.")
       )
     )
   )

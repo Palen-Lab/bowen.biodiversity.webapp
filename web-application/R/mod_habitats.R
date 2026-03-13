@@ -14,7 +14,7 @@ mod_habitats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "All Habitats",
-        p("Bowen Island features a rich mosaic of habitats—ranging from mature temperate rainforests and dry coastal bluffs to freshwater wetlands, lakes, streams, and coastal shores—each supporting distinct communities of plants, animals, and fungi.")
+        p("This map shows the overall richness of habitat types at 100m resolution across Bowen Island, combining terrestrial ecosystem mapping with freshwater habitat data. Areas where multiple distinct habitats co-occur indicate higher levels of overall biodiversity.")
       )
     ),
     tags$p(tags$strong("Freshwater"), class = "mb-0 mt-2"),
@@ -23,7 +23,7 @@ mod_habitats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Freshwater Richness",
-        p("Bowen Island hosts a diverse range of freshwater habitats, including lakes, wetlands, and streams.")
+        p("Freshwater resources play a fundamental role in sustaining Bowen Island's biodiversity. This map shows the number of distinct aquatic habitat types within each 100m pixel, drawn from a unique database of locally-mapped freshwater habitats developed by resident biologist Alan Whitehead.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -31,7 +31,7 @@ mod_habitats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Lakes",
-        p("The lakes on Bowen Island, such as Killarney and Grafton Lakes, are ecologically significant.")
+        p("The lakes on Bowen Island — including Killarney and Grafton Lakes — are ecologically significant freshwater habitats that support aquatic species and recharge groundwater.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -39,7 +39,7 @@ mod_habitats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Ponds",
-        p("The ponds on Bowen Island—including natural and beaver-created wetlands—are ecologically vital.")
+        p("The ponds on Bowen Island — including natural and beaver-created wetlands — provide critical habitat for aquatic and water-associated species, and support groundwater recharge.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -47,7 +47,7 @@ mod_habitats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Riparian",
-        p("Riparian zones on Bowen Island are ecologically crucial for watershed health and biodiversity.")
+        p("Riparian zones buffer free-flowing streams and support a unique assemblage of species. They are among the most productive habitats on Bowen Island for both aquatic and terrestrial biodiversity.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -55,7 +55,7 @@ mod_habitats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Streams",
-        p("Streams on Bowen Island play a vital ecological role supporting salmonid populations.")
+        p("Streams on Bowen Island sustain salmonid populations and provide habitat for many aquatic and water-associated species. The vast majority of terrestrial species also depend on riparian and stream habitats during particular seasons and life stages.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -63,7 +63,7 @@ mod_habitats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Wetlands",
-        p("Wetlands on Bowen Island regulate water flow, improve water quality, and support high biodiversity.")
+        p("Wetlands regulate water flow, recharge groundwater, improve water quality, and support high biodiversity. They are among the most threatened habitat types on Bowen Island due to development and drainage.")
       )
     ),
     tags$p(tags$strong("Terrestrial"), class = "mb-0 mt-2"),
@@ -112,7 +112,7 @@ mod_habitats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Coastal",
-        p("Coastal ecosystems on Bowen Island play a vital ecological role by supporting high biodiversity, including shellfish, seaweeds, and invertebrates.")
+        p("Coastal ecosystems on Bowen Island support high biodiversity — including shellfish, seaweeds, eelgrass, and invertebrates — and provide habitat types found nowhere else on the island.")
       )
     )
   )

@@ -15,8 +15,8 @@ mod_threats_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Wildfire Vulnerability Index (WVI)",
-        p("This map shows how vulnerable different parts of Bowen Island are to biodiversity loss if a wildfire were to happen — not predicting fires, just showing where damage could be worst."),
-        p("Based on slope steepness, aspect (south-facing slopes burn hotter), and habitat type. Private lands are masked.")
+        p("This map shows how vulnerable different parts of Bowen Island are to biodiversity loss in the event of a wildfire — not a prediction of where fires will occur, but an assessment of where ecological damage could be greatest."),
+        p("Vulnerability is based on slope steepness, aspect (south-facing slopes burn hotter and faster), and habitat type. Private lands are masked.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",

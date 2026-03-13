@@ -44,8 +44,8 @@ mod_land_management_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Existing Protected Areas",
-        p("Expanding and connecting protected areas on Bowen Island would help preserve rare ecosystems, maintain wildlife corridors, and contribute to Canada's 30 by 30 biodiversity targets."),
-        p("Canada's 30 by 30 target commits to protecting 30% of the country's lands and waters by 2030, aimed at conserving biodiversity, mitigating climate change, and safeguarding ecosystem services.")
+        p("Expanding and connecting protected areas on Bowen Island would help preserve rare ecosystems, maintain wildlife corridors, and advance Canada's 30 by 30 commitment to protect 30% of lands and waters by 2030."),
+        p("Biodiversity protection on Bowen Island also aligns with the conservation vision of the Átl'ka7tsem/Howe Sound UNESCO Biosphere Region and the Preserve and Protect Mandate of the Islands Trust.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -53,7 +53,7 @@ mod_land_management_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Candidate Protected Areas",
-        p("These are areas identified as high-priority candidates for protection based on their biodiversity values and connectivity potential.")
+        p("These are high-priority candidates for protection identified through the Bowen Island Biodiversity Plan, based on their integrated conservation values, connectivity potential, and land ownership.")
       )
     ),
     tags$p(tags$strong("Development"), class = "mb-0 mt-2"),
@@ -62,8 +62,8 @@ mod_land_management_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Development Potential",
-        p("Quantifies where land on Bowen Island can be subdivided to allow more buildings."),
-        em(strong("Note: "), "Shows only parcels identified as having potential for future development / densification.")
+        p("Shows where land on Bowen Island has potential for subdivision and additional development, quantified as the number of potential new units per parcel."),
+        em(strong("Note: "), "Shows only parcels identified as having potential for future development or densification.")
       )
     ),
     div(class = "d-flex align-items-center gap-2",
@@ -71,8 +71,8 @@ mod_land_management_ui <- function(id) {
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Development and Biodiversity",
-        p("Development potential compared to Conservation Values, showing the biodiversity value at risk per potential unit."),
-        em(strong("Note: "), "Shows only parcels identified as having potential for future development / densification.")
+        p("Development pressure overlaid with Integrated Conservation Values, showing the relative biodiversity value at risk per potential new unit. Higher values indicate development potential in areas of greater conservation significance."),
+        em(strong("Note: "), "Shows only parcels identified as having potential for future development or densification.")
       )
     )
   )

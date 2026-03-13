@@ -10,14 +10,14 @@
 mod_values_ui <- function(id) {
   tagList(
     div(class = "d-flex align-items-center gap-2",
-      checkboxInput(NS(id, "values_show"), "Conservation Values", value = FALSE),
+      checkboxInput(NS(id, "values_show"), "Integrated Conservation Values", value = FALSE),
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
-        title = "Conservation Values",
-        p("We used ", strong("Zonation5,"), "a robust conservation prioritization software, to calculate relative conservation values from the input layers visualized under the Species, Habitats, and People sections."),
-        p("This can help decide which natural areas are most important for biodiversity, informing how efforts and resources should be used for maximum impact."),
-        p("Note that these values are relative within Bowen Island. Areas that appear low on this map may still have high biodiversity compared to other places outside of Bowen Island."),
-        em(strong("Note: "), "While this map can provide a high-level view of biodiversity, it should not replace site-specific environmental assessments and consultation with experts.")
+        title = "Integrated Conservation Values",
+        p("We used ", strong("Zonation5,"), "a spatial conservation prioritization tool, to integrate all species, habitat, and ecological intactness layers into a single relative measure of conservation value across Bowen Island."),
+        p("This map identifies where biodiversity is highest and where conservation efforts and resources will have the greatest impact. Areas ranked highest represent the island's biodiversity hotspots."),
+        p("These values are relative within Bowen Island. Areas that appear lower on this map may still have significant biodiversity value compared to other locations outside the island."),
+        em(strong("Note: "), "This map provides a high-level, island-wide view of biodiversity. It should complement — not replace — site-specific environmental assessments and expert consultation.")
       )
     ),
     sliderInput(NS(id, "top_pct_slider"), label = "Top % Values", min = 10, max = 100, value = 100, step = 5)
