@@ -20,9 +20,15 @@ app_ui <- function(request) {
         "Biodiversity Data Atlas"
       ),
       fillable = c("Map"),
+      selected = "Map",
       bslib::nav_spacer(),
       bslib::nav_item(
         actionLink("about_btn", "About", icon = icon("circle-info"))
+      ),
+      bslib::nav_panel(
+        "Contact",
+        icon = icon("envelope"),
+        mod_contact_ui("contact_1")
       ),
       bslib::nav_panel(
         "Map",
