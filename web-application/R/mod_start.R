@@ -17,14 +17,11 @@ mod_start_ui <- function(id) {
     p("Integrated Conservation Values are calculated using Zonation5, a spatial conservation prioritization tool, combining all species, habitat, and intactness layers to identify where biodiversity is highest and where conservation efforts will have the greatest impact."),
     h3("Planning for a Biodiverse Future"),
     p("These conservation values are used to identify candidates for protection, assess development pressure on high-value areas, and support the land use planning and stewardship decisions needed to protect Bowen Island's natural heritage."),
-    h2("Collaborators:"),
     div(style = "display: flex; align-items: center; justify-content: space-around; gap: 16px;",
       img(src = "www/SFU_horizontal_logo_rgb.png",
-          style = "width: 28%; height: auto; object-fit: contain;"),
-      img(src = "www/Bowen-Conservancy-Oval-Logo-6-green-text-transparent-background-400x112-1.png",
-          style = "width: 28%; height: auto; object-fit: contain;"),
-      img(src = "www/bowenisland_brandmark.png",
-          style = "width: 28%; height: auto; object-fit: contain;")
+          style = "width: 45%; height: auto; object-fit: contain;"),
+      img(src = "www/e2o_logo.png",
+          style = "width: 45%; height: auto; object-fit: contain;")
     )
   )
 }

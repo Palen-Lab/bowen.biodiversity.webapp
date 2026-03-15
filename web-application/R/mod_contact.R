@@ -11,12 +11,8 @@ mod_contact_ui <- function(id) {
   div(
     class = "container py-5",
     style = "max-width: 800px;",
-    h1("Contact Us"),
-    p("This atlas was developed by the ",
-      tags$a("Palen Lab", href = "https://palenlab.wordpress.com/", target = "_blank"),
-      " at Simon Fraser University in partnership with the Bowen Island Conservancy and the Municipality of Bowen Island."
-    ),
-    p("The Palen Lab conducts applied ecology research to inform conservation policy, with a focus on aquatic community ecology across the Pacific Northwest. Led by Professor Wendy Palen, the lab uses field experiments and landscape surveys to understand ecological patterns — from species physiology to food web interactions — and translate findings into actionable conservation guidance."),
+    h1("Contributions and Acknowledgements"),
+    p("This atlas was developed by the authors in collaboration with the Bowen Island Conservancy and the Caring for Nature initiative. We are thankful for the substantial contributions made by the Caring For Nature team, including B. Turner, J. Matheson, W. Husby, J. Dowler, S.E. Fast, A. Whitehead, J. Gedye, S. Johnson, E. Wachtman, P. Hay, E. Olsen, B. Brokenshire, P. Matthews, L. Gilday, and M. Toom, as well as the public participants in our technical workshop and community meetings. Financial support was provided by the Sitka Foundation and the National Science and Engineering Research Council. We acknowledge the valuable technical input and scientific support provided by V. Kwok, K. Rolfe, M. Persram, M. Tylo (SFU Research Team), D. Martin, C. Skuce (Bowen Island Municipality), and W. Shulba (Islands Trust)."),
     h3("Authors"),
     tags$table(
       style = "border-collapse: collapse; margin-bottom: 1rem;",
