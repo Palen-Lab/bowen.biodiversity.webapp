@@ -92,7 +92,7 @@ mod_people_server <- function(id, map_id, parent_session, active_raster = NULL){
       if (group == "people_disturb") {
         human_footprint_domain <- c(0, terra::minmax(human_footprint)[2])
         human_footprint_pal <- leaflet::colorNumeric(
-          c("#1a9641", "#a6d96a", "#ffffbf", "#fdae61", "#d7191c"),
+          viridis::inferno(6),
           human_footprint_domain, na.color = "transparent"
         )
         map %>%
