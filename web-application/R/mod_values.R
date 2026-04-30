@@ -35,6 +35,11 @@ mod_values_server <- function(id, map_id, parent_session, active_raster = NULL){
     zonation <- rast_layer("5_values/rankmap.tif")
 
     #### Cross-module raster exclusivity ####
+    # TODO: this doesn't update across modules of the same type
+    # ex. if raster is selected in one module and then another is selected in a different module
+    # raster does get deselected, but not the checkbox
+    # changing from "values" to id fixes the checbox behaviour, but regresses the raster toggle ability of the checkbox
+    # troubleshoot another time
     observe({
       if (isTRUE(input$values_show)) active_raster("values")
     })

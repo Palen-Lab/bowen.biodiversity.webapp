@@ -12,7 +12,7 @@ mod_land_management_ui <- function(id) {
   tagList(
     tags$p(tags$strong("Land Ownership"), class = "mb-0 mt-2"),
     div(class = "d-flex align-items-center gap-2",
-      checkboxInput(NS(id, "ownership_rast_show"), "Land Ownership Raster", value = FALSE),
+      checkboxInput(NS(id, "ownership_rast_show"), "Land Ownership", value = FALSE),
       hover_popover(
         icon("circle-info", style = "cursor:pointer;"),
         title = "Land Ownership Map",
@@ -74,7 +74,9 @@ mod_land_management_ui <- function(id) {
         p("Development pressure overlaid with Integrated Conservation Values, showing the relative biodiversity value at risk per potential new unit. Higher values indicate development potential in areas of greater conservation significance."),
         em(strong("Note: "), "Shows only parcels identified as having potential for future development or densification.")
       )
-    )
+    ),
+    tags$p(tags$strong("Integrated Conservation Values"), class = "mb-0 mt-2"),
+    mod_values_ui("values_2")
   )
 }
 
