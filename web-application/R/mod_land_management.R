@@ -306,14 +306,14 @@ mod_land_management_server <- function(id, map_id, parent_session, active_raster
           leaflet::removeControl(layerId = "dev_bio_legend")
         return()
       }
-      layer_domain <- c(0, dev_layer$bioval_per_unit)
+      layer_domain <- c(0, dev_layer$rankmap)
       pal <- leaflet::colorNumeric(palette = "YlOrRd", domain = layer_domain)
       map %>%
         leaflet::addPolygons(data = dev_layer, group = "dev_bio",
-                             color = ~pal(bioval_per_unit), stroke = FALSE,
+                             color = ~pal(rankmap), stroke = FALSE,
                              fillOpacity = 1, smoothFactor = 0.2) %>%
         leaflet::addLegend(layerId = "dev_bio_legend", pal = pal, values = layer_domain,
-                           title = "Rel. Biodiversity per Potential Unit", opacity = 0.7)
+                           title = "Rel. Biodiversity per Parcel", opacity = 0.7)
     })
 
   })
