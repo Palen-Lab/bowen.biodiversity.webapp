@@ -56,6 +56,14 @@ mod_land_management_ui <- function(id) {
         p("These are high-priority candidates for protection identified through the Bowen Island Biodiversity Plan, based on their integrated conservation values, connectivity potential, and land ownership.")
       )
     ),
+    div(class = "d-flex align-items-center gap-2",
+      checkboxInput(NS(id, "corridor_candidates_show"), "Candidate Corridors", value = FALSE),
+      hover_popover(
+        icon("circle-info", style = "cursor:pointer;"),
+        title = "Candidate Corridors",
+        p("Potential ecological corridor zones connecting candidate and existing protected areas. Maintaining connectivity between habitats supports species movement, genetic exchange, and resilience to environmental change.")
+      )
+    ),
     tags$p(tags$strong("Development"), class = "mb-0 mt-2"),
     div(class = "d-flex align-items-center gap-2",
       checkboxInput(NS(id, "dev_potential"), "Development Potential", value = FALSE),
@@ -154,6 +162,8 @@ mod_land_management_server <- function(id, map_id, parent_session, active_raster
     bowen_pa <- vect_layer("7_land_management/existing_protected_areas.gpkg") %>%
       sf::st_transform(4326)
     bowen_new_pa <- vect_layer("7_land_management/pa_candidates.gpkg") %>%
+      sf::st_transform(4326)
+    corridor_candidates <- vect_layer("7_land_management/corridor_candidates.gpkg") %>%
       sf::st_transform(4326)
 
     #### Show / hide private land ####
@@ -279,6 +289,32 @@ mod_land_management_server <- function(id, map_id, parent_session, active_raster
         ) %>%
         leaflet::addLegend(layerId = "candidate_pa_legend", colors = "orange",
                            labels = "Candidate Protected Areas", title = "Candidates")
+    })
+
+    #### Show / hide candidate corridors ####
+    observeEvent(input$corridor_candidates_show, {
+      map <- leaflet::leafletProxy(mapId = map_id, session = parent_session)
+
+      if (!isTRUE(input$corridor_candidates_show)) {
+        map %>%
+          leaflet::clearGroup("corridor_candidates") %>%
+          leaflet::removeControl(layerId = "corridor_candidates_legend")
+        return()
+      }
+
+      map %>%
+        leaflet::addPolylines(
+          data = corridor_candidates,
+          group = "corridor_candidates",
+          color = "#FF9300",
+          weight = 8,
+          opacity = 0.8,
+          smoothFactor = 0.2,
+          label = "Candidate Corridor",
+          highlightOptions = leaflet::highlightOptions(color = "#FF9300", weight = 6, bringToFront = TRUE)
+        ) %>%
+        leaflet::addLegend(layerId = "corridor_candidates_legend", colors = "#FF9300",
+                           labels = "Candidate Corridors", title = "Candidates")
     })
 
     #### Development vector layers (independent toggles) ####
